@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabinapp</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <!-- Encabezado -->
+    <header>
+        <h1>Sabinapp</h1>
+        <p>Una aplicación web para conocer el clima y las noticias más recientes de Sabinas Hidalgo.</p>
+    </header>
+
+    <!-- Sección de Clima -->
+    <main>
+        <section id="clima">
+            <h2>Clima Actual en Sabinas Hidalgo</h2>
+            <div id="weatherInfo" class="weather-info">
+                <!-- La información del clima se mostrará aquí -->
+            </div>
+            <div id="map" style="height: 300px; margin-top: 20px;"></div>
+        </section>
+
+        <!-- Sección de Noticias -->
+        <section id="noticias">
+            <h2>Últimas Noticias de Sabinas Hidalgo</h2>
+            <div class="news-container" id="news-container">
+                <!-- Las noticias se cargarán aquí dinámicamente -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Pie de página -->
+    <footer>
+        <p>&copy; 2024 Sabinapp. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Script para cargar el clima y las noticias -->
+    <script src="/combinado_app.js"></script>
+
+    <!-- Script para cargar las noticias dinámicamente -->
+    <script>
+        // Función para cargar noticias dinámicamente
+        async function loadNews() {
+            const newsContainer = document.getElementById('news-container');
+            try {
+                const response = await fetch('/api/noticias');
+                const articles = await response.json();
+                
+                if (articles && articles.length > 0) {
+                    let newsHTML = articles.map(article => `
+                        <div class="news-card">
+                            <a href="${article.url}" target="_blank">
+                                <img src="${article.urlToImage || 'https://via.placeholder.com/400x200'}" alt="Imagen de la noticia">
+                                <div class="news-card-content">
+                                    <h2>${article.title}</h2>
+                                    <p>${article.description || 'Sin descripción disponible'}</p>
+                                </div>
+                            </a>
+                        </div>
+                    `).join('');
+                    newsContainer.innerHTML = newsHTML;
+                } else {
+                    newsContainer.innerHTML = '<p>No se encontraron noticias sobre Sabinas Hidalgo.</p>';
+                }
+            } catch (error) {
+                console.error('Error al cargar las noticias:', error);
+                newsContainer.innerHTML = '<p>Hubo un error al cargar las noticias.</p>';
+            }
+        }
+
+        // Llama a la función para cargar las noticias cuando se cargue la página
+        document.addEventListener('DOMContentLoaded', loadNews);
+    </script>
+</body>
+</html>

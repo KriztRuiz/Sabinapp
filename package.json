@@ -1,0 +1,13 @@
+{
+  "name": "combinado-sh",
+  "version": "1.0.0",
+  "main": "combinado_app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node combinado_server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "node-fetch": "^3.3.2"
+  }
+}
