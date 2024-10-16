@@ -1,4 +1,3 @@
-// netlify/functions/getWeather.js
 const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
