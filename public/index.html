@@ -41,40 +41,5 @@
 
     <!-- Script para cargar el clima y las noticias -->
     <script src="/combinado_app.js"></script>
-
-    <!-- Script para cargar las noticias dinámicamente -->
-    <script>
-        // Función para cargar noticias dinámicamente
-        async function loadNews() {
-            const newsContainer = document.getElementById('news-container');
-            try {
-                const response = await fetch('/api/noticias');
-                const articles = await response.json();
-                
-                if (articles && articles.length > 0) {
-                    let newsHTML = articles.map(article => `
-                        <div class="news-card">
-                            <a href="${article.url}" target="_blank">
-                                <img src="${article.urlToImage || 'https://via.placeholder.com/400x200'}" alt="Imagen de la noticia">
-                                <div class="news-card-content">
-                                    <h2>${article.title}</h2>
-                                    <p>${article.description || 'Sin descripción disponible'}</p>
-                                </div>
-                            </a>
-                        </div>
-                    `).join('');
-                    newsContainer.innerHTML = newsHTML;
-                } else {
-                    newsContainer.innerHTML = '<p>No se encontraron noticias sobre Sabinas Hidalgo.</p>';
-                }
-            } catch (error) {
-                console.error('Error al cargar las noticias:', error);
-                newsContainer.innerHTML = '<p>Hubo un error al cargar las noticias.</p>';
-            }
-        }
-
-        // Llama a la función para cargar las noticias cuando se cargue la página
-        document.addEventListener('DOMContentLoaded', loadNews);
-    </script>
 </body>
 </html>

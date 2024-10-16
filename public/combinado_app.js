@@ -1,12 +1,9 @@
-// Tu clave API gratuita de OpenWeatherMap
-const apiKey = '84eeb2d3645b5c1bfd6c4e9cea29db2a';
-
-// Función para obtener el clima actual usando la API gratuita
-function getCurrentWeather(city = 'Sabinas Hidalgo') {
+// Función para obtener el clima actual usando la API de Netlify
+function getCurrentWeather() {
     const weatherInfoDiv = document.getElementById('weatherInfo');
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=es`;
+    const weatherUrl = '/.netlify/functions/getWeather';
 
-    fetch(url)
+    fetch(weatherUrl)
         .then(response => response.json())
         .then(data => {
             if (data.cod === 200) {
@@ -50,7 +47,39 @@ function initMap(lat, lon) {
     L.marker([lat, lon]).addTo(map);
 }
 
-// Llamar a la función cuando el DOM se haya cargado
+// Función para cargar noticias usando la API de Netlify
+async function loadNews() {
+    const newsContainer = document.getElementById('news-container');
+    const newsUrl = '/.netlify/functions/getNews';
+
+    try {
+        const response = await fetch(newsUrl);
+        const articles = await response.json();
+        
+        if (articles && articles.length > 0) {
+            let newsHTML = articles.map(article => `
+                <div class="news-card">
+                    <a href="${article.url}" target="_blank">
+                        <img src="${article.urlToImage || 'https://via.placeholder.com/400x200'}" alt="Imagen de la noticia">
+                        <div class="news-card-content">
+                            <h2>${article.title}</h2>
+                            <p>${article.description || 'Sin descripción disponible'}</p>
+                        </div>
+                    </a>
+                </div>
+            `).join('');
+            newsContainer.innerHTML = newsHTML;
+        } else {
+            newsContainer.innerHTML = '<p>No se encontraron noticias sobre Sabinas Hidalgo.</p>';
+        }
+    } catch (error) {
+        console.error('Error al cargar las noticias:', error);
+        newsContainer.innerHTML = '<p>Hubo un error al cargar las noticias.</p>';
+    }
+}
+
+// Llamar a las funciones cuando el DOM se haya cargado
 document.addEventListener('DOMContentLoaded', () => {
-    getCurrentWeather('Sabinas Hidalgo');
+    getCurrentWeather();
+    loadNews();
 });
