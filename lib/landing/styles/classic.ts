@@ -1,3 +1,5 @@
+// lib/landing/styles/classic.ts
+
 import type { LandingStyles } from "./types";
 
 export const classicStyles: LandingStyles = {

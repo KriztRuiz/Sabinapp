@@ -1,3 +1,5 @@
+// lib/landing/styles/index.ts
+
 import { classicStyles } from "./classic";
 import { compactStyles } from "./compact";
 import { elegantStyles } from "./elegant";

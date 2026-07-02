@@ -1,3 +1,5 @@
+// lib/landing/styles/impact.ts
+
 import type { LandingStyles } from "./types";
 
 export const impactStyles: LandingStyles = {

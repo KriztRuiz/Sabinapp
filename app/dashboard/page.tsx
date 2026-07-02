@@ -1,6 +1,9 @@
+// app/dashboard/page.tsx
+
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 type RoleRow = {
   roles: {
@@ -127,6 +130,24 @@ export default async function DashboardPage() {
             )}
           </div>
         </article>
+      </section>
+
+            <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-950">
+          Administración de landing pages
+        </h2>
+
+        <p className="mt-2 text-sm text-gray-600">
+          Edita el contenido y el estilo visual de tus negocios publicados o en
+          revisión.
+        </p>
+
+        <Link
+          href="/dashboard/negocios"
+          className="mt-5 inline-flex rounded-lg bg-gray-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+        >
+          Ir a mis negocios
+        </Link>
       </section>
 
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">

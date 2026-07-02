@@ -1,3 +1,5 @@
+// components/landing/contact-hub.tsx
+
 "use client";
 
 import type { PublicLandingContact } from "@/lib/landing/styles/types";

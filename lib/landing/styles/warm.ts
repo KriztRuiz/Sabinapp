@@ -1,3 +1,5 @@
+// lib/landing/styles/warm.ts
+
 import type { LandingStyles } from "./types";
 
 export const warmStyles: LandingStyles = {

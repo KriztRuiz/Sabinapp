@@ -1,3 +1,5 @@
+// components/landing/public-business-landing.tsx
+
 /* eslint-disable @next/next/no-img-element */
 
 import { ContactHub } from "./contact-hub";

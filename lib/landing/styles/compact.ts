@@ -1,3 +1,5 @@
+// lib/landing/styles/compact.ts
+
 import type { LandingStyles } from "./types";
 
 export const compactStyles: LandingStyles = {

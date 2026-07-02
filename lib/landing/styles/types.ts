@@ -1,3 +1,5 @@
+// lib/landing/styles/types.ts
+
 //import type { LandingVisualMode } from "@/lib/landing/styles/types.tsx";
 
 export type PublicLandingContact = {

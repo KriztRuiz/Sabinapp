@@ -1,3 +1,5 @@
+// app/negocio/[slug]/page.tsx
+
 import { PublicBusinessLanding } from "@/components/landing/public-business-landing";
 import type {
   PublicLandingContact,
@@ -7,7 +9,7 @@ import type {
   PublicLandingLocation,
   PublicLandingPhoto,
 } from "@/lib/landing/styles/types";
-import type { LandingVisualMode } from "@/lib/landing/styles";
+import type { LandingVisualMode } from "@/lib/landing/styles/types";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
