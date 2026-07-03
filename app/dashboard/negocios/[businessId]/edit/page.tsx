@@ -1,9 +1,13 @@
 // app/dashboard/negocios/[businessId]/edit/page.tsx
 
-import { BusinessEditForm } from "./business-edit-form";
+import {
+  normalizeLandingVisualMode,
+  type LandingVisualMode,
+} from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { BusinessEditForm } from "./business-edit-form";
 
 type PageProps = {
   params: Promise<{
@@ -14,6 +18,10 @@ type PageProps = {
   }>;
 };
 
+type BusinessSettingsRow = {
+  visual_mode: string | null;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -22,12 +30,18 @@ type BusinessRow = {
   long_description: string | null;
   status: string;
   is_published: boolean;
-  business_settings:
-    | {
-        visual_mode: string | null;
-      }[]
-    | null;
+  business_settings: BusinessSettingsRow[] | BusinessSettingsRow | null;
 };
+
+function getBusinessVisualMode(
+  settings: BusinessRow["business_settings"],
+): LandingVisualMode {
+  if (Array.isArray(settings)) {
+    return normalizeLandingVisualMode(settings[0]?.visual_mode);
+  }
+
+  return normalizeLandingVisualMode(settings?.visual_mode);
+}
 
 export default async function EditBusinessPage({
   params,
@@ -80,7 +94,7 @@ export default async function EditBusinessPage({
     long_description: businessRow.long_description,
     status: businessRow.status,
     is_published: businessRow.is_published,
-    visual_mode: businessRow.business_settings?.[0]?.visual_mode ?? "modern",
+    visual_mode: getBusinessVisualMode(businessRow.business_settings),
   };
 
   return (
@@ -114,6 +128,10 @@ export default async function EditBusinessPage({
 
           <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
             /negocio/{business.slug}
+          </span>
+
+          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
+            Estilo: {business.visual_mode}
           </span>
         </div>
 

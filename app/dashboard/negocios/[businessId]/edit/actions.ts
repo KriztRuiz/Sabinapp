@@ -2,23 +2,13 @@
 
 "use server";
 
+import { isLandingVisualMode } from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 function getFormValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
-}
-
-function isValidVisualMode(value: string) {
-  return (
-    value === "classic" ||
-    value === "modern" ||
-    value === "warm" ||
-    value === "compact" ||
-    value === "elegant" ||
-    value === "impact"
-  );
 }
 
 export async function updateBusinessLanding(
@@ -46,7 +36,7 @@ export async function updateBusinessLanding(
     );
   }
 
-  if (!isValidVisualMode(visualMode)) {
+  if (!isLandingVisualMode(visualMode)) {
     redirect(
       `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
         "Selecciona un estilo visual válido.",
@@ -101,54 +91,28 @@ export async function updateBusinessLanding(
     );
   }
 
-  const { data: existingSettings, error: settingsReadError } = await supabase
+  const { data: updatedSettings, error: upsertSettingsError } = await supabase
     .from("business_settings")
-    .select("business_id")
-    .eq("business_id", businessId)
-    .maybeSingle();
-
-  if (settingsReadError) {
-    redirect(
-      `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
-        `No se pudo leer la configuración visual: ${settingsReadError.message}`,
-      )}`,
-    );
-  }
-
-  if (!existingSettings) {
-    const { error: insertSettingsError } = await supabase
-      .from("business_settings")
-      .insert({
+    .upsert(
+      {
         business_id: businessId,
         visual_mode: visualMode,
-      });
+      },
+      {
+        onConflict: "business_id",
+      },
+    )
+    .select("business_id, visual_mode")
+    .single();
 
-    if (insertSettingsError) {
-      redirect(
-        `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
-          `El contenido se guardó, pero no se pudo crear la configuración visual: ${insertSettingsError.message}`,
-        )}`,
-      );
-    }
-  } else {
-    const { data: updatedSettings, error: updateSettingsError } = await supabase
-      .from("business_settings")
-      .update({
-        visual_mode: visualMode,
-      })
-      .eq("business_id", businessId)
-      .select("business_id, visual_mode")
-      .single();
-
-    if (updateSettingsError || !updatedSettings) {
-      redirect(
-        `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
-          `El contenido se guardó, pero no se pudo actualizar el estilo visual: ${
-            updateSettingsError?.message ?? "sin filas actualizadas"
-          }`,
-        )}`,
-      );
-    }
+  if (upsertSettingsError || !updatedSettings) {
+    redirect(
+      `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
+        `El contenido se guardó, pero no se pudo guardar el estilo visual: ${
+          upsertSettingsError?.message ?? "sin configuración actualizada"
+        }`,
+      )}`,
+    );
   }
 
   revalidatePath("/dashboard");

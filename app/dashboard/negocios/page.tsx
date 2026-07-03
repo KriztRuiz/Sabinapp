@@ -1,8 +1,16 @@
 // app/dashboard/negocios/page.tsx
 
+import {
+  normalizeLandingVisualMode,
+  type LandingVisualMode,
+} from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+type BusinessSettingsRow = {
+  visual_mode: string | null;
+};
 
 type BusinessRow = {
   id: string;
@@ -11,12 +19,18 @@ type BusinessRow = {
   status: string;
   is_published: boolean;
   short_description: string;
-  business_settings:
-    | {
-        visual_mode: string | null;
-      }[]
-    | null;
+  business_settings: BusinessSettingsRow[] | BusinessSettingsRow | null;
 };
+
+function getBusinessVisualMode(
+  settings: BusinessRow["business_settings"],
+): LandingVisualMode {
+  if (Array.isArray(settings)) {
+    return normalizeLandingVisualMode(settings[0]?.visual_mode);
+  }
+
+  return normalizeLandingVisualMode(settings?.visual_mode);
+}
 
 export default async function DashboardBusinessesPage() {
   const supabase = await createClient();
@@ -52,9 +66,9 @@ export default async function DashboardBusinessesPage() {
       <main className="mx-auto max-w-5xl px-6 py-10">
         <h1 className="text-3xl font-bold text-gray-950">Mis negocios</h1>
 
-        <pre className="mt-6 whitespace-pre-wrap rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {JSON.stringify(error, null, 2)}
-        </pre>
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          No se pudieron cargar tus negocios. Intenta de nuevo.
+        </div>
       </main>
     );
   }
@@ -77,8 +91,9 @@ export default async function DashboardBusinessesPage() {
       <section className="mt-8 grid gap-4">
         {businesses.length > 0 ? (
           businesses.map((business) => {
-            const visualMode =
-              business.business_settings?.[0]?.visual_mode ?? "modern";
+            const visualMode = getBusinessVisualMode(
+              business.business_settings,
+            );
 
             return (
               <article
@@ -122,6 +137,7 @@ export default async function DashboardBusinessesPage() {
                       <Link
                         href={`/negocio/${business.slug}`}
                         target="_blank"
+                        rel="noreferrer"
                         className="rounded-lg border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
                       >
                         Ver pública

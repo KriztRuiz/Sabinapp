@@ -8,6 +8,15 @@ import { modernStyles } from "./modern";
 import type { LandingStyles, LandingVisualMode } from "./types";
 import { warmStyles } from "./warm";
 
+export const landingVisualModes = [
+  "classic",
+  "modern",
+  "warm",
+  "compact",
+  "elegant",
+  "impact",
+] as const satisfies readonly LandingVisualMode[];
+
 export const landingStylesByMode: Record<LandingVisualMode, LandingStyles> = {
   classic: classicStyles,
   modern: modernStyles,
@@ -17,19 +26,24 @@ export const landingStylesByMode: Record<LandingVisualMode, LandingStyles> = {
   impact: impactStyles,
 };
 
-export function getLandingStyles(mode?: string | null) {
-  if (
-    mode === "classic" ||
-    mode === "modern" ||
-    mode === "warm" ||
-    mode === "compact" ||
-    mode === "elegant" ||
-    mode === "impact"
-  ) {
-    return landingStylesByMode[mode];
+export function isLandingVisualMode(
+  mode: string | null | undefined,
+): mode is LandingVisualMode {
+  if (!mode) {
+    return false;
   }
 
-  return landingStylesByMode.modern;
+  return landingVisualModes.includes(mode as LandingVisualMode);
+}
+
+export function normalizeLandingVisualMode(
+  mode?: string | null,
+): LandingVisualMode {
+  return isLandingVisualMode(mode) ? mode : "modern";
+}
+
+export function getLandingStyles(mode?: string | null) {
+  return landingStylesByMode[normalizeLandingVisualMode(mode)];
 }
 
 export type { LandingStyles, LandingVisualMode };

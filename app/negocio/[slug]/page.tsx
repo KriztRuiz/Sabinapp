@@ -1,6 +1,10 @@
 // app/negocio/[slug]/page.tsx
 
 import { PublicBusinessLanding } from "@/components/landing/public-business-landing";
+import {
+  normalizeLandingVisualMode,
+  type LandingVisualMode,
+} from "@/lib/landing/styles";
 import type {
   PublicLandingContact,
   PublicLandingData,
@@ -9,7 +13,6 @@ import type {
   PublicLandingLocation,
   PublicLandingPhoto,
 } from "@/lib/landing/styles/types";
-import type { LandingVisualMode } from "@/lib/landing/styles/types";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -17,6 +20,10 @@ type PageProps = {
   params: Promise<{
     slug: string;
   }>;
+};
+
+type BusinessSettingsRow = {
+  visual_mode: string | null;
 };
 
 type BusinessQueryRow = {
@@ -31,11 +38,7 @@ type BusinessQueryRow = {
   categories: {
     name: string;
   } | null;
-  business_settings:
-    | {
-        visual_mode: string | null;
-      }[]
-    | null;
+  business_settings: BusinessSettingsRow[] | BusinessSettingsRow | null;
   contact_methods:
     | {
         id: string;
@@ -102,23 +105,52 @@ type BusinessQueryRow = {
     | null;
 };
 
-function toVisualMode(mode: string | null | undefined): LandingVisualMode {
-  if (
-    mode === "classic" ||
-    mode === "modern" ||
-    mode === "warm" ||
-    mode === "compact" ||
-    mode === "elegant" ||
-    mode === "impact"
-  ) {
-    return mode;
+function getBusinessVisualMode(
+  settings: BusinessQueryRow["business_settings"],
+): LandingVisualMode {
+  if (Array.isArray(settings)) {
+    return normalizeLandingVisualMode(settings[0]?.visual_mode);
   }
 
-  return "modern";
+  return normalizeLandingVisualMode(settings?.visual_mode);
+}
+
+function normalizeContactHref(contact: {
+  type: string;
+  value: string;
+  url: string | null;
+}) {
+  const explicitUrl = contact.url?.trim();
+
+  if (explicitUrl) {
+    return explicitUrl;
+  }
+
+  const value = contact.value.trim();
+
+  if (contact.type === "phone") {
+    return `tel:${value.replace(/\s+/g, "")}`;
+  }
+
+  if (contact.type === "email") {
+    return `mailto:${value}`;
+  }
+
+  if (contact.type === "whatsapp") {
+    const phone = value.replace(/\D/g, "");
+
+    return phone ? `https://wa.me/52${phone}` : value;
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  return value;
 }
 
 function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
-  const visualMode = toVisualMode(row.business_settings?.[0]?.visual_mode);
+  const visualMode = getBusinessVisualMode(row.business_settings);
 
   const contacts: PublicLandingContact[] = (row.contact_methods ?? [])
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -127,7 +159,7 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
       type: contact.type,
       label: contact.label,
       value: contact.value,
-      href: contact.url ?? contact.value,
+      href: normalizeContactHref(contact),
       isPrimary: contact.is_primary,
     }));
 
@@ -314,7 +346,9 @@ export default async function PublicBusinessPage({ params }: PageProps) {
     notFound();
   }
 
-  const landingData = mapBusinessToLandingData(data as unknown as BusinessQueryRow);
+  const landingData = mapBusinessToLandingData(
+    data as unknown as BusinessQueryRow,
+  );
 
   return <PublicBusinessLanding data={landingData} />;
 }
