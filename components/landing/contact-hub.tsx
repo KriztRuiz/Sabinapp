@@ -1,5 +1,3 @@
-// components/landing/contact-hub.tsx
-
 "use client";
 
 import type { PublicLandingContact } from "@/lib/landing/styles/types";
@@ -10,6 +8,8 @@ type ContactHubProps = {
   contacts: PublicLandingContact[];
   styles: LandingStyles["contactHub"];
 };
+
+const CONTACT_HUB_PANEL_ID = "landing-contact-hub-panel";
 
 function getContactIcon(type: string) {
   const icons: Record<string, string> = {
@@ -29,6 +29,10 @@ function getContactIcon(type: string) {
   return icons[type] ?? "🔗";
 }
 
+function isExternalHref(href: string) {
+  return href.startsWith("http://") || href.startsWith("https://");
+}
+
 export function ContactHub({ contacts, styles }: ContactHubProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,35 +41,34 @@ export function ContactHub({ contacts, styles }: ContactHubProps) {
   }
 
   return (
-    <aside className={styles.wrapper}>
+    <aside className={styles.wrapper} aria-label="Opciones de contacto">
       {isOpen ? (
-        <div className={styles.panel}>
-          {contacts.slice(0, 5).map((contact) => (
-            <a
-              key={contact.id}
-              href={contact.href}
-              className={styles.item}
-              target={
-                contact.href.startsWith("http") &&
-                !contact.href.startsWith("https://wa.me")
-                  ? "_blank"
-                  : undefined
-              }
-              rel={
-                contact.href.startsWith("http") &&
-                !contact.href.startsWith("https://wa.me")
-                  ? "noreferrer"
-                  : undefined
-              }
-            >
-              <span>{getContactIcon(contact.type)}</span>
+        <div id={CONTACT_HUB_PANEL_ID} className={styles.panel}>
+          {contacts.map((contact) => {
+            const isExternal = isExternalHref(contact.href);
 
-              <span>
-                <span className="block text-sm font-bold">{contact.label}</span>
-                <span className="block text-xs opacity-70">{contact.value}</span>
-              </span>
-            </a>
-          ))}
+            return (
+              <a
+                key={contact.id}
+                href={contact.href}
+                className={styles.item}
+                target={isExternal ? "_blank" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
+              >
+                <span aria-hidden="true">{getContactIcon(contact.type)}</span>
+
+                <span>
+                  <span className="block text-sm font-bold">
+                    {contact.label}
+                  </span>
+
+                  <span className="block text-xs opacity-70">
+                    {contact.value}
+                  </span>
+                </span>
+              </a>
+            );
+          })}
         </div>
       ) : null}
 
@@ -73,7 +76,7 @@ export function ContactHub({ contacts, styles }: ContactHubProps) {
         type="button"
         className={styles.button}
         aria-expanded={isOpen}
-        aria-controls="landing-contact-hub-panel"
+        aria-controls={CONTACT_HUB_PANEL_ID}
         onClick={() => setIsOpen((currentValue) => !currentValue)}
       >
         {isOpen ? "Cerrar contacto" : "Contactar ahora"}
