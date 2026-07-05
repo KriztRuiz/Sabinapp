@@ -3,8 +3,12 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { ContactHub } from "./contact-hub";
-import type { PublicLandingData } from "@/lib/landing/styles/types";
+import {
+  getContactIcon,
+  getExternalLinkProps,
+} from "@/lib/landing/contact";
 import { getLandingStyles } from "@/lib/landing/styles";
+import type { PublicLandingData } from "@/lib/landing/styles/types";
 
 type Props = {
   data: PublicLandingData;
@@ -19,24 +23,6 @@ const dayNames: Record<number, string> = {
   5: "Viernes",
   6: "Sábado",
 };
-
-function getContactIcon(type: string) {
-  const icons: Record<string, string> = {
-    whatsapp: "💬",
-    phone: "📞",
-    email: "✉️",
-    facebook: "📘",
-    instagram: "📸",
-    tiktok: "🎵",
-    x: "𝕏",
-    messenger: "💬",
-    website: "🌐",
-    map: "📍",
-    custom: "🔗",
-  };
-
-  return icons[type] ?? "🔗";
-}
 
 function getItemTypeLabel(type: string) {
   const labels: Record<string, string> = {
@@ -306,7 +292,11 @@ export function PublicBusinessLanding({ data }: Props) {
             </nav>
 
             {primaryContact ? (
-              <a href={primaryContact.href} className={styles.buttonPrimary}>
+              <a
+                href={primaryContact.href}
+                className={styles.buttonPrimary}
+                {...getExternalLinkProps(primaryContact.href)}
+              >
                 Contactar
               </a>
             ) : null}
@@ -335,7 +325,11 @@ export function PublicBusinessLanding({ data }: Props) {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {primaryContact ? (
-                <a href={primaryContact.href} className={styles.buttonPrimary}>
+                <a
+                  href={primaryContact.href}
+                  className={styles.buttonPrimary}
+                  {...getExternalLinkProps(primaryContact.href)}
+                >
                   {getContactIcon(primaryContact.type)} {primaryContact.label}
                 </a>
               ) : null}
@@ -646,12 +640,13 @@ export function PublicBusinessLanding({ data }: Props) {
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {data.contacts.map((contact) => (
-                <a
-                  key={contact.id}
-                  href={contact.href}
-                  className={`${styles.card} transition hover:-translate-y-1`}
-                >
+                {data.contacts.map((contact) => (
+                  <a
+                    key={contact.id}
+                    href={contact.href}
+                    className={`${styles.card} transition hover:-translate-y-1`}
+                    {...getExternalLinkProps(contact.href)}
+                  >
                   <span className="text-2xl">{getContactIcon(contact.type)}</span>
                   <p className={`${styles.heading} mt-3 font-bold`}>
                     {contact.label}
@@ -665,9 +660,8 @@ export function PublicBusinessLanding({ data }: Props) {
               {mainLocation?.mapUrl ? (
                 <a
                   href={mainLocation.mapUrl}
-                  target="_blank"
-                  rel="noreferrer"
                   className={`${styles.card} transition hover:-translate-y-1`}
+                  {...getExternalLinkProps(mainLocation.mapUrl)}
                 >
                   <span className="text-2xl">📍</span>
                   <p className={`${styles.heading} mt-3 font-bold`}>
