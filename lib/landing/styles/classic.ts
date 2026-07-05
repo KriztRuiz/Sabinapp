@@ -23,6 +23,8 @@ export const classicStyles: LandingStyles = {
   heroImageCard:
     "relative rounded-[1.5rem] border border-[#d8c3a3] bg-[#efe1cf] p-3 shadow-xl shadow-[#5c3b14]/10",
   heroImage: "h-[500px] w-full rounded-[1rem] object-cover",
+  heroPlaceholder:
+  "grid h-[420px] place-items-center rounded-[1.5rem] border border-dashed border-[#d6b98e] bg-[#fff7ed] p-8 text-center",
   heroOverlay:
     "absolute bottom-6 left-6 right-6 rounded-2xl bg-[#21170f]/85 p-5 text-white",
   card: "rounded-2xl border border-[#dfcdb4] bg-white/80 p-6 shadow-sm",

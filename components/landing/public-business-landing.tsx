@@ -358,7 +358,7 @@ export function PublicBusinessLanding({ data }: Props) {
                 className={styles.heroImage}
               />
             ) : (
-              <div className="grid h-[420px] place-items-center rounded-[1.5rem] border border-dashed border-current/20 p-8 text-center">
+              <div className={styles.heroPlaceholder}>
                 <p className={styles.mutedText}>
                   Este negocio todavía no tiene foto principal.
                 </p>

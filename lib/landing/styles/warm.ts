@@ -23,6 +23,8 @@ export const warmStyles: LandingStyles = {
   heroImageCard:
     "relative rounded-[2rem] border border-orange-200 bg-white/80 p-3 shadow-2xl shadow-orange-900/10 backdrop-blur-xl",
   heroImage: "h-[520px] w-full rounded-[1.5rem] object-cover",
+  heroPlaceholder:
+    "grid h-[420px] place-items-center rounded-[1.5rem] border border-dashed border-orange-300 bg-orange-50 p-8 text-center",
   heroOverlay:
     "absolute bottom-7 left-7 right-7 rounded-3xl bg-orange-950/80 p-5 text-white backdrop-blur",
   card: "rounded-[2rem] border border-orange-200 bg-white/75 p-6 shadow-lg shadow-orange-900/5 backdrop-blur-xl",

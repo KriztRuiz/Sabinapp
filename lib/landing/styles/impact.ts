@@ -23,6 +23,8 @@ export const impactStyles: LandingStyles = {
   heroImageCard:
     "relative rounded-[2.5rem] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-rose-950/40",
   heroImage: "h-[540px] w-full rounded-[2rem] object-cover contrast-110 saturate-125",
+  heroPlaceholder:
+    "grid h-[420px] place-items-center rounded-[1.5rem] border border-dashed border-rose-300/60 bg-rose-950/20 p-8 text-center",
   heroOverlay:
     "absolute bottom-7 left-7 right-7 rounded-[2rem] bg-black/70 p-5 text-white backdrop-blur-xl",
   card: "rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-2xl shadow-black/30",

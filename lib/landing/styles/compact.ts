@@ -22,6 +22,8 @@ export const compactStyles: LandingStyles = {
   heroImageCard:
     "relative rounded-2xl border border-slate-200 bg-white p-2 shadow-sm",
   heroImage: "h-[360px] w-full rounded-xl object-cover",
+  heroPlaceholder:
+    "grid h-[420px] place-items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center",
   heroOverlay:
     "absolute bottom-4 left-4 right-4 rounded-xl bg-slate-950/80 p-4 text-white",
   card: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm",

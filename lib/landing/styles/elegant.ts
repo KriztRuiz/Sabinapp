@@ -23,6 +23,8 @@ export const elegantStyles: LandingStyles = {
   heroImageCard:
     "relative overflow-hidden rounded-[2rem] border border-[#d8c9b3] bg-[#e7ded0] shadow-xl",
   heroImage: "h-[520px] w-full object-cover",
+  heroPlaceholder:
+    "grid h-[420px] place-items-center rounded-[1.5rem] border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center",
   heroOverlay:
     "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white",
   card: "rounded-3xl border border-[#ded6ca] bg-white/80 p-6 shadow-sm",

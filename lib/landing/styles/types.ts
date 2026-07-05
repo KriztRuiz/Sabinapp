@@ -92,6 +92,7 @@ export type LandingStyles = {
   heroGrid: string;
   heroImageCard: string;
   heroImage: string;
+  heroPlaceholder: string;
   heroOverlay: string;
   card: string;
   featuredCard: string;
