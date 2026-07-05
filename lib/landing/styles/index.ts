@@ -17,6 +17,46 @@ export const landingVisualModes = [
   "impact",
 ] as const satisfies readonly LandingVisualMode[];
 
+export const landingVisualModeOptions: {
+  key: LandingVisualMode;
+  name: string;
+  description: string;
+}[] = [
+  {
+    key: "modern",
+    name: "Modern",
+    description: "Oscuro, llamativo, con alto contraste y estética actual.",
+  },
+  {
+    key: "classic",
+    name: "Classic",
+    description: "Tradicional, claro, ordenado y fácil de leer.",
+  },
+  {
+    key: "warm",
+    name: "Warm",
+    description:
+      "Cálido, cercano, ideal para comida, eventos o negocios familiares.",
+  },
+  {
+    key: "compact",
+    name: "Compact",
+    description:
+      "Simple, directo y funcional para servicios técnicos o listados rápidos.",
+  },
+  {
+    key: "elegant",
+    name: "Elegant",
+    description: "Sobrio, profesional y premium para servicios formales.",
+  },
+  {
+    key: "impact",
+    name: "Impact",
+    description:
+      "Fuerte, promocional y visualmente agresivo para eventos o anuncios.",
+  },
+];
+
 export const landingStylesByMode: Record<LandingVisualMode, LandingStyles> = {
   classic: classicStyles,
   modern: modernStyles,

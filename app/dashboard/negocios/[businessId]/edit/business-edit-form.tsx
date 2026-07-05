@@ -1,5 +1,6 @@
-// app/dashboard/negocios/[businessId]/edit/business-edit-form.tsxS
+// app/dashboard/negocios/[businessId]/edit/business-edit-form.tsx
 
+import { landingVisualModeOptions } from "@/lib/landing/styles";
 import { updateBusinessLanding } from "./actions";
 
 type BusinessEditFormProps = {
@@ -14,39 +15,6 @@ type BusinessEditFormProps = {
     visual_mode: string;
   };
 };
-
-const visualModes = [
-  {
-    key: "modern",
-    name: "Modern",
-    description: "Oscuro, llamativo, con alto contraste y estética actual.",
-  },
-  {
-    key: "classic",
-    name: "Classic",
-    description: "Tradicional, claro, ordenado y fácil de leer.",
-  },
-  {
-    key: "warm",
-    name: "Warm",
-    description: "Cálido, cercano, ideal para comida, eventos o negocios familiares.",
-  },
-  {
-    key: "compact",
-    name: "Compact",
-    description: "Simple, directo y funcional para servicios técnicos o listados rápidos.",
-  },
-  {
-    key: "elegant",
-    name: "Elegant",
-    description: "Sobrio, profesional y premium para servicios formales.",
-  },
-  {
-    key: "impact",
-    name: "Impact",
-    description: "Fuerte, promocional y visualmente agresivo para eventos o anuncios.",
-  },
-];
 
 export function BusinessEditForm({ business }: BusinessEditFormProps) {
   const updateBusinessLandingWithId = updateBusinessLanding.bind(
@@ -131,7 +99,7 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {visualModes.map((mode) => (
+          {landingVisualModeOptions.map((mode) => (
             <label
               key={mode.key}
               className="cursor-pointer rounded-2xl border border-gray-200 p-4 transition hover:border-orange-300 hover:bg-orange-50"
@@ -172,6 +140,7 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
           <a
             href={`/negocio/${business.slug}`}
             target="_blank"
+            rel="noreferrer"
             className="rounded-lg border border-gray-300 px-5 py-3 text-center text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
           >
             Ver página pública
