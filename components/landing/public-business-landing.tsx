@@ -585,8 +585,8 @@ export function PublicBusinessLanding({ data }: Props) {
           </h2>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {(galleryPhotos.length > 0 ? galleryPhotos : data.photos).map(
-              (photo) => (
+            {(galleryPhotos.length > 0 ? galleryPhotos : data.photos).length > 0 ? (
+              (galleryPhotos.length > 0 ? galleryPhotos : data.photos).map((photo) => (
                 <figure key={photo.id} className={styles.galleryCard}>
                   <img
                     src={photo.src}
@@ -594,7 +594,13 @@ export function PublicBusinessLanding({ data }: Props) {
                     className="h-72 w-full object-cover transition duration-500 hover:scale-105"
                   />
                 </figure>
-              ),
+              ))
+            ) : (
+              <article className={styles.card}>
+                <p className={styles.mutedText}>
+                  Este negocio todavía no tiene fotos adicionales registradas.
+                </p>
+              </article>
             )}
           </div>
         </section>
@@ -615,17 +621,24 @@ export function PublicBusinessLanding({ data }: Props) {
             </h2>
 
             <div className="mt-6 space-y-3">
-              {data.hours.map((hour) => (
-                <div
-                  key={hour.id}
-                  className={`flex justify-between gap-4 border-b pb-3 text-sm ${styles.divider}`}
-                >
-                  <span className={`${styles.heading} font-semibold`}>
-                    {hour.label || dayNames[hour.dayOfWeek]}
-                  </span>
-                  <span className={styles.mutedText}>{formatHour(hour)}</span>
-                </div>
-              ))}
+              {data.hours.length > 0 ? (
+                data.hours.map((hour) => (
+                  <div
+                    key={hour.id}
+                    className={`flex justify-between gap-4 border-b pb-3 text-sm ${styles.divider}`}
+                  >
+                    <span className={`${styles.heading} font-semibold`}>
+                      {hour.label || dayNames[hour.dayOfWeek]}
+                    </span>
+
+                    <span className={styles.mutedText}>{formatHour(hour)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className={styles.mutedText}>
+                  Este negocio todavía no tiene horarios registrados.
+                </p>
+              )}
             </div>
           </article>
 
@@ -640,22 +653,32 @@ export function PublicBusinessLanding({ data }: Props) {
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {data.contacts.map((contact) => (
+              {data.contacts.length > 0 ? (
+                data.contacts.map((contact) => (
                   <a
                     key={contact.id}
                     href={contact.href}
                     className={`${styles.card} transition hover:-translate-y-1`}
                     {...getExternalLinkProps(contact.href)}
                   >
-                  <span className="text-2xl">{getContactIcon(contact.type)}</span>
-                  <p className={`${styles.heading} mt-3 font-bold`}>
-                    {contact.label}
+                    <span className="text-2xl" aria-hidden="true">
+                      {getContactIcon(contact.type)}
+                    </span>
+
+                    <p className={`${styles.heading} mt-3 font-bold`}>
+                      {contact.label}
+                    </p>
+
+                    <p className={`${styles.mutedText} text-sm`}>{contact.value}</p>
+                  </a>
+                ))
+              ) : (
+                <article className={styles.card}>
+                  <p className={styles.mutedText}>
+                    Este negocio todavía no tiene contactos públicos registrados.
                   </p>
-                  <p className={`${styles.mutedText} text-sm`}>
-                    {contact.value}
-                  </p>
-                </a>
-              ))}
+                </article>
+              )}
 
               {mainLocation?.mapUrl ? (
                 <a
@@ -663,10 +686,12 @@ export function PublicBusinessLanding({ data }: Props) {
                   className={`${styles.card} transition hover:-translate-y-1`}
                   {...getExternalLinkProps(mainLocation.mapUrl)}
                 >
-                  <span className="text-2xl">📍</span>
-                  <p className={`${styles.heading} mt-3 font-bold`}>
-                    Ver ubicación
-                  </p>
+                  <span className="text-2xl" aria-hidden="true">
+                    📍
+                  </span>
+
+                  <p className={`${styles.heading} mt-3 font-bold`}>Ver ubicación</p>
+
                   <p className={`${styles.mutedText} text-sm`}>Abrir mapa</p>
                 </a>
               ) : null}
