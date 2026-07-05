@@ -10,6 +10,8 @@ export const impactStyles: LandingStyles = {
   nav: "sticky top-4 z-40 rounded-full border border-white/15 bg-black/70 px-5 py-3 text-white shadow-2xl backdrop-blur-xl",
   navPill:
     "rounded-full px-3 py-1.5 text-sm text-white/70 transition hover:bg-white hover:text-black",
+  brandIcon:
+    "grid h-10 w-10 place-items-center rounded-full bg-rose-500 text-lg text-white shadow-lg shadow-rose-950/40",
   badge:
     "inline-flex w-fit rounded-full bg-rose-500 px-4 py-2 text-sm font-black uppercase tracking-wide text-white",
   heading: "text-white",

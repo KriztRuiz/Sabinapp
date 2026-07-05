@@ -10,6 +10,8 @@ export const warmStyles: LandingStyles = {
   nav: "sticky top-4 z-40 rounded-full border border-orange-200 bg-white/75 px-5 py-3 text-stone-900 shadow-sm shadow-orange-900/5 backdrop-blur-xl",
   navPill:
     "rounded-full px-3 py-1.5 text-sm text-stone-700 transition hover:bg-orange-100 hover:text-orange-700",
+  brandIcon:
+    "grid h-10 w-10 place-items-center rounded-full bg-orange-600 text-lg text-white shadow-lg shadow-orange-900/20",
   badge:
     "inline-flex w-fit rounded-full border border-orange-200 bg-orange-100 px-4 py-2 text-sm font-medium text-orange-800",
   heading: "text-stone-950",

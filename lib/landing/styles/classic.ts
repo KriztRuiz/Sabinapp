@@ -10,6 +10,8 @@ export const classicStyles: LandingStyles = {
   nav: "sticky top-4 z-40 rounded-2xl border border-[#dfcdb4] bg-[#fffaf3]/90 px-5 py-3 text-[#21170f] shadow-sm backdrop-blur",
   navPill:
     "rounded-xl px-3 py-1.5 text-sm text-[#6d5945] transition hover:bg-[#efe1cf] hover:text-[#21170f]",
+  brandIcon:
+    "grid h-10 w-10 place-items-center rounded-full bg-[#21170f] text-lg text-white",
   badge:
     "inline-flex w-fit rounded-full border border-[#d6b98e] bg-[#f3e2c9] px-4 py-2 text-sm font-semibold text-[#7c4f1d]",
   heading: "text-[#1d130b]",

@@ -83,6 +83,7 @@ export type LandingStyles = {
   container: string;
   nav: string;
   navPill: string;
+  brandIcon: string;
   badge: string;
   heading: string;
   text: string;

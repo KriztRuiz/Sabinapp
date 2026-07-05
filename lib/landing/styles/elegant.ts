@@ -10,6 +10,8 @@ export const elegantStyles: LandingStyles = {
   nav: "sticky top-4 z-40 rounded-none border-b border-[#d8c9b3] bg-[#f5f1ea]/90 px-0 py-4 text-[#151515] backdrop-blur",
   navPill:
     "px-3 py-1.5 text-sm text-[#6b6358] transition hover:text-[#9a7437]",
+  brandIcon:
+    "grid h-10 w-10 place-items-center rounded-full bg-[#151515] text-lg text-white shadow-sm",
   badge:
     "inline-flex w-fit border-b border-[#9a7437] px-0 py-1 text-sm font-semibold uppercase tracking-[0.25em] text-[#9a7437]",
   heading: "text-[#151515]",
