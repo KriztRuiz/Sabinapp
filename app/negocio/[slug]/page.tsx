@@ -2,9 +2,9 @@
 
 import { PublicBusinessLanding } from "@/components/landing/public-business-landing";
 import {
-  normalizeLandingVisualMode,
-  type LandingVisualMode,
-} from "@/lib/landing/styles";
+  getBusinessVisualMode,
+  type BusinessSettingsRelation,
+} from "@/lib/landing/business-settings";
 import type {
   PublicLandingContact,
   PublicLandingData,
@@ -22,10 +22,6 @@ type PageProps = {
   }>;
 };
 
-type BusinessSettingsRow = {
-  visual_mode: string | null;
-};
-
 type BusinessQueryRow = {
   id: string;
   name: string;
@@ -38,7 +34,7 @@ type BusinessQueryRow = {
   categories: {
     name: string;
   } | null;
-  business_settings: BusinessSettingsRow[] | BusinessSettingsRow | null;
+  business_settings: BusinessSettingsRelation;
   contact_methods:
     | {
         id: string;
@@ -104,16 +100,6 @@ type BusinessQueryRow = {
       }[]
     | null;
 };
-
-function getBusinessVisualMode(
-  settings: BusinessQueryRow["business_settings"],
-): LandingVisualMode {
-  if (Array.isArray(settings)) {
-    return normalizeLandingVisualMode(settings[0]?.visual_mode);
-  }
-
-  return normalizeLandingVisualMode(settings?.visual_mode);
-}
 
 function normalizeContactHref(contact: {
   type: string;

@@ -1,9 +1,9 @@
 // app/dashboard/negocios/[businessId]/edit/page.tsx
 
 import {
-  normalizeLandingVisualMode,
-  type LandingVisualMode,
-} from "@/lib/landing/styles";
+  getBusinessVisualMode,
+  type BusinessSettingsRelation,
+} from "@/lib/landing/business-settings";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -18,10 +18,6 @@ type PageProps = {
   }>;
 };
 
-type BusinessSettingsRow = {
-  visual_mode: string | null;
-};
-
 type BusinessRow = {
   id: string;
   name: string;
@@ -30,18 +26,8 @@ type BusinessRow = {
   long_description: string | null;
   status: string;
   is_published: boolean;
-  business_settings: BusinessSettingsRow[] | BusinessSettingsRow | null;
+  business_settings: BusinessSettingsRelation;
 };
-
-function getBusinessVisualMode(
-  settings: BusinessRow["business_settings"],
-): LandingVisualMode {
-  if (Array.isArray(settings)) {
-    return normalizeLandingVisualMode(settings[0]?.visual_mode);
-  }
-
-  return normalizeLandingVisualMode(settings?.visual_mode);
-}
 
 export default async function EditBusinessPage({
   params,

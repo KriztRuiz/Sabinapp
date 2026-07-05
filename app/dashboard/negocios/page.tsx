@@ -1,16 +1,12 @@
 // app/dashboard/negocios/page.tsx
 
 import {
-  normalizeLandingVisualMode,
-  type LandingVisualMode,
-} from "@/lib/landing/styles";
+  getBusinessVisualMode,
+  type BusinessSettingsRelation,
+} from "@/lib/landing/business-settings";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-type BusinessSettingsRow = {
-  visual_mode: string | null;
-};
 
 type BusinessRow = {
   id: string;
@@ -19,18 +15,8 @@ type BusinessRow = {
   status: string;
   is_published: boolean;
   short_description: string;
-  business_settings: BusinessSettingsRow[] | BusinessSettingsRow | null;
+  business_settings: BusinessSettingsRelation;
 };
-
-function getBusinessVisualMode(
-  settings: BusinessRow["business_settings"],
-): LandingVisualMode {
-  if (Array.isArray(settings)) {
-    return normalizeLandingVisualMode(settings[0]?.visual_mode);
-  }
-
-  return normalizeLandingVisualMode(settings?.visual_mode);
-}
 
 export default async function DashboardBusinessesPage() {
   const supabase = await createClient();
