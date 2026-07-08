@@ -18,6 +18,16 @@ type PageProps = {
   }>;
 };
 
+type BusinessMediaRow = {
+  id: string;
+  type: string;
+  url: string;
+  alt_text: string | null;
+  is_cover: boolean;
+  is_active: boolean;
+  sort_order: number;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -27,6 +37,7 @@ type BusinessRow = {
   status: string;
   is_published: boolean;
   business_settings: BusinessSettingsRelation;
+  business_media: BusinessMediaRow[] | null;
 };
 
 export default async function EditBusinessPage({
@@ -59,6 +70,15 @@ export default async function EditBusinessPage({
       is_published,
       business_settings (
         visual_mode
+      ),
+      business_media (
+        id,
+        type,
+        url,
+        alt_text,
+        is_cover,
+        is_active,
+        sort_order
       )
     `,
     )
@@ -81,6 +101,9 @@ export default async function EditBusinessPage({
     status: businessRow.status,
     is_published: businessRow.is_published,
     visual_mode: getBusinessVisualMode(businessRow.business_settings),
+    media: (businessRow.business_media ?? []).sort(
+      (a, b) => a.sort_order - b.sort_order,
+    ),
   };
 
   return (

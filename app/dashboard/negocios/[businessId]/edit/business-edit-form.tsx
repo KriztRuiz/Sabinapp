@@ -13,6 +13,15 @@ type BusinessEditFormProps = {
     status: string;
     is_published: boolean;
     visual_mode: string;
+    media: {
+      id: string;
+      type: string;
+      url: string;
+      alt_text: string | null;
+      is_cover: boolean;
+      is_active: boolean;
+      sort_order: number;
+    }[];
   };
 };
 
@@ -87,6 +96,61 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
             />
           </div>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-950">Imágenes actuales</h2>
+
+        <p className="mt-2 text-sm text-gray-600">
+          Por ahora solo mostramos las imágenes registradas. En la siguiente fase
+          agregaremos edición de URL, texto alternativo y activación.
+        </p>
+
+        {business.media.length > 0 ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {business.media.map((media) => (
+              <article
+                key={media.id}
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={media.url}
+                  alt={media.alt_text ?? business.name}
+                  className="h-48 w-full object-cover"
+                />
+
+                <div className="space-y-2 p-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      Tipo: {media.type}
+                    </span>
+
+                    {media.is_cover ? (
+                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
+                        Portada
+                      </span>
+                    ) : null}
+
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      {media.is_active ? "Activa" : "Inactiva"}
+                    </span>
+                  </div>
+
+                  <p className="break-all text-xs text-gray-500">{media.url}</p>
+
+                  <p className="text-sm text-gray-600">
+                    {media.alt_text ?? "Sin texto alternativo."}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-sm text-gray-600">
+            Este negocio todavía no tiene imágenes registradas.
+          </div>
+        )}
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
