@@ -297,3 +297,92 @@ export async function setBusinessMediaAsCover(
 
   redirectToEditBusiness(businessId, "Portada actualizada correctamente.");
 }
+
+export async function addBusinessMedia(businessId: string, formData: FormData) {
+  const url = getFormValue(formData, "url");
+  const altText = getFormValue(formData, "alt_text");
+
+  if (!url) {
+    redirectToEditBusiness(businessId, "La URL de la imagen es obligatoria.");
+  }
+
+  if (!isValidMediaUrl(url)) {
+    redirectToEditBusiness(
+      businessId,
+      "La URL de la imagen debe iniciar con http:// o https://.",
+    );
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?message=Inicia sesión para agregar imágenes.");
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_id")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (businessError || !business) {
+    redirectToEditBusiness(
+      businessId,
+      "No se encontró el negocio o no tienes permiso.",
+    );
+  }
+
+  const { data: existingMedia, error: existingMediaError } = await supabase
+    .from("business_media")
+    .select("id, sort_order")
+    .eq("business_id", businessId);
+
+  if (existingMediaError) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudieron revisar las imágenes actuales: ${existingMediaError.message}`,
+    );
+  }
+
+  const mediaCount = existingMedia?.length ?? 0;
+
+  const maxSortOrder = (existingMedia ?? []).reduce(
+    (currentMax, media) => Math.max(currentMax, media.sort_order ?? 0),
+    0,
+  );
+
+  const shouldBeCover = mediaCount === 0;
+
+  const { data: createdMedia, error: insertMediaError } = await supabase
+    .from("business_media")
+    .insert({
+      business_id: businessId,
+      type: shouldBeCover ? "cover" : "gallery",
+      url,
+      alt_text: altText || null,
+      is_active: true,
+      is_cover: shouldBeCover,
+      sort_order: maxSortOrder + 1,
+    })
+    .select("id")
+    .single();
+
+  if (insertMediaError || !createdMedia) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo agregar la imagen: ${
+        insertMediaError?.message ?? "sin imagen creada"
+      }`,
+    );
+  }
+
+  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
+  revalidatePath(`/negocio/${business.slug}`);
+
+  redirectToEditBusiness(businessId, "Imagen agregada correctamente.");
+}

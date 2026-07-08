@@ -2,6 +2,7 @@
 
 import { landingVisualModeOptions } from "@/lib/landing/styles";
 import {
+  addBusinessMedia,
   setBusinessMediaAsCover,
   updateBusinessLanding,
   updateBusinessMediaDetails,
@@ -36,6 +37,8 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
     null,
     business.id,
   );
+
+  const addBusinessMediaWithId = addBusinessMedia.bind(null, business.id);
 
   return (
     <div className="space-y-8">
@@ -172,6 +175,62 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
           Edita las URLs de imágenes, el texto alternativo y cuál imagen se usa
           como portada.
         </p>
+
+        <form
+          action={addBusinessMediaWithId}
+          className="mt-6 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-5"
+        >
+          <h3 className="text-lg font-bold text-gray-950">Agregar nueva imagen</h3>
+
+          <p className="mt-1 text-sm text-gray-600">
+            Pega una URL pública de imagen. Si el negocio no tiene imágenes, se usará
+            como portada automáticamente.
+          </p>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="new-media-url"
+                className="block text-sm font-semibold text-gray-800"
+              >
+                URL de imagen
+              </label>
+
+              <input
+                id="new-media-url"
+                name="url"
+                type="url"
+                required
+                placeholder="https://..."
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="new-media-alt"
+                className="block text-sm font-semibold text-gray-800"
+              >
+                Texto alternativo
+              </label>
+
+              <input
+                id="new-media-alt"
+                name="alt_text"
+                type="text"
+                placeholder="Ej. Fachada del negocio"
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="mt-4 rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+          >
+            Agregar imagen
+          </button>
+        </form>
 
         {business.media.length > 0 ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
