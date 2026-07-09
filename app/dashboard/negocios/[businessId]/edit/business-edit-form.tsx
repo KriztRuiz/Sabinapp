@@ -640,6 +640,9 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
                     )}
 
                     <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-black/70 px-3 py-1 text-xs font-black uppercase tracking-wide text-white shadow">
+                        Orden {item.sort_order}
+                      </span>
                       {item.is_featured ? (
                         <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-black uppercase tracking-wide text-white shadow">
                           Destacado
@@ -760,6 +763,29 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
                           className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm uppercase text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`item-sort-order-${item.id}`}
+                        className="block text-sm font-bold text-gray-800"
+                      >
+                        Orden de aparición
+                      </label>
+
+                      <input
+                        id={`item-sort-order-${item.id}`}
+                        name="sort_order"
+                        type="number"
+                        min="0"
+                        step="1"
+                        defaultValue={item.sort_order}
+                        className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        Menor número aparece primero. Ejemplo: 1, 2, 3.
+                      </p>
                     </div>
 
                     <div>

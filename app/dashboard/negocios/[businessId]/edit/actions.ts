@@ -399,7 +399,7 @@ export async function updateBusinessItemDetails(
   const currency = getFormValue(formData, "currency") || "MXN";
   const imageUrl = getFormValue(formData, "image_url");
   const imageAlt = getFormValue(formData, "image_alt");
-
+  const sortOrderValue = getFormValue(formData, "sort_order");
   const showPrice = formData.get("show_price") === "on";
   const isFeatured = formData.get("is_featured") === "on";
   const isActive = formData.get("is_active") === "on";
@@ -422,6 +422,21 @@ export async function updateBusinessItemDetails(
 
   if (!name) {
     redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
+  }
+
+  let sortOrder = 0;
+
+  if (sortOrderValue) {
+    const numericSortOrder = Number(sortOrderValue);
+
+    if (!Number.isInteger(numericSortOrder) || numericSortOrder < 0) {
+      redirectToEditBusiness(
+        businessId,
+        "El orden debe ser un número entero mayor o igual a cero.",
+      );
+    }
+
+    sortOrder = numericSortOrder;
   }
 
   let price: number | null = null;
@@ -483,6 +498,7 @@ export async function updateBusinessItemDetails(
       is_active: isActive,
       image_url: imageUrl || null,
       image_alt: imageAlt || null,
+      sort_order: sortOrder,
       updated_at: new Date().toISOString(),
     })
     .eq("id", itemId)
