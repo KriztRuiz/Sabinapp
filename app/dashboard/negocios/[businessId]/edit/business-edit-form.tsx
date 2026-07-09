@@ -9,74 +9,14 @@ import {
   updateBusinessLanding,
   updateBusinessMediaDetails,
 } from "./actions";
-
-type BusinessMedia = {
-  id: string;
-  type: string;
-  url: string;
-  alt_text: string | null;
-  is_cover: boolean;
-  is_active: boolean;
-  sort_order: number;
-};
-
-type BusinessItem = {
-  id: string;
-  type: string;
-  name: string;
-  description: string | null;
-  price: number | string | null;
-  currency: string;
-  show_price: boolean;
-  is_featured: boolean;
-  image_url: string | null;
-  image_alt: string | null;
-  is_active: boolean;
-  sort_order: number;
-};
-
-const businessItemTypeOptions = [
-  { value: "menu_item", label: "Menú" },
-  { value: "product", label: "Producto" },
-  { value: "service", label: "Servicio" },
-  { value: "package", label: "Paquete" },
-  { value: "faq", label: "Pregunta frecuente" },
-  { value: "installation", label: "Instalación / amenidad" },
-  { value: "rule", label: "Regla" },
-  { value: "activity", label: "Actividad" },
-  { value: "other", label: "Otro" },
-];
-
-function formatItemPrice(item: BusinessItem) {
-  if (!item.show_price || item.price === null) {
-    return "Precio oculto";
-  }
-
-  const numericPrice = Number(item.price);
-
-  if (Number.isNaN(numericPrice)) {
-    return `${item.price} ${item.currency}`;
-  }
-
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: item.currency || "MXN",
-  }).format(numericPrice);
-}
+import {
+  businessItemTypeOptions,
+  formatItemPrice,
+  type BusinessEditBusiness,
+} from "./business-edit-types";
 
 type BusinessEditFormProps = {
-  business: {
-    id: string;
-    name: string;
-    slug: string;
-    short_description: string;
-    long_description: string | null;
-    status: string;
-    is_published: boolean;
-    visual_mode: string;
-    media: BusinessMedia[];
-    items: BusinessItem[];
-  };
+  business: BusinessEditBusiness;
 };
 
 export function BusinessEditForm({ business }: BusinessEditFormProps) {
