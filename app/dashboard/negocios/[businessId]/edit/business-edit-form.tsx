@@ -18,6 +18,38 @@ type BusinessMedia = {
   sort_order: number;
 };
 
+type BusinessItem = {
+  id: string;
+  type: string;
+  name: string;
+  description: string | null;
+  price: number | string | null;
+  currency: string;
+  show_price: boolean;
+  is_featured: boolean;
+  image_url: string | null;
+  image_alt: string | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
+function formatItemPrice(item: BusinessItem) {
+  if (!item.show_price || item.price === null) {
+    return "Precio oculto";
+  }
+
+  const numericPrice = Number(item.price);
+
+  if (Number.isNaN(numericPrice)) {
+    return `${item.price} ${item.currency}`;
+  }
+
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: item.currency || "MXN",
+  }).format(numericPrice);
+}
+
 type BusinessEditFormProps = {
   business: {
     id: string;
@@ -29,6 +61,7 @@ type BusinessEditFormProps = {
     is_published: boolean;
     visual_mode: string;
     media: BusinessMedia[];
+    items: BusinessItem[];
   };
 };
 
@@ -354,6 +387,89 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
         ) : (
           <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-sm text-gray-600">
             Este negocio todavía no tiene imágenes registradas.
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-950">Menú y destacados</h2>
+
+        <p className="mt-2 text-sm text-gray-600">
+          Por ahora solo mostramos los productos, servicios o elementos registrados.
+          En la siguiente fase agregaremos edición.
+        </p>
+
+        {business.items.length > 0 ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {business.items.map((item) => (
+              <article
+                key={item.id}
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50"
+              >
+                {item.image_url ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.image_url}
+                      alt={item.image_alt ?? item.name}
+                      className="h-44 w-full object-cover"
+                    />
+                  </>
+                ) : null}
+
+                <div className="space-y-3 p-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      Tipo: {item.type}
+                    </span>
+
+                    {item.is_featured ? (
+                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
+                        Destacado
+                      </span>
+                    ) : null}
+
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      {item.is_active ? "Activo" : "Inactivo"}
+                    </span>
+
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      {item.show_price ? "Precio visible" : "Precio oculto"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-950">{item.name}</h3>
+
+                    {item.description ? (
+                      <p className="mt-1 text-sm text-gray-600">
+                        {item.description}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-500">
+                        Sin descripción.
+                      </p>
+                    )}
+                  </div>
+
+                  <p className="text-sm font-semibold text-gray-900">
+                    {formatItemPrice(item)}
+                  </p>
+
+                  {item.image_url ? (
+                    <p className="break-all text-xs text-gray-500">
+                      {item.image_url}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500">Sin imagen.</p>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-sm text-gray-600">
+            Este negocio todavía no tiene items registrados.
           </div>
         )}
       </section>

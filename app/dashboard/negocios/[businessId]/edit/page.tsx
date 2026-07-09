@@ -28,6 +28,21 @@ type BusinessMediaRow = {
   sort_order: number;
 };
 
+type BusinessItemRow = {
+  id: string;
+  type: string;
+  name: string;
+  description: string | null;
+  price: number | string | null;
+  currency: string;
+  show_price: boolean;
+  is_featured: boolean;
+  image_url: string | null;
+  image_alt: string | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -38,6 +53,7 @@ type BusinessRow = {
   is_published: boolean;
   business_settings: BusinessSettingsRelation;
   business_media: BusinessMediaRow[] | null;
+  business_items: BusinessItemRow[] | null;
 };
 
 export default async function EditBusinessPage({
@@ -79,6 +95,20 @@ export default async function EditBusinessPage({
         is_cover,
         is_active,
         sort_order
+      ),
+      business_items (
+        id,
+        type,
+        name,
+        description,
+        price,
+        currency,
+        show_price,
+        is_featured,
+        image_url,
+        image_alt,
+        is_active,
+        sort_order
       )
     `,
     )
@@ -92,19 +122,22 @@ export default async function EditBusinessPage({
 
   const businessRow = data as unknown as BusinessRow;
 
-  const business = {
-    id: businessRow.id,
-    name: businessRow.name,
-    slug: businessRow.slug,
-    short_description: businessRow.short_description,
-    long_description: businessRow.long_description,
-    status: businessRow.status,
-    is_published: businessRow.is_published,
-    visual_mode: getBusinessVisualMode(businessRow.business_settings),
-    media: (businessRow.business_media ?? []).sort(
-      (a, b) => a.sort_order - b.sort_order,
-    ),
-  };
+const business = {
+  id: businessRow.id,
+  name: businessRow.name,
+  slug: businessRow.slug,
+  short_description: businessRow.short_description,
+  long_description: businessRow.long_description,
+  status: businessRow.status,
+  is_published: businessRow.is_published,
+  visual_mode: getBusinessVisualMode(businessRow.business_settings),
+  media: (businessRow.business_media ?? []).sort(
+    (a, b) => a.sort_order - b.sort_order,
+  ),
+  items: (businessRow.business_items ?? []).sort(
+    (a, b) => a.sort_order - b.sort_order,
+  ),
+};
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
