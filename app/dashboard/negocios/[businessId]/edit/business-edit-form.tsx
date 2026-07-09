@@ -2,6 +2,7 @@
 
 import { landingVisualModeOptions } from "@/lib/landing/styles";
 import {
+  addBusinessItem,
   addBusinessMedia,
   setBusinessMediaAsCover,
   updateBusinessItemDetails,
@@ -85,6 +86,8 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
   );
 
   const addBusinessMediaWithId = addBusinessMedia.bind(null, business.id);
+
+  const addBusinessItemWithId = addBusinessItem.bind(null, business.id);
 
   return (
     <div className="space-y-8">
@@ -419,6 +422,186 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
             paquetes, reglas, amenidades o elementos destacados en la landing pública.
           </p>
         </div>
+
+        <form
+          action={addBusinessItemWithId}
+          className="border-b border-orange-100 bg-orange-50/60 p-6"
+        >
+          <div className="rounded-[1.5rem] border border-orange-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-600">
+                  Nuevo elemento
+                </p>
+
+                <h3 className="mt-1 text-xl font-black text-gray-950">
+                  Agregar al menú o destacados
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-600">
+                  Puedes agregar productos, servicios, paquetes, actividades,
+                  amenidades o reglas del negocio.
+                </p>
+              </div>
+
+              <span className="w-fit rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">
+                Activo por defecto
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="new-item-type"
+                  className="block text-sm font-bold text-gray-800"
+                >
+                  Tipo
+                </label>
+
+                <select
+                  id="new-item-type"
+                  name="type"
+                  defaultValue="product"
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                >
+                  {businessItemTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="new-item-name"
+                  className="block text-sm font-bold text-gray-800"
+                >
+                  Nombre
+                </label>
+
+                <input
+                  id="new-item-name"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="Ej. Combo familiar"
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label
+                htmlFor="new-item-description"
+                className="block text-sm font-bold text-gray-800"
+              >
+                Descripción
+              </label>
+
+              <textarea
+                id="new-item-description"
+                name="description"
+                rows={3}
+                placeholder="Describe brevemente este producto o servicio."
+                className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              />
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="new-item-price"
+                  className="block text-sm font-bold text-gray-800"
+                >
+                  Precio
+                </label>
+
+                <input
+                  id="new-item-price"
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="new-item-currency"
+                  className="block text-sm font-bold text-gray-800"
+                >
+                  Moneda
+                </label>
+
+                <input
+                  id="new-item-currency"
+                  name="currency"
+                  type="text"
+                  defaultValue="MXN"
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm uppercase text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="new-item-image-url"
+                  className="block text-sm font-bold text-gray-800"
+                >
+                  URL de imagen
+                </label>
+
+                <input
+                  id="new-item-image-url"
+                  name="image_url"
+                  type="url"
+                  placeholder="https://..."
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="new-item-image-alt"
+                  className="block text-sm font-bold text-gray-800"
+                >
+                  Texto alternativo de imagen
+                </label>
+
+                <input
+                  id="new-item-image-alt"
+                  name="image_alt"
+                  type="text"
+                  placeholder="Ej. Producto en mostrador"
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:grid-cols-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <input type="checkbox" name="show_price" defaultChecked />
+                Mostrar precio
+              </label>
+
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <input type="checkbox" name="is_featured" />
+                Destacado
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-600 to-gray-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              Agregar item
+            </button>
+          </div>
+        </form>
 
         {business.items.length > 0 ? (
           <div className="grid gap-5 p-6 lg:grid-cols-2">
