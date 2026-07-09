@@ -386,3 +386,121 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
 
   redirectToEditBusiness(businessId, "Imagen agregada correctamente.");
 }
+
+export async function updateBusinessItemDetails(
+  businessId: string,
+  itemId: string,
+  formData: FormData,
+) {
+  const type = getFormValue(formData, "type");
+  const name = getFormValue(formData, "name");
+  const description = getFormValue(formData, "description");
+  const priceValue = getFormValue(formData, "price").replace(",", ".");
+  const currency = getFormValue(formData, "currency") || "MXN";
+  const imageUrl = getFormValue(formData, "image_url");
+  const imageAlt = getFormValue(formData, "image_alt");
+
+  const showPrice = formData.get("show_price") === "on";
+  const isFeatured = formData.get("is_featured") === "on";
+  const isActive = formData.get("is_active") === "on";
+
+  const validTypes = [
+    "menu_item",
+    "product",
+    "service",
+    "package",
+    "faq",
+    "installation",
+    "rule",
+    "activity",
+    "other",
+  ];
+
+  if (!validTypes.includes(type)) {
+    redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
+  }
+
+  if (!name) {
+    redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
+  }
+
+  let price: number | null = null;
+
+  if (priceValue) {
+    const numericPrice = Number(priceValue);
+
+    if (Number.isNaN(numericPrice) || numericPrice < 0) {
+      redirectToEditBusiness(
+        businessId,
+        "El precio debe ser un número válido mayor o igual a cero.",
+      );
+    }
+
+    price = numericPrice;
+  }
+
+  if (imageUrl && !isValidMediaUrl(imageUrl)) {
+    redirectToEditBusiness(
+      businessId,
+      "La URL de imagen del item debe iniciar con http:// o https://.",
+    );
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?message=Inicia sesión para editar items.");
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_id")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (businessError || !business) {
+    redirectToEditBusiness(
+      businessId,
+      "No se encontró el negocio o no tienes permiso.",
+    );
+  }
+
+  const { data: updatedItem, error: updateItemError } = await supabase
+    .from("business_items")
+    .update({
+      type,
+      name,
+      description: description || null,
+      price,
+      currency,
+      show_price: showPrice,
+      is_featured: isFeatured,
+      is_active: isActive,
+      image_url: imageUrl || null,
+      image_alt: imageAlt || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", itemId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (updateItemError || !updatedItem) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo actualizar el item: ${
+        updateItemError?.message ?? "sin filas actualizadas"
+      }`,
+    );
+  }
+
+  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
+  revalidatePath(`/negocio/${business.slug}`);
+
+  redirectToEditBusiness(businessId, "Item actualizado correctamente.");
+}
