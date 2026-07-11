@@ -48,7 +48,18 @@ export const businessItemTypeOptions = [
   { value: "rule", label: "Regla" },
   { value: "activity", label: "Actividad" },
   { value: "other", label: "Otro" },
-];
+] as const;
+
+export type BusinessItemType =
+  (typeof businessItemTypeOptions)[number]["value"];
+
+export const businessItemTypeValues = businessItemTypeOptions.map(
+  (option) => option.value,
+);
+
+export function isBusinessItemType(value: string): value is BusinessItemType {
+  return businessItemTypeValues.includes(value as BusinessItemType);
+}
 
 export function formatItemPrice(item: BusinessItem) {
   if (!item.show_price || item.price === null) {

@@ -2,6 +2,7 @@
 
 "use server";
 
+import { isBusinessItemType } from "./business-edit-types";
 import { isLandingVisualMode } from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -404,19 +405,7 @@ export async function updateBusinessItemDetails(
   const isFeatured = formData.get("is_featured") === "on";
   const isActive = formData.get("is_active") === "on";
 
-  const validTypes = [
-    "menu_item",
-    "product",
-    "service",
-    "package",
-    "faq",
-    "installation",
-    "rule",
-    "activity",
-    "other",
-  ];
-
-  if (!validTypes.includes(type)) {
+  if (!isBusinessItemType(type)) {
     redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
   }
 
@@ -533,19 +522,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
   const showPrice = formData.get("show_price") === "on";
   const isFeatured = formData.get("is_featured") === "on";
 
-  const validTypes = [
-    "menu_item",
-    "product",
-    "service",
-    "package",
-    "faq",
-    "installation",
-    "rule",
-    "activity",
-    "other",
-  ];
-
-  if (!validTypes.includes(type)) {
+  if (!isBusinessItemType(type)) {
     redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
   }
 
