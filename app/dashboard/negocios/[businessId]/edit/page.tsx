@@ -122,22 +122,22 @@ export default async function EditBusinessPage({
 
   const businessRow = data as unknown as BusinessRow;
 
-const business = {
-  id: businessRow.id,
-  name: businessRow.name,
-  slug: businessRow.slug,
-  short_description: businessRow.short_description,
-  long_description: businessRow.long_description,
-  status: businessRow.status,
-  is_published: businessRow.is_published,
-  visual_mode: getBusinessVisualMode(businessRow.business_settings),
-  media: (businessRow.business_media ?? []).sort(
-    (a, b) => a.sort_order - b.sort_order,
-  ),
-  items: (businessRow.business_items ?? []).sort(
-    (a, b) => a.sort_order - b.sort_order,
-  ),
-};
+  const business = {
+    id: businessRow.id,
+    name: businessRow.name,
+    slug: businessRow.slug,
+    short_description: businessRow.short_description,
+    long_description: businessRow.long_description,
+    status: businessRow.status,
+    is_published: businessRow.is_published,
+    visual_mode: getBusinessVisualMode(businessRow.business_settings),
+    media: (businessRow.business_media ?? []).sort(
+      (a, b) => a.sort_order - b.sort_order,
+    ),
+    items: (businessRow.business_items ?? []).sort(
+      (a, b) => a.sort_order - b.sort_order,
+    ),
+  };
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
