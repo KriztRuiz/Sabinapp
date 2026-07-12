@@ -131,6 +131,23 @@ function isValidMediaUrl(url: string) {
   return url.startsWith("http://") || url.startsWith("https://");
 }
 
+function validateRequiredMediaUrl(businessId: string, url: string) {
+  validateRequiredMediaUrl(businessId, url);
+}
+
+function validateOptionalItemImageUrl(businessId: string, url: string) {
+  if (!url) {
+    return;
+  }
+
+  if (!isValidMediaUrl(url)) {
+    redirectToEditBusiness(
+      businessId,
+      "La URL de imagen del item debe iniciar con http:// o https://.",
+    );
+  }
+}
+
 function redirectToEditBusiness(businessId: string, message: string): never {
   redirect(
     `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
@@ -227,16 +244,7 @@ export async function updateBusinessMediaDetails(
   const altText = getFormValue(formData, "alt_text");
   const isActive = formData.get("is_active") === "on";
 
-  if (!url) {
-    redirectToEditBusiness(businessId, "La URL de la imagen es obligatoria.");
-  }
-
-  if (!isValidMediaUrl(url)) {
-    redirectToEditBusiness(
-      businessId,
-      "La URL de la imagen debe iniciar con http:// o https://.",
-    );
-  }
+  validateRequiredMediaUrl(businessId, url);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
@@ -341,16 +349,7 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
   const url = getFormValue(formData, "url");
   const altText = getFormValue(formData, "alt_text");
 
-  if (!url) {
-    redirectToEditBusiness(businessId, "La URL de la imagen es obligatoria.");
-  }
-
-  if (!isValidMediaUrl(url)) {
-    redirectToEditBusiness(
-      businessId,
-      "La URL de la imagen debe iniciar con http:// o https://.",
-    );
-  }
+  validateRequiredMediaUrl(businessId, url);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
@@ -438,12 +437,7 @@ export async function updateBusinessItemDetails(
 
   const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
-  if (imageUrl && !isValidMediaUrl(imageUrl)) {
-    redirectToEditBusiness(
-      businessId,
-      "La URL de imagen del item debe iniciar con http:// o https://.",
-    );
-  }
+  validateOptionalItemImageUrl(businessId, imageUrl);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
@@ -507,12 +501,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
 
   const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
-  if (imageUrl && !isValidMediaUrl(imageUrl)) {
-    redirectToEditBusiness(
-      businessId,
-      "La URL de imagen del item debe iniciar con http:// o https://.",
-    );
-  }
+  validateOptionalItemImageUrl(businessId, imageUrl);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
