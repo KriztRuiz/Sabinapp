@@ -144,6 +144,46 @@ function revalidateBusinessEditAndPublic(businessId: string, slug: string) {
   revalidatePath(`/negocio/${slug}`);
 }
 
+function parseOptionalNonNegativePrice(
+  businessId: string,
+  value: string,
+): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const numericPrice = Number(value);
+
+  if (Number.isNaN(numericPrice) || numericPrice < 0) {
+    redirectToEditBusiness(
+      businessId,
+      "El precio debe ser un número válido mayor o igual a cero.",
+    );
+  }
+
+  return numericPrice;
+}
+
+function parseNonNegativeIntegerOrZero(
+  businessId: string,
+  value: string,
+): number {
+  if (!value) {
+    return 0;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isInteger(numericValue) || numericValue < 0) {
+    redirectToEditBusiness(
+      businessId,
+      "El orden debe ser un número entero mayor o igual a cero.",
+    );
+  }
+
+  return numericValue;
+}
+
 async function getOwnedBusinessContextOrRedirect(
   businessId: string,
   loginMessage: string,
@@ -391,35 +431,12 @@ export async function updateBusinessItemDetails(
     redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
   }
 
-  let sortOrder = 0;
+  const sortOrder = parseNonNegativeIntegerOrZero(
+    businessId,
+    sortOrderValue,
+  );
 
-  if (sortOrderValue) {
-    const numericSortOrder = Number(sortOrderValue);
-
-    if (!Number.isInteger(numericSortOrder) || numericSortOrder < 0) {
-      redirectToEditBusiness(
-        businessId,
-        "El orden debe ser un número entero mayor o igual a cero.",
-      );
-    }
-
-    sortOrder = numericSortOrder;
-  }
-
-  let price: number | null = null;
-
-  if (priceValue) {
-    const numericPrice = Number(priceValue);
-
-    if (Number.isNaN(numericPrice) || numericPrice < 0) {
-      redirectToEditBusiness(
-        businessId,
-        "El precio debe ser un número válido mayor o igual a cero.",
-      );
-    }
-
-    price = numericPrice;
-  }
+  const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
   if (imageUrl && !isValidMediaUrl(imageUrl)) {
     redirectToEditBusiness(
@@ -488,20 +505,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
     redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
   }
 
-  let price: number | null = null;
-
-  if (priceValue) {
-    const numericPrice = Number(priceValue);
-
-    if (Number.isNaN(numericPrice) || numericPrice < 0) {
-      redirectToEditBusiness(
-        businessId,
-        "El precio debe ser un número válido mayor o igual a cero.",
-      );
-    }
-
-    price = numericPrice;
-  }
+  const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
   if (imageUrl && !isValidMediaUrl(imageUrl)) {
     redirectToEditBusiness(
