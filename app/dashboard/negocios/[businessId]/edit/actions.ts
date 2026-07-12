@@ -118,8 +118,7 @@ export async function updateBusinessLanding(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/negocios");
-  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
-  revalidatePath(`/negocio/${business.slug}`);
+  revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirect(
     `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
@@ -138,6 +137,45 @@ function redirectToEditBusiness(businessId: string, message: string): never {
       message,
     )}`,
   );
+}
+
+function revalidateBusinessEditAndPublic(businessId: string, slug: string) {
+  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
+  revalidatePath(`/negocio/${slug}`);
+}
+
+async function getOwnedBusinessContextOrRedirect(
+  businessId: string,
+  loginMessage: string,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/auth/login?message=${encodeURIComponent(loginMessage)}`);
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_id")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (businessError || !business) {
+    redirectToEditBusiness(
+      businessId,
+      "No se encontró el negocio o no tienes permiso.",
+    );
+  }
+
+  return {
+    supabase,
+    business,
+  };
 }
 
 export async function updateBusinessMediaDetails(
@@ -160,29 +198,10 @@ export async function updateBusinessMediaDetails(
     );
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login?message=Inicia sesión para editar imágenes.");
-  }
-
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, slug, owner_id")
-    .eq("id", businessId)
-    .eq("owner_id", user.id)
-    .single();
-
-  if (businessError || !business) {
-    redirectToEditBusiness(
-      businessId,
-      "No se encontró el negocio o no tienes permiso.",
-    );
-  }
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para editar imágenes.",
+  );
 
   const { data: updatedMedia, error: updateMediaError } = await supabase
     .from("business_media")
@@ -206,8 +225,7 @@ export async function updateBusinessMediaDetails(
     );
   }
 
-  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
-  revalidatePath(`/negocio/${business.slug}`);
+  revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Imagen actualizada correctamente.");
 }
@@ -216,29 +234,10 @@ export async function setBusinessMediaAsCover(
   businessId: string,
   mediaId: string,
 ) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login?message=Inicia sesión para editar imágenes.");
-  }
-
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, slug, owner_id")
-    .eq("id", businessId)
-    .eq("owner_id", user.id)
-    .single();
-
-  if (businessError || !business) {
-    redirectToEditBusiness(
-      businessId,
-      "No se encontró el negocio o no tienes permiso.",
-    );
-  }
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para editar imágenes.",
+  );
 
   const { data: existingMedia, error: existingMediaError } = await supabase
     .from("business_media")
@@ -293,8 +292,7 @@ export async function setBusinessMediaAsCover(
     );
   }
 
-  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
-  revalidatePath(`/negocio/${business.slug}`);
+  revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Portada actualizada correctamente.");
 }
@@ -314,29 +312,10 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
     );
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login?message=Inicia sesión para agregar imágenes.");
-  }
-
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, slug, owner_id")
-    .eq("id", businessId)
-    .eq("owner_id", user.id)
-    .single();
-
-  if (businessError || !business) {
-    redirectToEditBusiness(
-      businessId,
-      "No se encontró el negocio o no tienes permiso.",
-    );
-  }
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para agregar imágenes.",
+  );
 
   const { data: existingMedia, error: existingMediaError } = await supabase
     .from("business_media")
@@ -382,8 +361,7 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
     );
   }
 
-  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
-  revalidatePath(`/negocio/${business.slug}`);
+  revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Imagen agregada correctamente.");
 }
@@ -450,29 +428,10 @@ export async function updateBusinessItemDetails(
     );
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login?message=Inicia sesión para editar items.");
-  }
-
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, slug, owner_id")
-    .eq("id", businessId)
-    .eq("owner_id", user.id)
-    .single();
-
-  if (businessError || !business) {
-    redirectToEditBusiness(
-      businessId,
-      "No se encontró el negocio o no tienes permiso.",
-    );
-  }
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para editar items.",
+  );
 
   const { data: updatedItem, error: updateItemError } = await supabase
     .from("business_items")
@@ -504,8 +463,7 @@ export async function updateBusinessItemDetails(
     );
   }
 
-  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
-  revalidatePath(`/negocio/${business.slug}`);
+  revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Item actualizado correctamente.");
 }
@@ -552,29 +510,10 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
     );
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login?message=Inicia sesión para agregar items.");
-  }
-
-  const { data: business, error: businessError } = await supabase
-    .from("businesses")
-    .select("id, slug, owner_id")
-    .eq("id", businessId)
-    .eq("owner_id", user.id)
-    .single();
-
-  if (businessError || !business) {
-    redirectToEditBusiness(
-      businessId,
-      "No se encontró el negocio o no tienes permiso.",
-    );
-  }
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para agregar items.",
+  );
 
   const { data: existingItems, error: existingItemsError } = await supabase
     .from("business_items")
@@ -621,8 +560,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
     );
   }
 
-  revalidatePath(`/dashboard/negocios/${businessId}/edit`);
-  revalidatePath(`/negocio/${business.slug}`);
+  revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Item agregado correctamente.");
 }
