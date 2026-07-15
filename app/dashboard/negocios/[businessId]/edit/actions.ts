@@ -132,7 +132,16 @@ function isValidMediaUrl(url: string) {
 }
 
 function validateRequiredMediaUrl(businessId: string, url: string) {
-  validateRequiredMediaUrl(businessId, url);
+  if (!url) {
+    redirectToEditBusiness(businessId, "La URL de la imagen es obligatoria.");
+  }
+
+  if (!isValidMediaUrl(url)) {
+    redirectToEditBusiness(
+      businessId,
+      "La URL de la imagen debe iniciar con http:// o https://.",
+    );
+  }
 }
 
 function validateOptionalItemImageUrl(businessId: string, url: string) {
@@ -199,6 +208,15 @@ function parseNonNegativeIntegerOrZero(
   }
 
   return numericValue;
+}
+
+function getNextSortOrder(rows: { sort_order?: number | null }[]) {
+  const maxSortOrder = rows.reduce(
+    (currentMax, row) => Math.max(currentMax, row.sort_order ?? 0),
+    0,
+  );
+
+  return maxSortOrder + 1;
 }
 
 async function getOwnedBusinessContextOrRedirect(
@@ -370,10 +388,7 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
 
   const mediaCount = existingMedia?.length ?? 0;
 
-  const maxSortOrder = (existingMedia ?? []).reduce(
-    (currentMax, media) => Math.max(currentMax, media.sort_order ?? 0),
-    0,
-  );
+  const nextSortOrder = getNextSortOrder(existingMedia ?? []);
 
   const shouldBeCover = mediaCount === 0;
 
@@ -386,7 +401,7 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
       alt_text: altText || null,
       is_active: true,
       is_cover: shouldBeCover,
-      sort_order: maxSortOrder + 1,
+      sort_order: nextSortOrder,
     })
     .select("id")
     .single();
@@ -520,10 +535,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
     );
   }
 
-  const maxSortOrder = (existingItems ?? []).reduce(
-    (currentMax, item) => Math.max(currentMax, item.sort_order ?? 0),
-    0,
-  );
+  const nextSortOrder = getNextSortOrder(existingItems ?? []);
 
   const { data: createdItem, error: insertItemError } = await supabase
     .from("business_items")
@@ -539,7 +551,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
       is_active: true,
       image_url: imageUrl || null,
       image_alt: imageAlt || null,
-      sort_order: maxSortOrder + 1,
+      sort_order: nextSortOrder,
     })
     .select("id")
     .single();
