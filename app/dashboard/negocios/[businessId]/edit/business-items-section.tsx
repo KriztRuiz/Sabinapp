@@ -170,7 +170,7 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
               <input
                 id="new-item-image-url"
                 name="image_url"
-                type="url"
+                type="text"
                 placeholder="https://..."
                 className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
               />
@@ -415,7 +415,7 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
                     <input
                       id={`item-image-url-${item.id}`}
                       name="image_url"
-                      type="url"
+                      type="text"
                       defaultValue={item.image_url ?? ""}
                       placeholder="https://..."
                       className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"

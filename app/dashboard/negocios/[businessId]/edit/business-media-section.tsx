@@ -48,8 +48,7 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
             <input
               id="new-media-url"
               name="url"
-              type="url"
-              required
+              type="text"
               placeholder="https://..."
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
             />
@@ -140,8 +139,7 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
                       <input
                         id={`media-url-${media.id}`}
                         name="url"
-                        type="url"
-                        required
+                        type="text"
                         defaultValue={media.url}
                         className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
                       />
