@@ -219,6 +219,10 @@ function getNextSortOrder(rows: { sort_order?: number | null }[]) {
   return maxSortOrder + 1;
 }
 
+function getNowIsoTimestamp() {
+  return new Date().toISOString();
+}
+
 async function getOwnedBusinessContextOrRedirect(
   businessId: string,
   loginMessage: string,
@@ -275,7 +279,7 @@ export async function updateBusinessMediaDetails(
       url,
       alt_text: altText || null,
       is_active: isActive,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowIsoTimestamp(),
     })
     .eq("id", mediaId)
     .eq("business_id", businessId)
@@ -324,7 +328,7 @@ export async function setBusinessMediaAsCover(
     .update({
       type: "gallery",
       is_cover: false,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowIsoTimestamp(),
     })
     .eq("business_id", businessId)
     .neq("id", mediaId);
@@ -342,7 +346,7 @@ export async function setBusinessMediaAsCover(
       type: "cover",
       is_cover: true,
       is_active: true,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowIsoTimestamp(),
     })
     .eq("id", mediaId)
     .eq("business_id", businessId)
@@ -473,7 +477,7 @@ export async function updateBusinessItemDetails(
       image_url: imageUrl || null,
       image_alt: imageAlt || null,
       sort_order: sortOrder,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowIsoTimestamp(),
     })
     .eq("id", itemId)
     .eq("business_id", businessId)
