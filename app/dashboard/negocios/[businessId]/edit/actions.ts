@@ -144,6 +144,18 @@ function validateRequiredMediaUrl(businessId: string, url: string) {
   }
 }
 
+function getBusinessMediaFormInput(businessId: string, formData: FormData) {
+  const url = getFormValue(formData, "url");
+  const altText = getFormValue(formData, "alt_text");
+
+  validateRequiredMediaUrl(businessId, url);
+
+  return {
+    url,
+    altText,
+  };
+}
+
 function validateOptionalItemImageUrl(businessId: string, url: string) {
   if (!url) {
     return;
@@ -281,11 +293,8 @@ export async function updateBusinessMediaDetails(
   mediaId: string,
   formData: FormData,
 ) {
-  const url = getFormValue(formData, "url");
-  const altText = getFormValue(formData, "alt_text");
+  const { url, altText } = getBusinessMediaFormInput(businessId, formData);
   const isActive = formData.get("is_active") === "on";
-
-  validateRequiredMediaUrl(businessId, url);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
@@ -387,10 +396,7 @@ export async function setBusinessMediaAsCover(
 }
 
 export async function addBusinessMedia(businessId: string, formData: FormData) {
-  const url = getFormValue(formData, "url");
-  const altText = getFormValue(formData, "alt_text");
-
-  validateRequiredMediaUrl(businessId, url);
+  const { url, altText } = getBusinessMediaFormInput(businessId, formData);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
