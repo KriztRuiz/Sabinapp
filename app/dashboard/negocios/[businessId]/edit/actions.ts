@@ -157,6 +157,25 @@ function validateOptionalItemImageUrl(businessId: string, url: string) {
   }
 }
 
+function validateBusinessItemInput(
+  businessId: string,
+  input: {
+    type: string;
+    name: string;
+    imageUrl: string;
+  },
+) {
+  if (!isBusinessItemType(input.type)) {
+    redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
+  }
+
+  if (!input.name) {
+    redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
+  }
+
+  validateOptionalItemImageUrl(businessId, input.imageUrl);
+}
+
 function redirectToEditBusiness(businessId: string, message: string): never {
   redirect(
     `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
@@ -441,13 +460,11 @@ export async function updateBusinessItemDetails(
   const isFeatured = formData.get("is_featured") === "on";
   const isActive = formData.get("is_active") === "on";
 
-  if (!isBusinessItemType(type)) {
-    redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
-  }
-
-  if (!name) {
-    redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
-  }
+  validateBusinessItemInput(businessId, {
+    type,
+    name,
+    imageUrl,
+  });
 
   const sortOrder = parseNonNegativeIntegerOrZero(
     businessId,
@@ -456,7 +473,6 @@ export async function updateBusinessItemDetails(
 
   const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
-  validateOptionalItemImageUrl(businessId, imageUrl);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
@@ -510,17 +526,14 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
   const showPrice = formData.get("show_price") === "on";
   const isFeatured = formData.get("is_featured") === "on";
 
-  if (!isBusinessItemType(type)) {
-    redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
-  }
-
-  if (!name) {
-    redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
-  }
+  validateBusinessItemInput(businessId, {
+    type,
+    name,
+    imageUrl,
+  });
 
   const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
-  validateOptionalItemImageUrl(businessId, imageUrl);
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
