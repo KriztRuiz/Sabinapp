@@ -398,6 +398,37 @@ export async function setBusinessMediaAsCover(
   redirectToEditBusiness(businessId, "Portada actualizada correctamente.");
 }
 
+export async function deleteBusinessMedia(
+  businessId: string,
+  mediaId: string,
+) {
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para eliminar imágenes.",
+  );
+
+  const { data: deletedMedia, error: deleteMediaError } = await supabase
+    .from("business_media")
+    .delete()
+    .eq("id", mediaId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (deleteMediaError || !deletedMedia) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo eliminar la imagen: ${
+        deleteMediaError?.message ?? "sin filas eliminadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Imagen eliminada correctamente.");
+}
+
 export async function addBusinessMedia(businessId: string, formData: FormData) {
   const { url, altText } = getBusinessMediaFormInput(businessId, formData);
 

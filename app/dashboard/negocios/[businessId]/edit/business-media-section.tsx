@@ -2,6 +2,7 @@
 
 import {
   addBusinessMedia,
+  deleteBusinessMedia,
   setBusinessMediaAsCover,
   updateBusinessMediaDetails,
 } from "./actions";
@@ -90,6 +91,12 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
             );
 
             const setMediaAsCoverWithIds = setBusinessMediaAsCover.bind(
+              null,
+              business.id,
+              media.id,
+            );
+
+            const deleteBusinessMediaWithIds = deleteBusinessMedia.bind(
               null,
               business.id,
               media.id,
@@ -219,6 +226,15 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
                       Esta imagen es la portada actual.
                     </p>
                   )}
+
+                  <form action={deleteBusinessMediaWithIds}>
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                    >
+                      Eliminar imagen
+                    </button>
+                  </form>
                 </div>
               </article>
             );
