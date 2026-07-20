@@ -294,6 +294,8 @@ export async function updateBusinessMediaDetails(
   formData: FormData,
 ) {
   const { url, altText } = getBusinessMediaFormInput(businessId, formData);
+  const sortOrderValue = getFormValue(formData, "sort_order");
+  const sortOrder = parseNonNegativeIntegerOrZero(businessId, sortOrderValue);
   const isActive = formData.get("is_active") === "on";
 
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(
@@ -307,6 +309,7 @@ export async function updateBusinessMediaDetails(
       url,
       alt_text: altText || null,
       is_active: isActive,
+      sort_order: sortOrder,
       updated_at: getNowIsoTimestamp(),
     })
     .eq("id", mediaId)

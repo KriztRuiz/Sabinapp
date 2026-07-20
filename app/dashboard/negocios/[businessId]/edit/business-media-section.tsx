@@ -113,6 +113,10 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
                       Tipo: {media.type}
                     </span>
 
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      Orden: {media.sort_order}
+                    </span>
+
                     {media.is_cover ? (
                       <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
                         Portada actual
@@ -160,6 +164,28 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
                         defaultValue={media.alt_text ?? ""}
                         className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
                       />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`media-sort-order-${media.id}`}
+                        className="block text-sm font-semibold text-gray-800"
+                      >
+                        Orden de aparición
+                      </label>
+
+                      <input
+                        id={`media-sort-order-${media.id}`}
+                        name="sort_order"
+                        type="text"
+                        inputMode="numeric"
+                        defaultValue={media.sort_order}
+                        className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        Menor número aparece primero. Ejemplo: 1, 2, 3.
+                      </p>
                     </div>
 
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
