@@ -2,6 +2,7 @@
 
 import { landingVisualModeOptions } from "@/lib/landing/styles";
 import { updateBusinessLanding } from "./actions";
+import { ConfirmSubmitButton } from "./confirm-submit-button";
 import type { BusinessEditBusiness } from "./business-edit-types";
 
 type BusinessContentStyleFormProps = {
@@ -123,12 +124,12 @@ export function BusinessContentStyleForm({
       </section>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="submit"
+        <ConfirmSubmitButton
+          message="¿Guardar los cambios de contenido y estilo de este negocio?"
           className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
         >
           Guardar contenido y estilo
-        </button>
+        </ConfirmSubmitButton>
 
         {business.is_published ? (
           <a
