@@ -554,6 +554,37 @@ export async function updateBusinessItemDetails(
   redirectToEditBusiness(businessId, "Item actualizado correctamente.");
 }
 
+export async function deleteBusinessItem(
+  businessId: string,
+  itemId: string,
+) {
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para eliminar items.",
+  );
+
+  const { data: deletedItem, error: deleteItemError } = await supabase
+    .from("business_items")
+    .delete()
+    .eq("id", itemId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (deleteItemError || !deletedItem) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo eliminar el item: ${
+        deleteItemError?.message ?? "sin filas eliminadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Item eliminado correctamente.");
+}
+
 export async function addBusinessItem(businessId: string, formData: FormData) {
   const type = getFormValue(formData, "type");
   const name = getFormValue(formData, "name");

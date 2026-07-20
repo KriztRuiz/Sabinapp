@@ -2,8 +2,10 @@
 
 import {
   addBusinessItem,
+  deleteBusinessItem,
   updateBusinessItemDetails,
 } from "./actions";
+import { ConfirmSubmitButton } from "./confirm-submit-button";
 import {
   businessItemTypeOptions,
   formatItemPrice,
@@ -218,6 +220,12 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
         <div className="grid gap-5 p-6 lg:grid-cols-2">
           {business.items.map((item) => {
             const updateBusinessItemWithIds = updateBusinessItemDetails.bind(
+              null,
+              business.id,
+              item.id,
+            );
+
+            const deleteBusinessItemWithIds = deleteBusinessItem.bind(
               null,
               business.id,
               item.id,
@@ -472,6 +480,15 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
                   >
                     Guardar item
                   </button>
+                </form>
+
+                <form action={deleteBusinessItemWithIds} className="px-5 pb-5">
+                  <ConfirmSubmitButton
+                    message="¿Eliminar este item? Esta acción no se puede deshacer."
+                    className="w-full rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-black text-red-700 transition hover:bg-red-100"
+                  >
+                    Eliminar item
+                  </ConfirmSubmitButton>
                 </form>
               </article>
             );
