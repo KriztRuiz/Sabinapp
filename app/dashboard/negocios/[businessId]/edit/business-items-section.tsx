@@ -207,12 +207,12 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
             </label>
           </div>
 
-          <button
-            type="submit"
+          <ConfirmSubmitButton
+            message="¿Agregar este item al negocio?"
             className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-600 to-gray-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             Agregar item
-          </button>
+          </ConfirmSubmitButton>
         </div>
       </form>
 
@@ -474,12 +474,12 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
                     </label>
                   </div>
 
-                  <button
-                    type="submit"
+                  <ConfirmSubmitButton
+                    message="¿Guardar los cambios de este item?"
                     className="w-full rounded-xl bg-gradient-to-r from-gray-950 to-orange-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     Guardar item
-                  </button>
+                  </ConfirmSubmitButton>
                 </form>
 
                 <form action={deleteBusinessItemWithIds} className="px-5 pb-5">
