@@ -74,12 +74,12 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
           </div>
         </div>
 
-        <button
-          type="submit"
+        <ConfirmSubmitButton
+          message="¿Agregar esta imagen al negocio?"
           className="mt-4 rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
         >
           Agregar imagen
-        </button>
+        </ConfirmSubmitButton>
       </form>
 
       {business.media.length > 0 ? (
