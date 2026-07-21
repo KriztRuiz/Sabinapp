@@ -133,9 +133,8 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
               <input
                 id="new-item-price"
                 name="price"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 placeholder="0.00"
                 className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
               />
@@ -361,9 +360,8 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
                       <input
                         id={`item-price-${item.id}`}
                         name="price"
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         defaultValue={item.price ?? ""}
                         className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
                       />
@@ -398,9 +396,8 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
                     <input
                       id={`item-sort-order-${item.id}`}
                       name="sort_order"
-                      type="number"
-                      min="0"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
                       defaultValue={item.sort_order}
                       className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
                     />

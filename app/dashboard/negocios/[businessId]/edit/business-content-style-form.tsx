@@ -41,7 +41,6 @@ export function BusinessContentStyleForm({
               id="name"
               name="name"
               type="text"
-              required
               defaultValue={business.name}
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
             />
@@ -58,7 +57,6 @@ export function BusinessContentStyleForm({
             <textarea
               id="short_description"
               name="short_description"
-              required
               rows={3}
               defaultValue={business.short_description}
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
