@@ -1,4 +1,7 @@
-import { updateBusinessContactDetails } from "./actions";
+import {
+  addBusinessContact,
+  updateBusinessContactDetails,
+} from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
 
@@ -9,6 +12,8 @@ type BusinessContactsSectionProps = {
 export function BusinessContactsSection({
   business,
 }: BusinessContactsSectionProps) {
+  const addContactWithBusinessId = addBusinessContact.bind(null, business.id);
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-950">Contactos públicos</h2>
@@ -17,6 +22,118 @@ export function BusinessContactsSection({
         Estos contactos aparecen en la landing pública y en el botón flotante de
         contacto.
       </p>
+
+      <form
+        action={addContactWithBusinessId}
+        className="mt-6 rounded-2xl border border-dashed border-orange-300 bg-orange-50/60 p-5"
+      >
+        <h3 className="text-base font-black text-gray-950">
+          Agregar nuevo contacto
+        </h3>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="new-contact-type"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Tipo
+            </label>
+
+            <select
+              id="new-contact-type"
+              name="type"
+              defaultValue="whatsapp"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            >
+              <option value="whatsapp">WhatsApp</option>
+              <option value="phone">Teléfono</option>
+              <option value="email">Email</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="website">Sitio web</option>
+              <option value="map">Mapa / ubicación</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="new-contact-label"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Etiqueta
+            </label>
+
+            <input
+              id="new-contact-label"
+              name="label"
+              type="text"
+              placeholder="Ej. WhatsApp principal"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="new-contact-value"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Texto visible en la landing
+            </label>
+
+            <input
+              id="new-contact-value"
+              name="value"
+              type="text"
+              placeholder="Ej. 528240000003"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="new-contact-url"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Enlace real al hacer click
+            </label>
+
+            <input
+              id="new-contact-url"
+              name="url"
+              type="text"
+              placeholder="Ej. https://wa.me/528240000003"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+
+            <p className="mt-1 text-xs text-gray-600">
+              Para WhatsApp, mantén el mismo número en texto visible y enlace.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 rounded-2xl border border-orange-200 bg-white p-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <input type="checkbox" name="is_primary" />
+            Contacto principal
+          </label>
+
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <input type="checkbox" name="is_active" defaultChecked />
+            Contacto activo
+          </label>
+        </div>
+
+        <ConfirmSubmitButton
+          message="¿Agregar este contacto al negocio?"
+          className="mt-5 w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+        >
+          Agregar contacto
+        </ConfirmSubmitButton>
+      </form>
 
       {business.contacts.length > 0 ? (
         <div className="mt-6 grid gap-4">

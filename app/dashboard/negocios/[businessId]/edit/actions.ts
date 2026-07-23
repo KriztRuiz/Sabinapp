@@ -288,6 +288,79 @@ async function getOwnedBusinessContextOrRedirect(
   };
 }
 
+export async function addBusinessContact(
+  businessId: string,
+  formData: FormData,
+) {
+  const type = getFormValue(formData, "type");
+  const label = getFormValue(formData, "label");
+  const value = getFormValue(formData, "value");
+  const url = getFormValue(formData, "url");
+  const isPrimary = formData.get("is_primary") === "on";
+  const isActive = formData.get("is_active") === "on";
+
+  if (!type) {
+    redirectToEditBusiness(businessId, "El tipo de contacto es obligatorio.");
+  }
+
+  if (!label) {
+    redirectToEditBusiness(businessId, "La etiqueta del contacto es obligatoria.");
+  }
+
+  if (!value) {
+    redirectToEditBusiness(businessId, "El texto visible del contacto es obligatorio.");
+  }
+
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para agregar contactos.",
+  );
+
+  const { data: existingContacts, error: existingContactsError } = await supabase
+    .from("contact_methods")
+    .select("sort_order")
+    .eq("business_id", businessId);
+
+  if (existingContactsError) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo calcular el orden del contacto: ${existingContactsError.message}`,
+    );
+  }
+
+  const nextSortOrder = getNextSortOrder(existingContacts ?? []);
+
+  const { data: insertedContact, error: insertContactError } = await supabase
+    .from("contact_methods")
+    .insert({
+      business_id: businessId,
+      type,
+      label,
+      value,
+      url: url || null,
+      is_primary: isPrimary,
+      is_active: isActive,
+      is_approved: true,
+      sort_order: nextSortOrder,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .select("id")
+    .single();
+
+  if (insertContactError || !insertedContact) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo agregar el contacto: ${
+        insertContactError?.message ?? "sin filas insertadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Contacto agregado correctamente.");
+}
+
 export async function updateBusinessContactDetails(
   businessId: string,
   contactId: string,
