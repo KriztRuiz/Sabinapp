@@ -25,6 +25,18 @@ export type BusinessItem = {
   sort_order: number;
 };
 
+export type BusinessContact = {
+  id: string;
+  type: string;
+  label: string;
+  value: string;
+  url: string | null;
+  is_primary: boolean;
+  is_active: boolean;
+  is_approved: boolean;
+  sort_order: number;
+};
+
 export type BusinessEditBusiness = {
   id: string;
   name: string;
@@ -36,6 +48,7 @@ export type BusinessEditBusiness = {
   visual_mode: string;
   media: BusinessMedia[];
   items: BusinessItem[];
+  contacts: BusinessContact[];
 };
 
 export const businessItemTypeOptions = [

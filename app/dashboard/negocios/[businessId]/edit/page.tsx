@@ -43,6 +43,18 @@ type BusinessItemRow = {
   sort_order: number;
 };
 
+type BusinessContactRow = {
+  id: string;
+  type: string;
+  label: string;
+  value: string;
+  url: string | null;
+  is_primary: boolean;
+  is_active: boolean;
+  is_approved: boolean;
+  sort_order: number;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -54,6 +66,7 @@ type BusinessRow = {
   business_settings: BusinessSettingsRelation;
   business_media: BusinessMediaRow[] | null;
   business_items: BusinessItemRow[] | null;
+  contact_methods: BusinessContactRow[] | null;
 };
 
 export default async function EditBusinessPage({
@@ -109,6 +122,17 @@ export default async function EditBusinessPage({
         image_alt,
         is_active,
         sort_order
+      ),
+      contact_methods (
+        id,
+        type,
+        label,
+        value,
+        url,
+        is_primary,
+        is_active,
+        is_approved,
+        sort_order
       )
     `,
     )
@@ -135,6 +159,9 @@ export default async function EditBusinessPage({
       (a, b) => a.sort_order - b.sort_order,
     ),
     items: (businessRow.business_items ?? []).sort(
+      (a, b) => a.sort_order - b.sort_order,
+    ),
+    contacts: (businessRow.contact_methods ?? []).sort(
       (a, b) => a.sort_order - b.sort_order,
     ),
   };

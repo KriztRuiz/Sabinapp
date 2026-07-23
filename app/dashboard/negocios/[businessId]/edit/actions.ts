@@ -288,6 +288,68 @@ async function getOwnedBusinessContextOrRedirect(
   };
 }
 
+export async function updateBusinessContactDetails(
+  businessId: string,
+  contactId: string,
+  formData: FormData,
+) {
+  const type = getFormValue(formData, "type");
+  const label = getFormValue(formData, "label");
+  const value = getFormValue(formData, "value");
+  const url = getFormValue(formData, "url");
+  const sortOrderValue = getFormValue(formData, "sort_order");
+  const sortOrder = parseNonNegativeIntegerOrZero(businessId, sortOrderValue);
+  const isPrimary = formData.get("is_primary") === "on";
+  const isActive = formData.get("is_active") === "on";
+
+  if (!type) {
+    redirectToEditBusiness(businessId, "El tipo de contacto es obligatorio.");
+  }
+
+  if (!label) {
+    redirectToEditBusiness(businessId, "La etiqueta del contacto es obligatoria.");
+  }
+
+  if (!value) {
+    redirectToEditBusiness(businessId, "El valor del contacto es obligatorio.");
+  }
+
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para editar contactos.",
+  );
+
+  const { data: updatedContact, error: updateContactError } = await supabase
+    .from("contact_methods")
+    .update({
+      type,
+      label,
+      value,
+      url: url || null,
+      is_primary: isPrimary,
+      is_active: isActive,
+      sort_order: sortOrder,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .eq("id", contactId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (updateContactError || !updatedContact) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo actualizar el contacto: ${
+        updateContactError?.message ?? "sin filas actualizadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Contacto actualizado correctamente.");
+}
+
 export async function updateBusinessMediaDetails(
   businessId: string,
   mediaId: string,
