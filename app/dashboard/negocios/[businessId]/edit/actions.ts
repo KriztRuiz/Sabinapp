@@ -250,6 +250,33 @@ function getNextSortOrder(rows: { sort_order?: number | null }[]) {
   return maxSortOrder + 1;
 }
 
+async function unsetOtherPrimaryContacts(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  currentContactId?: string,
+) {
+  let query = supabase
+    .from("contact_methods")
+    .update({
+      is_primary: false,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .eq("business_id", businessId);
+
+  if (currentContactId) {
+    query = query.neq("id", currentContactId);
+  }
+
+  const { error } = await query;
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudieron actualizar los contactos principales: ${error.message}`,
+    );
+  }
+}
+
 function getNowIsoTimestamp() {
   return new Date().toISOString();
 }
@@ -329,6 +356,10 @@ export async function addBusinessContact(
   }
 
   const nextSortOrder = getNextSortOrder(existingContacts ?? []);
+
+  if (isPrimary) {
+    await unsetOtherPrimaryContacts(supabase, businessId);
+  }
 
   const { data: insertedContact, error: insertContactError } = await supabase
     .from("contact_methods")
@@ -422,6 +453,10 @@ export async function updateBusinessContactDetails(
     businessId,
     "Inicia sesión para editar contactos.",
   );
+
+  if (isPrimary) {
+    await unsetOtherPrimaryContacts(supabase, businessId, contactId);
+  }
 
   const { data: updatedContact, error: updateContactError } = await supabase
     .from("contact_methods")
