@@ -1,5 +1,6 @@
 import {
   addBusinessContact,
+  deleteBusinessContact,
   updateBusinessContactDetails,
 } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
@@ -139,6 +140,12 @@ export function BusinessContactsSection({
         <div className="mt-6 grid gap-4">
           {business.contacts.map((contact) => {
             const updateContactWithIds = updateBusinessContactDetails.bind(
+              null,
+              business.id,
+              contact.id,
+            );
+
+            const deleteContactWithIds = deleteBusinessContact.bind(
               null,
               business.id,
               contact.id,
@@ -296,6 +303,15 @@ export function BusinessContactsSection({
                     className="w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
                   >
                     Guardar contacto
+                  </ConfirmSubmitButton>
+                </form>
+
+                <form action={deleteContactWithIds} className="mt-4">
+                  <ConfirmSubmitButton
+                    message="¿Eliminar este contacto? Esta acción no se puede deshacer."
+                    className="w-full rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                  >
+                    Eliminar contacto
                   </ConfirmSubmitButton>
                 </form>
               </article>

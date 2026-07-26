@@ -361,6 +361,37 @@ export async function addBusinessContact(
   redirectToEditBusiness(businessId, "Contacto agregado correctamente.");
 }
 
+export async function deleteBusinessContact(
+  businessId: string,
+  contactId: string,
+) {
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para eliminar contactos.",
+  );
+
+  const { data: deletedContact, error: deleteContactError } = await supabase
+    .from("contact_methods")
+    .delete()
+    .eq("id", contactId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (deleteContactError || !deletedContact) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo eliminar el contacto: ${
+        deleteContactError?.message ?? "sin filas eliminadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Contacto eliminado correctamente.");
+}
+
 export async function updateBusinessContactDetails(
   businessId: string,
   contactId: string,
