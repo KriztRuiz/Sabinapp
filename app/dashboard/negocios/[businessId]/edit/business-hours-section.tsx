@@ -1,6 +1,7 @@
 import { updateBusinessHourDetails } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
+import { TimeInput } from "./time-input";
 
 type BusinessHoursSectionProps = {
   business: BusinessEditBusiness;
@@ -91,10 +92,9 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
                         Abre
                       </label>
 
-                      <input
+                      <TimeInput
                         id={`hour-opens-at-${hour.id}`}
                         name="opens_at"
-                        type="text"
                         defaultValue={formatTimeForInput(hour.opens_at)}
                         placeholder="08:00"
                         className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
@@ -109,10 +109,9 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
                         Cierra
                       </label>
 
-                      <input
+                      <TimeInput
                         id={`hour-closes-at-${hour.id}`}
                         name="closes_at"
-                        type="text"
                         defaultValue={formatTimeForInput(hour.closes_at)}
                         placeholder="21:00"
                         className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
