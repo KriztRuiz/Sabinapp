@@ -241,6 +241,19 @@ function parseNonNegativeIntegerOrZero(
   return numericValue;
 }
 
+function parseDayOfWeek(businessId: string, value: string) {
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 0 || parsedValue > 6) {
+    redirectToEditBusiness(
+      businessId,
+      "Selecciona un día de la semana válido.",
+    );
+  }
+
+  return parsedValue;
+}
+
 function parsePositiveIntegerOrOne(businessId: string, value: string) {
   if (!value) {
     return 1;
@@ -354,6 +367,72 @@ async function getOwnedBusinessContextOrRedirect(
     supabase,
     business,
   };
+}
+
+export async function addBusinessHour(
+  businessId: string,
+  formData: FormData,
+) {
+  const dayOfWeekValue = getFormValue(formData, "day_of_week");
+  const periodOrderValue = getFormValue(formData, "period_order");
+  const opensAtValue = getFormValue(formData, "opens_at");
+  const closesAtValue = getFormValue(formData, "closes_at");
+  const notes = getFormValue(formData, "notes");
+  const isClosed = formData.get("is_closed") === "on";
+
+  const dayOfWeek = parseDayOfWeek(businessId, dayOfWeekValue);
+  const periodOrder = parsePositiveIntegerOrOne(
+    businessId,
+    periodOrderValue,
+  );
+
+  const opensAt = isClosed
+    ? null
+    : normalizeBusinessHourTime(businessId, opensAtValue, "La hora de apertura");
+
+  const closesAt = isClosed
+    ? null
+    : normalizeBusinessHourTime(businessId, closesAtValue, "La hora de cierre");
+
+  if (!isClosed && (!opensAt || !closesAt)) {
+    redirectToEditBusiness(
+      businessId,
+      "La hora de apertura y cierre son obligatorias cuando el día está abierto.",
+    );
+  }
+
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para agregar horarios.",
+  );
+
+  const { data: insertedHour, error: insertHourError } = await supabase
+    .from("business_hours")
+    .insert({
+      business_id: businessId,
+      day_of_week: dayOfWeek,
+      period_order: periodOrder,
+      opens_at: opensAt,
+      closes_at: closesAt,
+      is_closed: isClosed,
+      notes: notes || null,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .select("id")
+    .single();
+
+  if (insertHourError || !insertedHour) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo agregar el horario: ${
+        insertHourError?.message ?? "sin filas insertadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Horario agregado correctamente.");
 }
 
 export async function updateBusinessHourDetails(
