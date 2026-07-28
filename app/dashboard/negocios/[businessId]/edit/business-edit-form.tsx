@@ -2,6 +2,7 @@
 
 import { BusinessContentStyleForm } from "./business-content-style-form";
 import { BusinessContactsSection } from "./business-contacts-section";
+import { BusinessHoursSection } from "./business-hours-section";
 import { BusinessItemsSection } from "./business-items-section";
 import { BusinessMediaSection } from "./business-media-section";
 import type { BusinessEditBusiness } from "./business-edit-types";
@@ -18,6 +19,8 @@ export function BusinessEditForm({ business }: BusinessEditFormProps) {
       <BusinessItemsSection business={business} />
 
       <BusinessContactsSection business={business} />
+
+      <BusinessHoursSection business={business} />
     </div>
   );
 }

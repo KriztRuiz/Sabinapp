@@ -37,6 +37,16 @@ export type BusinessContact = {
   sort_order: number;
 };
 
+export type BusinessHour = {
+  id: string;
+  day_of_week: number;
+  period_order: number;
+  opens_at: string | null;
+  closes_at: string | null;
+  is_closed: boolean;
+  notes: string | null;
+};
+
 export type BusinessEditBusiness = {
   id: string;
   name: string;
@@ -49,6 +59,7 @@ export type BusinessEditBusiness = {
   media: BusinessMedia[];
   items: BusinessItem[];
   contacts: BusinessContact[];
+  hours: BusinessHour[];
 };
 
 export const businessItemTypeOptions = [

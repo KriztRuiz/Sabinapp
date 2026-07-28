@@ -55,6 +55,16 @@ type BusinessContactRow = {
   sort_order: number;
 };
 
+type BusinessHourRow = {
+  id: string;
+  day_of_week: number;
+  period_order: number;
+  opens_at: string | null;
+  closes_at: string | null;
+  is_closed: boolean;
+  notes: string | null;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -67,6 +77,7 @@ type BusinessRow = {
   business_media: BusinessMediaRow[] | null;
   business_items: BusinessItemRow[] | null;
   contact_methods: BusinessContactRow[] | null;
+  business_hours: BusinessHourRow[] | null;
 };
 
 export default async function EditBusinessPage({
@@ -133,6 +144,15 @@ export default async function EditBusinessPage({
         is_active,
         is_approved,
         sort_order
+      ),
+      business_hours (
+        id,
+        day_of_week,
+        period_order,
+        opens_at,
+        closes_at,
+        is_closed,
+        notes
       )
     `,
     )
@@ -163,6 +183,10 @@ export default async function EditBusinessPage({
     ),
     contacts: (businessRow.contact_methods ?? []).sort(
       (a, b) => a.sort_order - b.sort_order,
+    ),
+    hours: (businessRow.business_hours ?? []).sort(
+      (a, b) =>
+        a.day_of_week - b.day_of_week || a.period_order - b.period_order,
     ),
   };
 
