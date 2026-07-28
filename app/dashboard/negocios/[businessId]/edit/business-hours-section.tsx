@@ -1,5 +1,6 @@
 import {
   addBusinessHour,
+  deleteBusinessHour,
   updateBusinessHourDetails,
 } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
@@ -169,6 +170,12 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
               hour.id,
             );
 
+            const deleteHourWithIds = deleteBusinessHour.bind(
+              null,
+              business.id,
+              hour.id,
+            );
+
             return (
               <article
                 key={hour.id}
@@ -284,6 +291,15 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
                     className="w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
                   >
                     Guardar horario
+                  </ConfirmSubmitButton>
+                </form>
+
+                <form action={deleteHourWithIds} className="mt-4">
+                  <ConfirmSubmitButton
+                    message="¿Eliminar este horario? Esta acción no se puede deshacer."
+                    className="w-full rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                  >
+                    Eliminar horario
                   </ConfirmSubmitButton>
                 </form>
               </article>

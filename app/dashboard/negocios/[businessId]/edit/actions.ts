@@ -435,6 +435,37 @@ export async function addBusinessHour(
   redirectToEditBusiness(businessId, "Horario agregado correctamente.");
 }
 
+export async function deleteBusinessHour(
+  businessId: string,
+  hourId: string,
+) {
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para eliminar horarios.",
+  );
+
+  const { data: deletedHour, error: deleteHourError } = await supabase
+    .from("business_hours")
+    .delete()
+    .eq("id", hourId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (deleteHourError || !deletedHour) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo eliminar el horario: ${
+        deleteHourError?.message ?? "sin filas eliminadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Horario eliminado correctamente.");
+}
+
 export async function updateBusinessHourDetails(
   businessId: string,
   hourId: string,
