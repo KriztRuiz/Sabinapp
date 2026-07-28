@@ -1,4 +1,6 @@
+import { updateBusinessHourDetails } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
+import { ConfirmSubmitButton } from "./confirm-submit-button";
 
 type BusinessHoursSectionProps = {
   business: BusinessEditBusiness;
@@ -14,9 +16,9 @@ const dayNames = [
   "Sábado",
 ];
 
-function formatTime(value: string | null) {
+function formatTimeForInput(value: string | null) {
   if (!value) {
-    return "Sin horario";
+    return "";
   }
 
   return value.slice(0, 5);
@@ -32,41 +34,136 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
       </p>
 
       {business.hours.length > 0 ? (
-        <div className="mt-6 grid gap-3">
-          {business.hours.map((hour) => (
-            <article
-              key={hour.id}
-              className="rounded-xl border border-gray-200 bg-gray-50 p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-black text-gray-950">
-                    {dayNames[hour.day_of_week] ?? `Día ${hour.day_of_week}`}
-                  </h3>
+        <div className="mt-6 grid gap-4">
+          {business.hours.map((hour) => {
+            const updateHourWithIds = updateBusinessHourDetails.bind(
+              null,
+              business.id,
+              hour.id,
+            );
 
-                  <p className="mt-1 text-sm text-gray-600">
-                    Periodo {hour.period_order}
-                  </p>
+            return (
+              <article
+                key={hour.id}
+                className="rounded-2xl border border-gray-200 bg-gray-50 p-5"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-black text-gray-950">
+                      {dayNames[hour.day_of_week] ?? `Día ${hour.day_of_week}`}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-gray-600">
+                      Periodo {hour.period_order}
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                    {hour.is_closed ? "Cerrado" : "Abierto"}
+                  </span>
                 </div>
 
-                <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
-                  {hour.is_closed ? "Cerrado" : "Abierto"}
-                </span>
-              </div>
+                <form action={updateHourWithIds} className="mt-5 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                      <label
+                        htmlFor={`hour-period-order-${hour.id}`}
+                        className="block text-sm font-semibold text-gray-800"
+                      >
+                        Periodo
+                      </label>
 
-              <p className="mt-4 text-sm font-semibold text-gray-800">
-                {hour.is_closed
-                  ? "Cerrado todo el día"
-                  : `${formatTime(hour.opens_at)} - ${formatTime(
-                      hour.closes_at,
-                    )}`}
-              </p>
+                      <input
+                        id={`hour-period-order-${hour.id}`}
+                        name="period_order"
+                        type="text"
+                        inputMode="numeric"
+                        defaultValue={hour.period_order}
+                        className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+                    </div>
 
-              {hour.notes ? (
-                <p className="mt-2 text-sm text-gray-600">{hour.notes}</p>
-              ) : null}
-            </article>
-          ))}
+                    <div>
+                      <label
+                        htmlFor={`hour-opens-at-${hour.id}`}
+                        className="block text-sm font-semibold text-gray-800"
+                      >
+                        Abre
+                      </label>
+
+                      <input
+                        id={`hour-opens-at-${hour.id}`}
+                        name="opens_at"
+                        type="text"
+                        defaultValue={formatTimeForInput(hour.opens_at)}
+                        placeholder="08:00"
+                        className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`hour-closes-at-${hour.id}`}
+                        className="block text-sm font-semibold text-gray-800"
+                      >
+                        Cierra
+                      </label>
+
+                      <input
+                        id={`hour-closes-at-${hour.id}`}
+                        name="closes_at"
+                        type="text"
+                        defaultValue={formatTimeForInput(hour.closes_at)}
+                        placeholder="21:00"
+                        className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`hour-notes-${hour.id}`}
+                      className="block text-sm font-semibold text-gray-800"
+                    >
+                      Nota visible
+                    </label>
+
+                    <textarea
+                      id={`hour-notes-${hour.id}`}
+                      name="notes"
+                      defaultValue={hour.notes ?? ""}
+                      rows={2}
+                      placeholder="Ej. Horario especial de temporada."
+                      className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <input
+                        type="checkbox"
+                        name="is_closed"
+                        defaultChecked={hour.is_closed}
+                      />
+                      Cerrado este día
+                    </label>
+
+                    <p className="mt-2 text-xs text-gray-500">
+                      Si marcas el día como cerrado, se ignorarán las horas de
+                      apertura y cierre.
+                    </p>
+                  </div>
+
+                  <ConfirmSubmitButton
+                    message="¿Guardar los cambios de este horario?"
+                    className="w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                  >
+                    Guardar horario
+                  </ConfirmSubmitButton>
+                </form>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-sm text-gray-600">

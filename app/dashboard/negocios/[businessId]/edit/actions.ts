@@ -241,6 +241,47 @@ function parseNonNegativeIntegerOrZero(
   return numericValue;
 }
 
+function parsePositiveIntegerOrOne(businessId: string, value: string) {
+  if (!value) {
+    return 1;
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+    redirectToEditBusiness(
+      businessId,
+      "El periodo debe ser un número entero mayor o igual a uno.",
+    );
+  }
+
+  return parsedValue;
+}
+
+function normalizeBusinessHourTime(
+  businessId: string,
+  value: string,
+  fieldLabel: string,
+) {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = value.length === 5 ? `${value}:00` : value;
+  const isValidTime = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(
+    normalizedValue,
+  );
+
+  if (!isValidTime) {
+    redirectToEditBusiness(
+      businessId,
+      `${fieldLabel} debe tener formato HH:MM, por ejemplo 08:00.`,
+    );
+  }
+
+  return normalizedValue;
+}
+
 function getNextSortOrder(rows: { sort_order?: number | null }[]) {
   const maxSortOrder = rows.reduce(
     (currentMax, row) => Math.max(currentMax, row.sort_order ?? 0),
@@ -313,6 +354,71 @@ async function getOwnedBusinessContextOrRedirect(
     supabase,
     business,
   };
+}
+
+export async function updateBusinessHourDetails(
+  businessId: string,
+  hourId: string,
+  formData: FormData,
+) {
+  const periodOrderValue = getFormValue(formData, "period_order");
+  const opensAtValue = getFormValue(formData, "opens_at");
+  const closesAtValue = getFormValue(formData, "closes_at");
+  const notes = getFormValue(formData, "notes");
+  const isClosed = formData.get("is_closed") === "on";
+
+  const periodOrder = parsePositiveIntegerOrOne(
+    businessId,
+    periodOrderValue,
+  );
+
+  const opensAt = isClosed
+    ? null
+    : normalizeBusinessHourTime(businessId, opensAtValue, "La hora de apertura");
+
+  const closesAt = isClosed
+    ? null
+    : normalizeBusinessHourTime(businessId, closesAtValue, "La hora de cierre");
+
+  if (!isClosed && (!opensAt || !closesAt)) {
+    redirectToEditBusiness(
+      businessId,
+      "La hora de apertura y cierre son obligatorias cuando el día está abierto.",
+    );
+  }
+
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para editar horarios.",
+  );
+
+  const { data: updatedHour, error: updateHourError } = await supabase
+    .from("business_hours")
+    .update({
+      period_order: periodOrder,
+      opens_at: opensAt,
+      closes_at: closesAt,
+      is_closed: isClosed,
+      notes: notes || null,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .eq("id", hourId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (updateHourError || !updatedHour) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo actualizar el horario: ${
+        updateHourError?.message ?? "sin filas actualizadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Horario actualizado correctamente.");
 }
 
 export async function addBusinessContact(
