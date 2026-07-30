@@ -2,8 +2,8 @@
 
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 type RoleRow = {
   roles: {
@@ -63,9 +63,9 @@ export default async function DashboardPage() {
             Panel principal
           </h1>
 
-          <p className="mt-2 text-gray-600">
-            Esta pantalla confirma que la sesión de Supabase funciona dentro de
-            Next.js.
+          <p className="mt-2 max-w-2xl text-gray-600">
+            Administra tus negocios, revisa su estado y actualiza la información
+            que aparece en sus páginas públicas.
           </p>
         </div>
 
@@ -97,12 +97,14 @@ export default async function DashboardPage() {
             </div>
 
             <div>
-              <dt className="font-medium text-gray-500">Estado</dt>
+              <dt className="font-medium text-gray-500">Estado de cuenta</dt>
               <dd className="text-gray-950">{profile?.status ?? "active"}</dd>
             </div>
 
             <div>
-              <dt className="font-medium text-gray-500">Mayor de edad verificado</dt>
+              <dt className="font-medium text-gray-500">
+                Mayor de edad verificado
+              </dt>
               <dd className="text-gray-950">
                 {profile?.is_adult_verified ? "Sí" : "No"}
               </dd>
@@ -111,7 +113,12 @@ export default async function DashboardPage() {
         </article>
 
         <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-950">Tus roles</h2>
+          <h2 className="text-xl font-semibold text-gray-950">Tus permisos</h2>
+
+          <p className="mt-2 text-sm text-gray-600">
+            Los permisos definen qué acciones puedes realizar dentro de
+            Sabinapp.
+          </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {roleRows.length > 0 ? (
@@ -126,20 +133,20 @@ export default async function DashboardPage() {
                 ) : null,
               )
             ) : (
-              <p className="text-sm text-gray-600">Sin roles activos.</p>
+              <p className="text-sm text-gray-600">Sin permisos especiales.</p>
             )}
           </div>
         </article>
       </section>
 
-            <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-950">
-          Administración de landing pages
+          Administración de negocios
         </h2>
 
         <p className="mt-2 text-sm text-gray-600">
-          Edita el contenido y el estilo visual de tus negocios publicados o en
-          revisión.
+          Edita contenido, imágenes, menú, destacados, contactos, horarios y
+          estilo visual de tus páginas públicas.
         </p>
 
         <Link
@@ -154,7 +161,7 @@ export default async function DashboardPage() {
         <h2 className="text-xl font-semibold text-gray-950">Tus negocios</h2>
 
         <p className="mt-2 text-sm text-gray-600">
-          Por ahora aparecen los negocios demo que asignamos a tu usuario.
+          Estos son los negocios asociados a tu cuenta.
         </p>
 
         <div className="mt-5 grid gap-3">
@@ -164,24 +171,32 @@ export default async function DashboardPage() {
                 key={business.id}
                 className="rounded-xl border border-gray-200 p-4"
               >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-950">
                       {business.name}
                     </h3>
+
                     <p className="text-sm text-gray-500">
                       /negocio/{business.slug}
                     </p>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                      {business.status}
+                      Estado: {business.status}
                     </span>
 
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                       {business.is_published ? "Publicado" : "No publicado"}
                     </span>
+
+                    <Link
+                      href={`/dashboard/negocios/${business.id}/edit`}
+                      className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800 transition hover:bg-orange-200"
+                    >
+                      Editar
+                    </Link>
                   </div>
                 </div>
               </article>
