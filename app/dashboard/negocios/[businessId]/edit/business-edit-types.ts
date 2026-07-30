@@ -47,6 +47,20 @@ export type BusinessHour = {
   notes: string | null;
 };
 
+export type BusinessLocation = {
+  id: string;
+  location_type: string;
+  address_text: string | null;
+  neighborhood: string | null;
+  reference_notes: string | null;
+  service_area_text: string | null;
+  map_url: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  is_primary: boolean;
+  is_public: boolean;
+};
+
 export type BusinessEditBusiness = {
   id: string;
   name: string;
@@ -60,6 +74,7 @@ export type BusinessEditBusiness = {
   items: BusinessItem[];
   contacts: BusinessContact[];
   hours: BusinessHour[];
+  locations: BusinessLocation[];
 };
 
 export const businessItemTypeOptions = [

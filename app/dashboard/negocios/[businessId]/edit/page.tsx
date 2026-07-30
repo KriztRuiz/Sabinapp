@@ -65,6 +65,20 @@ type BusinessHourRow = {
   notes: string | null;
 };
 
+type BusinessLocationRow = {
+  id: string;
+  location_type: string;
+  address_text: string | null;
+  neighborhood: string | null;
+  reference_notes: string | null;
+  service_area_text: string | null;
+  map_url: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  is_primary: boolean;
+  is_public: boolean;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -78,6 +92,7 @@ type BusinessRow = {
   business_items: BusinessItemRow[] | null;
   contact_methods: BusinessContactRow[] | null;
   business_hours: BusinessHourRow[] | null;
+  business_locations: BusinessLocationRow[] | null;
 };
 
 export default async function EditBusinessPage({
@@ -153,6 +168,19 @@ export default async function EditBusinessPage({
         closes_at,
         is_closed,
         notes
+      ),
+      business_locations (
+        id,
+        location_type,
+        address_text,
+        neighborhood,
+        reference_notes,
+        service_area_text,
+        map_url,
+        latitude,
+        longitude,
+        is_primary,
+        is_public
       )
     `,
     )
@@ -187,6 +215,11 @@ export default async function EditBusinessPage({
     hours: (businessRow.business_hours ?? []).sort(
       (a, b) =>
         a.day_of_week - b.day_of_week || a.period_order - b.period_order,
+    ),
+    locations: (businessRow.business_locations ?? []).sort(
+      (a, b) =>
+        Number(b.is_primary) - Number(a.is_primary) ||
+        a.location_type.localeCompare(b.location_type),
     ),
   };
 
