@@ -64,7 +64,14 @@ export default async function DashboardBusinessesPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="border-b border-gray-200 pb-6">
-        <p className="text-sm font-medium text-orange-600">Sabinapp</p>
+        <Link
+          href="/dashboard"
+          className="text-sm font-semibold text-orange-600 hover:text-orange-700"
+        >
+          ← Volver al menú principal
+        </Link>
+
+        <p className="mt-6 text-sm font-medium text-orange-600">Sabinapp</p>
 
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Mis negocios</h1>
 
