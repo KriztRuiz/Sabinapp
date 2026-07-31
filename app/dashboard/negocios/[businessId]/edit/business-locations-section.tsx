@@ -2,6 +2,7 @@
 
 import {
   addBusinessLocation,
+  deleteBusinessLocation,
   updateBusinessLocationDetails,
 } from "./actions";
 import {
@@ -197,6 +198,12 @@ export function BusinessLocationsSection({
               location.id,
             );
 
+            const deleteLocationWithIds = deleteBusinessLocation.bind(
+              null,
+              business.id,
+              location.id,
+            );
+
             return (
               <article
                 key={location.id}
@@ -355,6 +362,16 @@ export function BusinessLocationsSection({
                     className="w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
                   >
                     Guardar ubicación
+                  </ConfirmSubmitButton>
+                </form>
+
+                <form action={deleteLocationWithIds} className="mt-3">
+                  <ConfirmSubmitButton
+                    message="¿Eliminar esta ubicación? Esta acción no se puede deshacer."
+                    className="w-full rounded-lg border border-red-300 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                    pendingText="Eliminando..."
+                  >
+                    Eliminar ubicación
                   </ConfirmSubmitButton>
                 </form>
               </article>

@@ -502,6 +502,74 @@ export async function addBusinessLocation(
   redirectToEditBusiness(businessId, "Ubicación agregada correctamente.");
 }
 
+export async function deleteBusinessLocation(
+  businessId: string,
+  locationId: string,
+) {
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para eliminar ubicaciones.",
+  );
+
+  const { data: deletedLocation, error: deleteLocationError } = await supabase
+    .from("business_locations")
+    .delete()
+    .eq("id", locationId)
+    .eq("business_id", businessId)
+    .select("id, is_primary")
+    .single();
+
+  if (deleteLocationError || !deletedLocation) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo eliminar la ubicación: ${
+        deleteLocationError?.message ?? "sin filas eliminadas"
+      }`,
+    );
+  }
+
+  if (deletedLocation.is_primary) {
+    const { data: remainingLocations, error: remainingLocationsError } =
+      await supabase
+        .from("business_locations")
+        .select("id")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: true })
+        .limit(1);
+
+    if (remainingLocationsError) {
+      redirectToEditBusiness(
+        businessId,
+        `La ubicación se eliminó, pero no se pudo revisar la nueva principal: ${remainingLocationsError.message}`,
+      );
+    }
+
+    const nextPrimaryLocation = remainingLocations?.[0];
+
+    if (nextPrimaryLocation) {
+      const { error: promoteLocationError } = await supabase
+        .from("business_locations")
+        .update({
+          is_primary: true,
+          updated_at: getNowIsoTimestamp(),
+        })
+        .eq("id", nextPrimaryLocation.id)
+        .eq("business_id", businessId);
+
+      if (promoteLocationError) {
+        redirectToEditBusiness(
+          businessId,
+          `La ubicación se eliminó, pero no se pudo asignar una nueva principal: ${promoteLocationError.message}`,
+        );
+      }
+    }
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Ubicación eliminada correctamente.");
+}
+
 export async function updateBusinessLocationDetails(
   businessId: string,
   locationId: string,
