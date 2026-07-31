@@ -1,6 +1,8 @@
 // app/dashboard/negocios/[businessId]/edit/business-locations-section.tsx
 
+import { updateBusinessLocationDetails } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
+import { ConfirmSubmitButton } from "./confirm-submit-button";
 
 type BusinessLocationsSectionProps = {
   business: BusinessEditBusiness;
@@ -43,98 +45,176 @@ export function BusinessLocationsSection({
 
       {business.locations.length > 0 ? (
         <div className="mt-6 grid gap-4">
-          {business.locations.map((location) => (
-            <article
-              key={location.id}
-              className="rounded-2xl border border-gray-200 bg-gray-50 p-5"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h3 className="text-lg font-black text-gray-950">
-                    {getLocationTypeLabel(location.location_type)}
-                  </h3>
+          {business.locations.map((location) => {
+            const updateLocationWithIds = updateBusinessLocationDetails.bind(
+              null,
+              business.id,
+              location.id,
+            );
 
-                  <p className="mt-2 text-sm leading-6 text-gray-700">
-                    {getMainLocationText(location)}
-                  </p>
-                </div>
+            return (
+              <article
+                key={location.id}
+                className="rounded-2xl border border-gray-200 bg-gray-50 p-5"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-black text-gray-950">
+                      {getLocationTypeLabel(location.location_type)}
+                    </h3>
 
-                <div className="flex flex-wrap gap-2">
-                  {location.is_primary ? (
-                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
-                      Principal
+                    <p className="mt-2 text-sm leading-6 text-gray-700">
+                      {getMainLocationText(location)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {location.is_primary ? (
+                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
+                        Principal
+                      </span>
+                    ) : null}
+
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
+                      {location.is_public ? "Pública" : "No pública"}
                     </span>
-                  ) : null}
-
-                  <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-700">
-                    {location.is_public ? "Pública" : "No pública"}
-                  </span>
-                </div>
-              </div>
-
-              <dl className="mt-5 grid gap-3 text-sm md:grid-cols-2">
-                <div>
-                  <dt className="font-semibold text-gray-800">Dirección</dt>
-                  <dd className="mt-1 text-gray-600">
-                    {location.address_text || "Sin dirección registrada"}
-                  </dd>
+                  </div>
                 </div>
 
-                <div>
-                  <dt className="font-semibold text-gray-800">Colonia</dt>
-                  <dd className="mt-1 text-gray-600">
-                    {location.neighborhood || "Sin colonia registrada"}
-                  </dd>
-                </div>
+                <form action={updateLocationWithIds} className="mt-5 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor={`location-address-${location.id}`}
+                        className="block text-sm font-semibold text-gray-800"
+                      >
+                        Dirección
+                      </label>
 
-                <div>
-                  <dt className="font-semibold text-gray-800">Referencia</dt>
-                  <dd className="mt-1 text-gray-600">
-                    {location.reference_notes || "Sin referencia registrada"}
-                  </dd>
-                </div>
+                      <input
+                        id={`location-address-${location.id}`}
+                        name="address_text"
+                        type="text"
+                        defaultValue={location.address_text ?? ""}
+                        placeholder="Ej. Calle, número o zona"
+                        className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+                    </div>
 
-                <div>
-                  <dt className="font-semibold text-gray-800">
-                    Área de servicio
-                  </dt>
-                  <dd className="mt-1 text-gray-600">
-                    {location.service_area_text ||
-                      "Sin área de servicio registrada"}
-                  </dd>
-                </div>
+                    <div>
+                      <label
+                        htmlFor={`location-neighborhood-${location.id}`}
+                        className="block text-sm font-semibold text-gray-800"
+                      >
+                        Colonia
+                      </label>
 
-                <div>
-                  <dt className="font-semibold text-gray-800">Latitud</dt>
-                  <dd className="mt-1 text-gray-600">
-                    {location.latitude ?? "Sin latitud"}
-                  </dd>
-                </div>
+                      <input
+                        id={`location-neighborhood-${location.id}`}
+                        name="neighborhood"
+                        type="text"
+                        defaultValue={location.neighborhood ?? ""}
+                        placeholder="Ej. Centro"
+                        className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <dt className="font-semibold text-gray-800">Longitud</dt>
-                  <dd className="mt-1 text-gray-600">
-                    {location.longitude ?? "Sin longitud"}
-                  </dd>
-                </div>
-              </dl>
+                  <div>
+                    <label
+                      htmlFor={`location-reference-${location.id}`}
+                      className="block text-sm font-semibold text-gray-800"
+                    >
+                      Referencia visible
+                    </label>
 
-              {location.map_url ? (
-                <a
-                  href={location.map_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-5 inline-flex rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-800 transition hover:bg-orange-100"
-                >
-                  Abrir mapa
-                </a>
-              ) : (
-                <p className="mt-5 rounded-lg border border-dashed border-gray-300 bg-white p-3 text-sm text-gray-600">
-                  Esta ubicación no tiene enlace de mapa.
-                </p>
-              )}
-            </article>
-          ))}
+                    <textarea
+                      id={`location-reference-${location.id}`}
+                      name="reference_notes"
+                      rows={2}
+                      defaultValue={location.reference_notes ?? ""}
+                      placeholder="Ej. Frente a la plaza, enseguida de..."
+                      className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`location-service-area-${location.id}`}
+                      className="block text-sm font-semibold text-gray-800"
+                    >
+                      Área de servicio
+                    </label>
+
+                    <textarea
+                      id={`location-service-area-${location.id}`}
+                      name="service_area_text"
+                      rows={2}
+                      defaultValue={location.service_area_text ?? ""}
+                      placeholder="Ej. Servicio en Sabinas Hidalgo y alrededores"
+                      className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`location-map-url-${location.id}`}
+                      className="block text-sm font-semibold text-gray-800"
+                    >
+                      URL de mapa
+                    </label>
+
+                    <input
+                      id={`location-map-url-${location.id}`}
+                      name="map_url"
+                      type="text"
+                      defaultValue={location.map_url ?? ""}
+                      placeholder="https://maps.google.com/..."
+                      className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    />
+
+                    {location.map_url ? (
+                      <a
+                        href={location.map_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex text-sm font-semibold text-orange-700 hover:text-orange-800"
+                      >
+                        Abrir mapa actual
+                      </a>
+                    ) : null}
+                  </div>
+
+                  <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 sm:grid-cols-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <input
+                        type="checkbox"
+                        name="is_primary"
+                        defaultChecked={location.is_primary}
+                      />
+                      Ubicación principal
+                    </label>
+
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <input
+                        type="checkbox"
+                        name="is_public"
+                        defaultChecked={location.is_public}
+                      />
+                      Mostrar públicamente
+                    </label>
+                  </div>
+
+                  <ConfirmSubmitButton
+                    message="¿Guardar los cambios de esta ubicación?"
+                    className="w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                  >
+                    Guardar ubicación
+                  </ConfirmSubmitButton>
+                </form>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-sm text-gray-600">

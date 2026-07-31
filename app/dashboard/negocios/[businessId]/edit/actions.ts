@@ -169,6 +169,19 @@ function validateOptionalItemImageUrl(businessId: string, url: string) {
   }
 }
 
+function validateOptionalLocationMapUrl(businessId: string, url: string) {
+  if (!url) {
+    return;
+  }
+
+  if (!isValidMediaUrl(url)) {
+    redirectToEditBusiness(
+      businessId,
+      "La URL del mapa debe iniciar con http:// o https://.",
+    );
+  }
+}
+
 function validateBusinessItemInput(
   businessId: string,
   input: {
@@ -331,6 +344,28 @@ async function unsetOtherPrimaryContacts(
   }
 }
 
+async function unsetOtherPrimaryLocations(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  currentLocationId: string,
+) {
+  const { error } = await supabase
+    .from("business_locations")
+    .update({
+      is_primary: false,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .eq("business_id", businessId)
+    .neq("id", currentLocationId);
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudieron actualizar las ubicaciones principales: ${error.message}`,
+    );
+  }
+}
+
 function getNowIsoTimestamp() {
   return new Date().toISOString();
 }
@@ -367,6 +402,74 @@ async function getOwnedBusinessContextOrRedirect(
     supabase,
     business,
   };
+}
+
+export async function updateBusinessLocationDetails(
+  businessId: string,
+  locationId: string,
+  formData: FormData,
+) {
+  const addressText = getFormValue(formData, "address_text");
+  const neighborhood = getFormValue(formData, "neighborhood");
+  const referenceNotes = getFormValue(formData, "reference_notes");
+  const serviceAreaText = getFormValue(formData, "service_area_text");
+  const mapUrl = getFormValue(formData, "map_url");
+  const isPrimary = formData.get("is_primary") === "on";
+  const isPublic = formData.get("is_public") === "on";
+
+  validateOptionalLocationMapUrl(businessId, mapUrl);
+
+  if (
+    isPublic &&
+    !addressText &&
+    !serviceAreaText &&
+    !referenceNotes &&
+    !mapUrl
+  ) {
+    redirectToEditBusiness(
+      businessId,
+      "Una ubicación pública debe tener dirección, área de servicio, referencia o enlace de mapa.",
+    );
+  }
+
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para editar ubicaciones.",
+  );
+
+  if (isPrimary) {
+    await unsetOtherPrimaryLocations(supabase, businessId, locationId);
+  }
+
+  const { data: updatedLocation, error: updateLocationError } = await supabase
+    .from("business_locations")
+    .update({
+      address_text: addressText || null,
+      neighborhood: neighborhood || null,
+      reference_notes: referenceNotes || null,
+      service_area_text: serviceAreaText || null,
+      map_url: mapUrl || null,
+      is_primary: isPrimary,
+      is_public: isPublic,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .eq("id", locationId)
+    .eq("business_id", businessId)
+    .select("id")
+    .single();
+
+  if (updateLocationError || !updatedLocation) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo actualizar la ubicación: ${
+        updateLocationError?.message ?? "sin filas actualizadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Ubicación actualizada correctamente.");
 }
 
 export async function addBusinessHour(
