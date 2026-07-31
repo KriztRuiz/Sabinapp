@@ -50,6 +50,7 @@ export type PublicLandingLocation = {
   referenceNotes: string | null;
   serviceAreaText: string | null;
   mapUrl: string | null;
+  isPrimary: boolean;
 };
 
 export type PublicLandingData = {

@@ -214,6 +214,28 @@ function formatPrice(price: number | null, currency: string | null) {
   }).format(price);
 }
 
+function getLocationTypeLabel(locationType: string) {
+  const labels: Record<string, string> = {
+    physical_location: "Local físico",
+    home_service: "Servicio a domicilio",
+    pickup_point: "Punto de entrega",
+    contact_only: "Solo por contacto",
+    temporary_event: "Evento temporal",
+    service_area: "Área de servicio",
+  };
+
+  return labels[locationType] ?? locationType;
+}
+
+function getLocationText(location: PublicLandingData["locations"][number]) {
+  return (
+    location.addressText ||
+    location.serviceAreaText ||
+    location.referenceNotes ||
+    "Ubicación disponible por contacto"
+  );
+}
+
 function formatHour(hour: PublicLandingData["hours"][number]) {
   if (hour.isClosed) {
     return "Cerrado";
@@ -371,10 +393,7 @@ export function PublicBusinessLanding({ data }: Props) {
 
               {mainLocation ? (
                 <p className="mt-2 text-sm opacity-75">
-                  {mainLocation.addressText ??
-                    mainLocation.serviceAreaText ??
-                    mainLocation.referenceNotes ??
-                    "Ubicación disponible por contacto"}
+                  {getLocationText(mainLocation)}
                 </p>
               ) : null}
             </div>
@@ -398,10 +417,9 @@ export function PublicBusinessLanding({ data }: Props) {
               Ubicación
             </h3>
             <p className={`${styles.mutedText} mt-2 leading-7`}>
-              {mainLocation?.addressText ??
-                mainLocation?.serviceAreaText ??
-                mainLocation?.referenceNotes ??
-                "Consulta ubicación por contacto."}
+              {mainLocation
+                ? getLocationText(mainLocation)
+                : "Consulta ubicación por contacto."}
             </p>
           </article>
 
@@ -696,6 +714,64 @@ export function PublicBusinessLanding({ data }: Props) {
                 </a>
               ) : null}
             </div>
+
+            {data.locations.length > 0 ? (
+              <div className="mt-8">
+                <h3 className={`${styles.heading} text-2xl font-black`}>
+                  Ubicaciones disponibles
+                </h3>
+
+                <div className="mt-4 grid gap-3">
+                  {data.locations.map((location) => (
+                    <article
+                      key={location.id}
+                      className={`rounded-2xl border p-4 ${styles.divider}`}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="flex flex-wrap gap-2">
+                            <span className={styles.badge}>
+                              {getLocationTypeLabel(location.locationType)}
+                            </span>
+
+                            {location.isPrimary ? (
+                              <span className={styles.tag}>Principal</span>
+                            ) : null}
+                          </div>
+
+                          <p className={`${styles.heading} mt-3 font-bold`}>
+                            {getLocationText(location)}
+                          </p>
+
+                          {location.neighborhood ? (
+                            <p className={`${styles.mutedText} mt-1 text-sm`}>
+                              Colonia: {location.neighborhood}
+                            </p>
+                          ) : null}
+
+                          {location.referenceNotes &&
+                          location.referenceNotes !== getLocationText(location) ? (
+                            <p className={`${styles.mutedText} mt-2 text-sm`}>
+                              {location.referenceNotes}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        {location.mapUrl ? (
+                          <a
+                            href={location.mapUrl}
+                            className={styles.buttonSecondary}
+                            {...getExternalLinkProps(location.mapUrl)}
+                          >
+                            Abrir mapa
+                          </a>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </article>
         </section>
       </div>
