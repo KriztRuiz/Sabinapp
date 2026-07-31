@@ -16,15 +16,11 @@ type BusinessLocationsSectionProps = {
 };
 
 function getLocationTypeLabel(locationType: string) {
-  const labels: Record<string, string> = {
-    physical_location: "Local físico",
-    service_area: "Área de servicio",
-    online: "En línea",
-    temporary_location: "Ubicación temporal",
-    other: "Otra ubicación",
-  };
+  const option = businessLocationTypeOptions.find(
+    (locationOption) => locationOption.value === locationType,
+  );
 
-  return labels[locationType] ?? locationType;
+  return option?.label ?? locationType;
 }
 
 function getMainLocationText(
