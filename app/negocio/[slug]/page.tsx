@@ -75,6 +75,8 @@ type BusinessQueryRow = {
         reference_notes: string | null;
         service_area_text: string | null;
         map_url: string | null;
+        is_primary: boolean;
+        is_public: boolean;
       }[]
     | null;
   business_items:
@@ -171,8 +173,10 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
       notes: hour.notes,
     }));
 
-  const locations: PublicLandingLocation[] = (row.business_locations ?? []).map(
-    (location) => ({
+  const locations: PublicLandingLocation[] = (row.business_locations ?? [])
+    .filter((location) => location.is_public)
+    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
+    .map((location) => ({
       id: location.id,
       locationType: location.location_type,
       addressText: location.address_text,
@@ -180,8 +184,8 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
       referenceNotes: location.reference_notes,
       serviceAreaText: location.service_area_text,
       mapUrl: location.map_url,
-    }),
-  );
+      isPrimary: location.is_primary,
+    }));
 
   const items: PublicLandingItem[] = (row.business_items ?? [])
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -298,7 +302,9 @@ export default async function PublicBusinessPage({ params }: PageProps) {
         neighborhood,
         reference_notes,
         service_area_text,
-        map_url
+        map_url,
+        is_primary,
+        is_public
       ),
       business_items (
         id,
@@ -326,6 +332,7 @@ export default async function PublicBusinessPage({ params }: PageProps) {
     .eq("contact_methods.is_active", true)
     .eq("business_media.is_active", true)
     .eq("business_items.is_active", true)
+    .eq("business_locations.is_public", true)
     .maybeSingle();
 
   if (error || !data) {
