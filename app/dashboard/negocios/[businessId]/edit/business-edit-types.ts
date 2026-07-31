@@ -61,6 +61,28 @@ export type BusinessLocation = {
   is_public: boolean;
 };
 
+export const businessLocationTypeOptions = [
+  { value: "physical_location", label: "Local físico" },
+  { value: "home_service", label: "Servicio a domicilio" },
+  { value: "pickup_point", label: "Punto de entrega" },
+  { value: "contact_only", label: "Solo por contacto" },
+  { value: "temporary_event", label: "Evento temporal" },
+  { value: "service_area", label: "Área de servicio" },
+] as const;
+
+export type BusinessLocationType =
+  (typeof businessLocationTypeOptions)[number]["value"];
+
+export const businessLocationTypeValues = businessLocationTypeOptions.map(
+  (option) => option.value,
+);
+
+export function isBusinessLocationType(
+  value: string,
+): value is BusinessLocationType {
+  return businessLocationTypeValues.includes(value as BusinessLocationType);
+}
+
 export type BusinessEditBusiness = {
   id: string;
   name: string;

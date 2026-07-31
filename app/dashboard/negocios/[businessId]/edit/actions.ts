@@ -2,7 +2,10 @@
 
 "use server";
 
-import { isBusinessItemType } from "./business-edit-types";
+import {
+  isBusinessItemType,
+  isBusinessLocationType,
+} from "./business-edit-types";
 import { isLandingVisualMode } from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -347,16 +350,21 @@ async function unsetOtherPrimaryContacts(
 async function unsetOtherPrimaryLocations(
   supabase: Awaited<ReturnType<typeof createClient>>,
   businessId: string,
-  currentLocationId: string,
+  currentLocationId?: string,
 ) {
-  const { error } = await supabase
+  let query = supabase
     .from("business_locations")
     .update({
       is_primary: false,
       updated_at: getNowIsoTimestamp(),
     })
-    .eq("business_id", businessId)
-    .neq("id", currentLocationId);
+    .eq("business_id", businessId);
+
+  if (currentLocationId) {
+    query = query.neq("id", currentLocationId);
+  }
+
+  const { error } = await query;
 
   if (error) {
     redirectToEditBusiness(
@@ -402,6 +410,96 @@ async function getOwnedBusinessContextOrRedirect(
     supabase,
     business,
   };
+}
+
+export async function addBusinessLocation(
+  businessId: string,
+  formData: FormData,
+) {
+  const locationType = getFormValue(formData, "location_type");
+  const addressText = getFormValue(formData, "address_text");
+  const neighborhood = getFormValue(formData, "neighborhood");
+  const referenceNotes = getFormValue(formData, "reference_notes");
+  const serviceAreaText = getFormValue(formData, "service_area_text");
+  const mapUrl = getFormValue(formData, "map_url");
+  const isPrimary = formData.get("is_primary") === "on";
+  const isPublic = formData.get("is_public") === "on";
+
+  if (!isBusinessLocationType(locationType)) {
+    redirectToEditBusiness(
+      businessId,
+      "Selecciona un tipo de ubicación válido.",
+    );
+  }
+
+  validateOptionalLocationMapUrl(businessId, mapUrl);
+
+  if (
+    isPublic &&
+    !addressText &&
+    !serviceAreaText &&
+    !referenceNotes &&
+    !mapUrl
+  ) {
+    redirectToEditBusiness(
+      businessId,
+      "Una ubicación pública debe tener dirección, área de servicio, referencia o enlace de mapa.",
+    );
+  }
+
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para agregar ubicaciones.",
+  );
+
+  const { data: existingLocations, error: existingLocationsError } =
+    await supabase
+      .from("business_locations")
+      .select("id")
+      .eq("business_id", businessId);
+
+  if (existingLocationsError) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudieron revisar las ubicaciones actuales: ${existingLocationsError.message}`,
+    );
+  }
+
+  const shouldBePrimary = isPrimary || (existingLocations?.length ?? 0) === 0;
+
+  if (shouldBePrimary) {
+    await unsetOtherPrimaryLocations(supabase, businessId);
+  }
+
+  const { data: insertedLocation, error: insertLocationError } = await supabase
+    .from("business_locations")
+    .insert({
+      business_id: businessId,
+      location_type: locationType,
+      address_text: addressText || null,
+      neighborhood: neighborhood || null,
+      reference_notes: referenceNotes || null,
+      service_area_text: serviceAreaText || null,
+      map_url: mapUrl || null,
+      is_primary: shouldBePrimary,
+      is_public: isPublic,
+      updated_at: getNowIsoTimestamp(),
+    })
+    .select("id")
+    .single();
+
+  if (insertLocationError || !insertedLocation) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo agregar la ubicación: ${
+        insertLocationError?.message ?? "sin filas insertadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Ubicación agregada correctamente.");
 }
 
 export async function updateBusinessLocationDetails(

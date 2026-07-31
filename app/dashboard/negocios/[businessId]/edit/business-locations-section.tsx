@@ -1,7 +1,13 @@
 // app/dashboard/negocios/[businessId]/edit/business-locations-section.tsx
 
-import { updateBusinessLocationDetails } from "./actions";
-import type { BusinessEditBusiness } from "./business-edit-types";
+import {
+  addBusinessLocation,
+  updateBusinessLocationDetails,
+} from "./actions";
+import {
+  businessLocationTypeOptions,
+  type BusinessEditBusiness,
+} from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
 
 type BusinessLocationsSectionProps = {
@@ -34,6 +40,8 @@ function getMainLocationText(
 export function BusinessLocationsSection({
   business,
 }: BusinessLocationsSectionProps) {
+  const addLocationWithBusinessId = addBusinessLocation.bind(null, business.id);
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-950">Ubicaciones públicas</h2>
@@ -42,6 +50,143 @@ export function BusinessLocationsSection({
         Estas ubicaciones aparecen en la landing pública del negocio cuando
         están marcadas como públicas.
       </p>
+
+      <form
+        action={addLocationWithBusinessId}
+        className="mt-6 rounded-2xl border border-dashed border-orange-300 bg-orange-50/60 p-5"
+      >
+        <h3 className="text-base font-black text-gray-950">
+          Agregar nueva ubicación
+        </h3>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="new-location-type"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Tipo de ubicación
+            </label>
+
+            <select
+              id="new-location-type"
+              name="location_type"
+              defaultValue="physical_location"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            >
+              {businessLocationTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="new-location-address"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Dirección
+            </label>
+
+            <input
+              id="new-location-address"
+              name="address_text"
+              type="text"
+              placeholder="Ej. Calle, número o zona"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="new-location-neighborhood"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              Colonia
+            </label>
+
+            <input
+              id="new-location-neighborhood"
+              name="neighborhood"
+              type="text"
+              placeholder="Ej. Centro"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="new-location-map-url"
+              className="block text-sm font-semibold text-gray-800"
+            >
+              URL de mapa
+            </label>
+
+            <input
+              id="new-location-map-url"
+              name="map_url"
+              type="text"
+              placeholder="https://maps.google.com/..."
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label
+            htmlFor="new-location-reference"
+            className="block text-sm font-semibold text-gray-800"
+          >
+            Referencia visible
+          </label>
+
+          <textarea
+            id="new-location-reference"
+            name="reference_notes"
+            rows={2}
+            placeholder="Ej. Frente a la plaza, enseguida de..."
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+          />
+        </div>
+
+        <div className="mt-4">
+          <label
+            htmlFor="new-location-service-area"
+            className="block text-sm font-semibold text-gray-800"
+          >
+            Área de servicio
+          </label>
+
+          <textarea
+            id="new-location-service-area"
+            name="service_area_text"
+            rows={2}
+            placeholder="Ej. Servicio en Sabinas Hidalgo y alrededores"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+          />
+        </div>
+
+        <div className="mt-4 grid gap-3 rounded-2xl border border-orange-200 bg-white p-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <input type="checkbox" name="is_primary" />
+            Ubicación principal
+          </label>
+
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <input type="checkbox" name="is_public" defaultChecked />
+            Mostrar públicamente
+          </label>
+        </div>
+
+        <ConfirmSubmitButton
+          message="¿Agregar esta ubicación al negocio?"
+          className="mt-5 w-full rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+        >
+          Agregar ubicación
+        </ConfirmSubmitButton>
+      </form>
 
       {business.locations.length > 0 ? (
         <div className="mt-6 grid gap-4">
