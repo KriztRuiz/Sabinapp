@@ -21,10 +21,13 @@ function formatDate(value: string) {
 export default async function LocalNewsPage() {
   const supabase = await createClient();
 
+  const now = new Date().toISOString();
+
   const { data, error } = await supabase
     .from("local_news")
     .select("id, title, summary, source_name, source_url, published_at")
     .eq("is_active", true)
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
     .order("published_at", { ascending: false })
     .limit(20);
 
