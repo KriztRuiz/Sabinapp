@@ -244,7 +244,7 @@ export default async function Home() {
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href="#negocios"
+                  href="/negocios"
                   className="rounded-full bg-orange-600 px-7 py-4 text-center font-black text-white shadow-lg shadow-orange-900/20 transition hover:-translate-y-0.5 hover:bg-orange-700"
                 >
                   Explorar negocios
@@ -510,12 +510,21 @@ export default async function Home() {
             </h2>
           </div>
 
-          <Link
-            href="/auth/sign-up"
-            className="rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
-          >
-            Quiero formar parte
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/negocios"
+              className="rounded-full border border-gray-300 bg-white px-5 py-3 text-center text-sm font-bold text-gray-950 transition hover:bg-gray-50"
+            >
+              Ver directorio completo
+            </Link>
+
+            <Link
+              href="/auth/sign-up"
+              className="rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
+            >
+              Quiero formar parte
+            </Link>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
