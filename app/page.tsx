@@ -372,10 +372,19 @@ export default async function Home() {
             </h2>
           </div>
 
-          <p className="max-w-xl text-sm leading-6 text-gray-600">
-            Esta sección queda preparada para mostrar 3 noticias resumidas por
-            IA, cada una con enlace a su fuente original.
-          </p>
+          <div className="max-w-xl">
+            <p className="text-sm leading-6 text-gray-600">
+              Esta sección queda preparada para mostrar 3 noticias resumidas por
+              IA, cada una con enlace a su fuente original.
+            </p>
+
+            <Link
+              href="/noticias"
+              className="mt-4 inline-flex rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
+            >
+              Ver más noticias
+            </Link>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
