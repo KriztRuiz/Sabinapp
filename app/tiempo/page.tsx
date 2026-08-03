@@ -1,9 +1,24 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   getSabinasWeather,
   getWeatherAdvice,
   getWeatherCodeLabel,
 } from "@/lib/weather/sabinas-weather";
+
+
+export const metadata: Metadata = {
+  title: "Clima de Sabinas Hidalgo | Sabinapp",
+  description:
+    "Consulta el clima actual de Sabinas Hidalgo, temperatura, sensación térmica, humedad, viento y recomendación rápida.",
+  openGraph: {
+    title: "Clima de Sabinas Hidalgo | Sabinapp",
+    description:
+      "Clima actual y recomendación rápida para Sabinas Hidalgo.",
+    type: "website",
+  },
+};
+
 
 export default async function WeatherPage() {
   const weather = await getSabinasWeather();

@@ -1,5 +1,20 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+
+
+export const metadata: Metadata = {
+  title: "Noticias locales | Sabinapp",
+  description:
+    "Consulta noticias y resúmenes locales relacionados con Sabinas Hidalgo, con enlace a su fuente original.",
+  openGraph: {
+    title: "Noticias locales | Sabinapp",
+    description:
+      "Resumen local de noticias relevantes para Sabinas Hidalgo.",
+    type: "website",
+  },
+};
+
 
 type LocalNewsRow = {
   id: string;

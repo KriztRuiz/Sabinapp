@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -5,6 +6,20 @@ import {
   getWeatherAdvice,
   getWeatherCodeLabel,
 } from "@/lib/weather/sabinas-weather";
+
+
+export const metadata: Metadata = {
+  title: "Sabinapp | Directorio local de Sabinas Hidalgo",
+  description:
+    "Encuentra negocios, productos, servicios, noticias y clima de Sabinas Hidalgo, Nuevo León.",
+  openGraph: {
+    title: "Sabinapp | Directorio local de Sabinas Hidalgo",
+    description:
+      "Explora negocios, productos, servicios, noticias y clima de Sabinas Hidalgo.",
+    type: "website",
+  },
+};
+
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 

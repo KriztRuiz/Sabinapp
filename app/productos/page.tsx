@@ -1,5 +1,20 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+
+
+export const metadata: Metadata = {
+  title: "Productos y servicios locales | Sabinapp",
+  description:
+    "Consulta productos, servicios, menús, paquetes y destacados de negocios publicados en Sabinas Hidalgo.",
+  openGraph: {
+    title: "Productos y servicios locales | Sabinapp",
+    description:
+      "Vitrina pública de productos, servicios y destacados locales.",
+    type: "website",
+  },
+};
+
 
 type PageProps = {
   searchParams: Promise<{
