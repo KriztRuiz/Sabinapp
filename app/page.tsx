@@ -44,6 +44,13 @@ type BusinessCardRow = {
   categories: CategoryRelation | CategoryRelation[] | null;
 };
 
+
+type PortalStats = {
+  businessesCount: number;
+  productsCount: number;
+  newsCount: number;
+};
+
 function firstRelation<T>(relation: T | T[] | null | undefined) {
   if (Array.isArray(relation)) {
     return relation[0] ?? null;
@@ -129,6 +136,43 @@ async function getFeaturedProducts(supabase: SupabaseServerClient) {
   );
 }
 
+async function getPortalStats(
+  supabase: SupabaseServerClient,
+): Promise<PortalStats> {
+  const now = new Date().toISOString();
+
+  const [
+    businessesResult,
+    productsResult,
+    newsResult,
+  ] = await Promise.all([
+    supabase
+      .from("businesses")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published")
+      .eq("is_published", true),
+
+    supabase
+      .from("business_items")
+      .select("id, businesses!inner(id)", { count: "exact", head: true })
+      .eq("is_active", true)
+      .eq("businesses.status", "published")
+      .eq("businesses.is_published", true),
+
+    supabase
+      .from("local_news")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true)
+      .or(`expires_at.is.null,expires_at.gt.${now}`),
+  ]);
+
+  return {
+    businessesCount: businessesResult.count ?? 0,
+    productsCount: productsResult.count ?? 0,
+    newsCount: newsResult.count ?? 0,
+  };
+}
+
 async function getRandomBusinesses(supabase: SupabaseServerClient) {
   const { data, error } = await supabase
     .from("businesses")
@@ -161,12 +205,13 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [weather, latestNews, featuredProducts, randomBusinesses] =
+  const [weather, latestNews, featuredProducts, randomBusinesses, portalStats] =
     await Promise.all([
       getSabinasWeather(),
       getLatestNews(supabase),
       getFeaturedProducts(supabase),
       getRandomBusinesses(supabase),
+      getPortalStats(supabase),
     ]);
 
   const weatherLabel = getWeatherCodeLabel(weather?.weatherCode ?? null);
@@ -322,6 +367,52 @@ export default async function Home() {
               </Link>
             </section>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pt-10">
+        <div className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
+              Sabinapp en números
+            </p>
+
+            <p className="mt-4 text-4xl font-black">
+              {portalStats.businessesCount}
+            </p>
+
+            <p className="mt-2 text-sm font-semibold text-gray-600">
+              Negocios publicados
+            </p>
+          </article>
+
+          <article className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
+              Vitrina activa
+            </p>
+
+            <p className="mt-4 text-4xl font-black">
+              {portalStats.productsCount}
+            </p>
+
+            <p className="mt-2 text-sm font-semibold text-gray-600">
+              Productos, servicios y destacados
+            </p>
+          </article>
+
+          <article className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
+              Resumen local
+            </p>
+
+            <p className="mt-4 text-4xl font-black">
+              {portalStats.newsCount}
+            </p>
+
+            <p className="mt-2 text-sm font-semibold text-gray-600">
+              Noticias activas disponibles
+            </p>
+          </article>
         </div>
       </section>
 
