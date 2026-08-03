@@ -325,40 +325,86 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-4 px-6 py-10 md:grid-cols-3">
-        <Link
-          href="/auth/sign-up"
-          className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-        >
-          <span className="text-3xl">👤</span>
-          <h2 className="mt-4 text-xl font-black">Únete a Sabinapp</h2>
-          <p className="mt-2 text-sm leading-6 text-gray-600">
-            Crea una cuenta para acceder a funciones futuras, favoritos y
-            recomendaciones locales.
-          </p>
-        </Link>
+      <section className="mx-auto max-w-7xl px-6 py-10">
+        <div className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
+                Menú rápido local
+              </p>
 
-        <a
-          href="#productos"
-          className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-        >
-          <span className="text-3xl">⭐</span>
-          <h2 className="mt-4 text-xl font-black">Productos destacados</h2>
-          <p className="mt-2 text-sm leading-6 text-gray-600">
-            Mira opciones que los negocios locales quieren mostrar hoy.
-          </p>
-        </a>
+              <h2 className="mt-3 text-3xl font-black">
+                ¿Qué quieres revisar hoy?
+              </h2>
+            </div>
 
-        <a
-          href="#noticias"
-          className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-        >
-          <span className="text-3xl">📰</span>
-          <h2 className="mt-4 text-xl font-black">Resumen local</h2>
-          <p className="mt-2 text-sm leading-6 text-gray-600">
-            Noticias relevantes de la ciudad resumidas para leer rápido.
-          </p>
-        </a>
+            <p className="max-w-xl text-sm leading-6 text-gray-600">
+              Accesos rápidos para explorar Sabinas Hidalgo sin perderte entre
+              menús: clima, noticias, negocios, productos y tu cuenta.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <Link
+              href="/negocios"
+              className="rounded-3xl border border-gray-200 bg-orange-50 p-5 transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+            >
+              <span className="text-3xl">🏪</span>
+              <h3 className="mt-4 font-black">Negocios</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Directorio completo de negocios publicados.
+              </p>
+            </Link>
+
+            <Link
+              href="/productos"
+              className="rounded-3xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+            >
+              <span className="text-3xl">⭐</span>
+              <h3 className="mt-4 font-black">Productos</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Vitrina de productos, servicios y destacados.
+              </p>
+            </Link>
+
+            <Link
+              href="/noticias"
+              className="rounded-3xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+            >
+              <span className="text-3xl">📰</span>
+              <h3 className="mt-4 font-black">Noticias</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Resúmenes locales con enlace a la fuente.
+              </p>
+            </Link>
+
+            <Link
+              href="/tiempo"
+              className="rounded-3xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+            >
+              <span className="text-3xl">🌤️</span>
+              <h3 className="mt-4 font-black">Clima</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Temperatura actual y recomendación rápida.
+              </p>
+            </Link>
+
+            <Link
+              href={user ? "/dashboard" : "/auth/sign-up"}
+              className="rounded-3xl border border-gray-950 bg-gray-950 p-5 text-white transition hover:-translate-y-1 hover:bg-gray-800 hover:shadow-lg"
+            >
+              <span className="text-3xl">👤</span>
+              <h3 className="mt-4 font-black">
+                {user ? "Mi cuenta" : "Crear cuenta"}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-white/70">
+                {user
+                  ? "Entra a tu panel y administra tu actividad."
+                  : "Únete para usar funciones futuras de Sabinapp."}
+              </p>
+            </Link>
+          </div>
+        </div>
       </section>
 
       <section
