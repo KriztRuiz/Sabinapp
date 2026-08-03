@@ -440,7 +440,16 @@ export default async function Home() {
           Vitrina local
         </p>
 
-        <h2 className="mt-3 text-4xl font-black">Productos destacados</h2>
+        <div className="mt-3 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <h2 className="text-4xl font-black">Productos destacados</h2>
+
+          <Link
+            href="/productos"
+            className="w-fit rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
+          >
+            Ver vitrina completa
+          </Link>
+        </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {featuredProducts.length > 0 ? (
