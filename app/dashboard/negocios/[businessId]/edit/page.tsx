@@ -81,6 +81,18 @@ type BusinessLocationRow = {
   is_public: boolean;
 };
 
+function formatModerationDate(value: string | null) {
+  if (!value) {
+    return "Sin fecha";
+  }
+
+  return new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/Monterrey",
+  }).format(new Date(value));
+}
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -89,6 +101,12 @@ type BusinessRow = {
   long_description: string | null;
   status: string;
   is_published: boolean;
+  submitted_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  published_at: string | null;
+  hidden_at: string | null;
   business_settings: BusinessSettingsRelation;
   business_media: BusinessMediaRow[] | null;
   business_items: BusinessItemRow[] | null;
@@ -125,6 +143,12 @@ export default async function EditBusinessPage({
       long_description,
       status,
       is_published,
+      submitted_at,
+      approved_at,
+      rejected_at,
+      rejection_reason,
+      published_at,
+      hidden_at,
       business_settings (
         visual_mode
       ),
@@ -204,6 +228,12 @@ export default async function EditBusinessPage({
     long_description: businessRow.long_description,
     status: businessRow.status,
     is_published: businessRow.is_published,
+    submitted_at: businessRow.submitted_at,
+    approved_at: businessRow.approved_at,
+    rejected_at: businessRow.rejected_at,
+    rejection_reason: businessRow.rejection_reason,
+    published_at: businessRow.published_at,
+    hidden_at: businessRow.hidden_at,
     visual_mode: getBusinessVisualMode(businessRow.business_settings),
     media: (businessRow.business_media ?? []).sort(
       (a, b) => a.sort_order - b.sort_order,
@@ -272,6 +302,41 @@ export default async function EditBusinessPage({
             {query.message}
           </div>
         ) : null}
+
+        <section className="mt-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-black text-gray-950">
+            Historial de moderación
+          </h2>
+
+          <div className="mt-4 grid gap-3 text-sm text-gray-700 md:grid-cols-2">
+            <p>
+              <strong>Enviado a revisión:</strong>{" "}
+              {formatModerationDate(business.submitted_at)}
+            </p>
+
+            <p>
+              <strong>Aprobado:</strong>{" "}
+              {formatModerationDate(business.approved_at)}
+            </p>
+
+            <p>
+              <strong>Publicado:</strong>{" "}
+              {formatModerationDate(business.published_at)}
+            </p>
+
+            <p>
+              <strong>Ocultado:</strong>{" "}
+              {formatModerationDate(business.hidden_at)}
+            </p>
+          </div>
+
+          {business.rejection_reason ? (
+            <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-800">
+              <p className="font-black">Motivo de rechazo</p>
+              <p className="mt-2">{business.rejection_reason}</p>
+            </div>
+          ) : null}
+        </section>
 
         {canSubmitForReview ? (
           <form
