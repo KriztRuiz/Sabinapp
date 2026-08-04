@@ -241,3 +241,48 @@ export async function publishApprovedBusiness(formData: FormData) {
 
   redirect("/dashboard/admin/negocios?message=Negocio%20publicado");
 }
+
+export async function extendBusinessExpiration(formData: FormData) {
+  const { supabase } = await requireAdminReviewPermission();
+  const businessId = getBusinessId(formData);
+  const daysValue = Number(formData.get("days") ?? 30);
+  const allowedDays = [30, 90, 180, 365];
+
+  const days = allowedDays.includes(daysValue) ? daysValue : 30;
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, starts_at")
+    .eq("id", businessId)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now);
+  expiresAt.setDate(expiresAt.getDate() + days);
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      starts_at: business.starts_at ?? now.toISOString(),
+      ends_at: expiresAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      updated_at: now.toISOString(),
+    })
+    .eq("id", businessId);
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudo%20extender%20la%20vigencia",
+    );
+  }
+
+  revalidateBusinessPaths(business.slug);
+
+  redirect("/dashboard/admin/negocios?message=Vigencia%20actualizada");
+}

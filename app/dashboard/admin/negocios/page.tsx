@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   approveBusinessForReview,
+  extendBusinessExpiration,
   hideBusinessFromPublic,
   publishApprovedBusiness,
   rejectBusinessForReview,
@@ -46,6 +47,8 @@ type BusinessReviewRow = {
   published_at: string | null;
   hidden_at: string | null;
   archived_at: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
   expires_at: string | null;
   created_at: string;
   updated_at: string;
@@ -264,6 +267,8 @@ export default async function AdminBusinessesPage({
       published_at,
       hidden_at,
       archived_at,
+      starts_at,
+      ends_at,
       expires_at,
       created_at,
       updated_at
@@ -466,6 +471,11 @@ export default async function AdminBusinessesPage({
                               {formatDate(business.published_at)}
                             </p>
 
+                            <p>
+                              <strong>Vence:</strong>{" "}
+                              {formatDate(business.expires_at)}
+                            </p>
+
                             <div className="mt-4 flex flex-wrap gap-2">
                               {getPublicVisibilityStatus(business)
                                 .canOpenPublicPage ? (
@@ -553,6 +563,45 @@ export default async function AdminBusinessesPage({
                                     className="mt-3 w-full rounded-full bg-red-600 px-4 py-2 text-sm font-black text-white transition hover:bg-red-700"
                                   >
                                     Rechazar
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
+
+                              {business.expires_at ? (
+                                <form
+                                  action={extendBusinessExpiration}
+                                  className="rounded-2xl border border-purple-100 bg-purple-50 p-3"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <label
+                                    htmlFor={`days-${business.id}`}
+                                    className="text-xs font-black uppercase tracking-[0.18em] text-purple-700"
+                                  >
+                                    Actualizar vigencia
+                                  </label>
+
+                                  <select
+                                    id={`days-${business.id}`}
+                                    name="days"
+                                    defaultValue="30"
+                                    className="mt-2 w-full rounded-xl border border-purple-200 bg-white p-3 text-sm text-gray-950 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                                  >
+                                    <option value="30">Extender 30 días</option>
+                                    <option value="90">Extender 90 días</option>
+                                    <option value="180">Extender 180 días</option>
+                                    <option value="365">Extender 365 días</option>
+                                  </select>
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres extender la vigencia de este negocio?"
+                                    className="mt-3 w-full rounded-full bg-purple-600 px-4 py-2 text-sm font-black text-white transition hover:bg-purple-700"
+                                  >
+                                    Extender vigencia
                                   </ConfirmAdminActionButton>
                                 </form>
                               ) : null}
