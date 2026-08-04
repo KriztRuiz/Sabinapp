@@ -185,3 +185,59 @@ export async function hideBusinessFromPublic(formData: FormData) {
 
   redirect("/dashboard/admin/negocios?message=Negocio%20ocultado");
 }
+
+export async function publishApprovedBusiness(formData: FormData) {
+  const { supabase, user } = await requireAdminReviewPermission();
+  const businessId = getBusinessId(formData);
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, status, approved_at, approved_by")
+    .eq("id", businessId)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  if (business.status !== "approved") {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20publicar%20negocios%20aprobados",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      status: "published",
+      is_published: true,
+      show_in_search: true,
+      show_in_home: true,
+      published_at: now,
+      approved_at: business.approved_at ?? now,
+      approved_by: business.approved_by ?? user.id,
+      rejected_at: null,
+      rejected_by: null,
+      rejection_reason: null,
+      suspended_at: null,
+      suspended_by: null,
+      suspension_reason: null,
+      hidden_at: null,
+      updated_at: now,
+    })
+    .eq("id", businessId);
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudo%20publicar%20el%20negocio",
+    );
+  }
+
+  revalidateBusinessPaths(business.slug);
+
+  redirect("/dashboard/admin/negocios?message=Negocio%20publicado");
+}

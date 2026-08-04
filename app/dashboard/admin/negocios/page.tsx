@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   approveBusinessForReview,
   hideBusinessFromPublic,
+  publishApprovedBusiness,
   rejectBusinessForReview,
 } from "./actions";
 import { ConfirmAdminActionButton } from "./confirm-admin-action-button";
@@ -366,6 +367,23 @@ export default async function AdminBusinessesPage({
                                     className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-black text-white transition hover:bg-blue-700"
                                   >
                                     Aprobar revisión
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
+
+                              {business.status === "approved" ? (
+                                <form action={publishApprovedBusiness}>
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres publicar este negocio? Aparecerá públicamente en Sabinapp."
+                                    className="w-full rounded-full bg-green-600 px-4 py-2 text-sm font-black text-white transition hover:bg-green-700"
+                                  >
+                                    Publicar negocio
                                   </ConfirmAdminActionButton>
                                 </form>
                               ) : null}
