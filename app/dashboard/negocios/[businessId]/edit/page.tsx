@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BusinessEditForm } from "./business-edit-form";
+import { submitBusinessForReview } from "./actions";
+import { SubmitBusinessReviewButton } from "./submit-business-review-button";
 
 type PageProps = {
   params: Promise<{
@@ -223,6 +225,10 @@ export default async function EditBusinessPage({
     ),
   };
 
+  const canSubmitForReview = ["draft", "rejected", "hidden", "approved"].includes(
+    business.status,
+  );
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <header className="border-b border-gray-200 pb-6">
@@ -264,6 +270,40 @@ export default async function EditBusinessPage({
         {query.message ? (
           <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
             {query.message}
+          </div>
+        ) : null}
+
+        {canSubmitForReview ? (
+          <form
+            action={submitBusinessForReview.bind(null, business.id)}
+            className="mt-6 rounded-3xl border border-blue-100 bg-blue-50 p-5"
+          >
+            <h2 className="text-lg font-black text-blue-950">
+              Enviar a revisión
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-900">
+              Cuando termines de editar la información, envía este negocio a
+              revisión. Un administrador deberá aprobarlo antes de que pueda
+              publicarse.
+            </p>
+
+            <div className="mt-4">
+              <SubmitBusinessReviewButton />
+            </div>
+          </form>
+        ) : null}
+
+        {business.status === "pending_review" ? (
+          <div className="mt-6 rounded-3xl border border-yellow-100 bg-yellow-50 p-5">
+            <h2 className="text-lg font-black text-yellow-950">
+              Negocio en revisión
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-yellow-900">
+              Tu negocio ya fue enviado. Un administrador debe revisarlo antes
+              de aprobarlo o publicarlo.
+            </p>
           </div>
         ) : null}
       </header>

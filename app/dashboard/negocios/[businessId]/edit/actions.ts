@@ -1343,3 +1343,64 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
 
   redirectToEditBusiness(businessId, "Item agregado correctamente.");
 }
+export async function submitBusinessForReview(businessId: string) {
+  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+    businessId,
+    "Inicia sesión para enviar tu negocio a revisión.",
+  );
+
+  const { data: currentBusiness, error: currentBusinessError } = await supabase
+    .from("businesses")
+    .select("id, status")
+    .eq("id", businessId)
+    .eq("owner_id", business.owner_id)
+    .single();
+
+  if (currentBusinessError || !currentBusiness) {
+    redirectToEditBusiness(
+      businessId,
+      "No se pudo revisar el estado actual del negocio.",
+    );
+  }
+
+  const allowedStatuses = ["draft", "rejected", "hidden", "approved"];
+
+  if (!allowedStatuses.includes(String(currentBusiness.status))) {
+    redirectToEditBusiness(
+      businessId,
+      "Este negocio no se puede enviar a revisión desde su estado actual.",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { data: updatedBusiness, error: updateBusinessError } = await supabase
+    .from("businesses")
+    .update({
+      status: "pending_review",
+      is_published: false,
+      submitted_at: now,
+      rejected_at: null,
+      rejected_by: null,
+      rejection_reason: null,
+      hidden_at: null,
+      published_at: null,
+      updated_at: now,
+    })
+    .eq("id", businessId)
+    .select("id")
+    .single();
+
+  if (updateBusinessError || !updatedBusiness) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo enviar a revisión: ${
+        updateBusinessError?.message ?? "sin filas actualizadas"
+      }`,
+    );
+  }
+
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(businessId, "Negocio enviado a revisión.");
+}
