@@ -53,6 +53,10 @@ export default async function DashboardPage() {
 
   const businesses = (businessesRaw ?? []) as BusinessRow[];
 
+  const { data: canReviewBusinesses } = await supabase.rpc("has_permission", {
+    permission_key: "admin.review_businesses",
+  });
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
@@ -156,6 +160,31 @@ export default async function DashboardPage() {
           Ir a mis negocios
         </Link>
       </section>
+
+      {canReviewBusinesses ? (
+        <section className="mt-8 rounded-2xl border border-orange-200 bg-orange-50 p-6 shadow-sm">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-orange-700">
+            Administración
+          </p>
+
+          <h2 className="mt-2 text-xl font-semibold text-gray-950">
+            Revisión de negocios
+          </h2>
+
+          <p className="mt-2 max-w-2xl text-sm text-gray-700">
+            Revisa negocios enviados por dueños, aprueba contenido, publica
+            negocios aprobados, oculta negocios visibles o rechaza registros que
+            no cumplan los requisitos.
+          </p>
+
+          <Link
+            href="/dashboard/admin/negocios"
+            className="mt-5 inline-flex rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+          >
+            Ir a revisión de negocios
+          </Link>
+        </section>
+      ) : null}
 
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-950">Tus negocios</h2>
