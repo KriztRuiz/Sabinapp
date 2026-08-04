@@ -1,6 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  approveBusinessForReview,
+  hideBusinessFromPublic,
+  rejectBusinessForReview,
+} from "./actions";
+import { ConfirmAdminActionButton } from "./confirm-admin-action-button";
+
+type PageProps = {
+  searchParams: Promise<{
+    message?: string;
+    error?: string;
+  }>;
+};
 
 type BusinessStatus =
   | "draft"
@@ -90,7 +103,11 @@ function groupByStatus(businesses: BusinessReviewRow[]) {
   );
 }
 
-export default async function AdminBusinessesPage() {
+export default async function AdminBusinessesPage({
+  searchParams,
+}: PageProps) {
+  const params = await searchParams;
+
   const supabase = await createClient();
 
   const {
@@ -184,6 +201,18 @@ export default async function AdminBusinessesPage() {
             </div>
           </div>
         </header>
+
+        {params.message ? (
+          <section className="mt-8 rounded-3xl border border-green-200 bg-green-50 p-6 text-green-800">
+            <p className="font-bold">{params.message}</p>
+          </section>
+        ) : null}
+
+        {params.error ? (
+          <section className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800">
+            <p className="font-bold">{params.error}</p>
+          </section>
+        ) : null}
 
         {error ? (
           <section className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800">
@@ -320,6 +349,80 @@ export default async function AdminBusinessesPage() {
                               >
                                 Editar
                               </Link>
+                            </div>
+
+                            <div id="admin-actions" className="mt-5 space-y-3">
+                              {business.status !== "approved" &&
+                              business.status !== "published" ? (
+                                <form action={approveBusinessForReview}>
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres aprobar la revisión de este negocio? Quedará aprobado, pero todavía no será publicado."
+                                    className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-black text-white transition hover:bg-blue-700"
+                                  >
+                                    Aprobar revisión
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
+
+                              {business.status !== "rejected" ? (
+                                <form
+                                  action={rejectBusinessForReview}
+                                  className="rounded-2xl border border-red-100 bg-red-50 p-3"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <label
+                                    htmlFor={`rejection-${business.id}`}
+                                    className="text-xs font-black uppercase tracking-[0.18em] text-red-700"
+                                  >
+                                    Motivo de rechazo
+                                  </label>
+
+                                  <textarea
+                                    id={`rejection-${business.id}`}
+                                    name="rejectionReason"
+                                    minLength={10}
+                                    rows={3}
+                                    placeholder="Ejemplo: falta información verificable del negocio."
+                                    className="mt-2 w-full rounded-xl border border-red-200 bg-white p-3 text-sm text-gray-950 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                                  />
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres rechazar este negocio? Se guardará el motivo de rechazo y dejará de estar publicado."
+                                    className="mt-3 w-full rounded-full bg-red-600 px-4 py-2 text-sm font-black text-white transition hover:bg-red-700"
+                                  >
+                                    Rechazar
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
+
+                              {business.status === "published" ||
+                              business.status === "approved" ? (
+                                <form action={hideBusinessFromPublic}>
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres ocultar este negocio? Dejará de aparecer públicamente en Sabinapp."
+                                    className="w-full rounded-full bg-gray-700 px-4 py-2 text-sm font-black text-white transition hover:bg-gray-800"
+                                  >
+                                    Ocultar
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
                             </div>
                           </div>
                         </div>
