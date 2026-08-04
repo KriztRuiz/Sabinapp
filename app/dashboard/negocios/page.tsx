@@ -14,9 +14,116 @@ type BusinessRow = {
   slug: string;
   status: string;
   is_published: boolean;
+  is_adult_content: boolean;
+  show_in_search: boolean;
+  expires_at: string | null;
+  hidden_at: string | null;
   short_description: string;
   business_settings: BusinessSettingsRelation;
 };
+
+function getPublicVisibilityStatus(business: BusinessRow) {
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+
+  if (business.status === "pending_review") {
+    return {
+      label: "En revisión",
+      detail: "Un administrador debe revisar este negocio antes de publicarlo.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-yellow-100 text-yellow-800",
+    };
+  }
+
+  if (business.status === "approved" && !business.is_published) {
+    return {
+      label: "Aprobado, falta publicar",
+      detail: "El negocio ya fue aprobado, pero todavía no está publicado.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-blue-100 text-blue-800",
+    };
+  }
+
+  if (business.status === "rejected") {
+    return {
+      label: "Rechazado",
+      detail: "El negocio fue rechazado. Revisa el motivo y vuelve a enviarlo.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-red-100 text-red-800",
+    };
+  }
+
+  if (business.status === "hidden" || business.hidden_at) {
+    return {
+      label: "Oculto",
+      detail: "El negocio fue ocultado y no aparece públicamente.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-gray-200 text-gray-800",
+    };
+  }
+
+  if (business.status === "suspended") {
+    return {
+      label: "Suspendido",
+      detail: "El negocio está suspendido y no aparece públicamente.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-orange-100 text-orange-800",
+    };
+  }
+
+  if (business.status === "archived") {
+    return {
+      label: "Archivado",
+      detail: "El negocio está archivado y no aparece públicamente.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-zinc-100 text-zinc-800",
+    };
+  }
+
+  if (business.status === "expired" || isExpired) {
+    return {
+      label: "Vencido",
+      detail: "El negocio está vencido. Debe renovarse o extender su vigencia.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-purple-100 text-purple-800",
+    };
+  }
+
+  if (!business.is_published || business.status !== "published") {
+    return {
+      label: "No publicado",
+      detail: "El negocio todavía no está publicado.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-gray-100 text-gray-700",
+    };
+  }
+
+  if (business.is_adult_content) {
+    return {
+      label: "Contenido adulto",
+      detail: "Los negocios con contenido adulto no aparecen en el directorio público general.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-red-100 text-red-800",
+    };
+  }
+
+  if (!business.show_in_search) {
+    return {
+      label: "Fuera de búsqueda",
+      detail: "El negocio está publicado, pero no aparece en el directorio público.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-slate-100 text-slate-800",
+    };
+  }
+
+  return {
+    label: "Visible públicamente",
+    detail: "El negocio aparece en el directorio público.",
+    canOpenPublicPage: true,
+    badgeClass: "bg-green-100 text-green-800",
+  };
+}
 
 export default async function DashboardBusinessesPage() {
   const supabase = await createClient();
@@ -38,6 +145,10 @@ export default async function DashboardBusinessesPage() {
       slug,
       status,
       is_published,
+      is_adult_content,
+      show_in_search,
+      expires_at,
+      hidden_at,
       short_description,
       business_settings (
         visual_mode
@@ -87,6 +198,7 @@ export default async function DashboardBusinessesPage() {
             const visualMode = getBusinessVisualMode(
               business.business_settings,
             );
+            const publicVisibility = getPublicVisibilityStatus(business);
 
             return (
               <article
@@ -108,14 +220,22 @@ export default async function DashboardBusinessesPage() {
                         Estado: {business.status}
                       </span>
 
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                        {business.is_published ? "Publicado" : "No publicado"}
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${publicVisibility.badgeClass}`}
+                      >
+                        {publicVisibility.label}
                       </span>
 
                       <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
                         Estilo: {visualMode}
                       </span>
                     </div>
+
+                    {!publicVisibility.canOpenPublicPage ? (
+                      <p className="mt-3 max-w-2xl rounded-2xl bg-yellow-50 p-3 text-sm font-medium text-yellow-900">
+                        {publicVisibility.detail}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col">
@@ -126,7 +246,7 @@ export default async function DashboardBusinessesPage() {
                       Editar landing
                     </Link>
 
-                    {business.is_published ? (
+                    {publicVisibility.canOpenPublicPage ? (
                       <Link
                         href={`/negocio/${business.slug}`}
                         target="_blank"

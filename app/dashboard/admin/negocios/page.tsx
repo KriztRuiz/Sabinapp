@@ -33,6 +33,9 @@ type BusinessReviewRow = {
   slug: string;
   status: BusinessStatus;
   is_published: boolean;
+  is_adult_content: boolean;
+  show_in_search: boolean;
+  show_in_home: boolean;
   short_description: string;
   submitted_at: string | null;
   approved_at: string | null;
@@ -82,6 +85,118 @@ function formatDate(value: string | null) {
     timeStyle: "short",
     timeZone: "America/Monterrey",
   }).format(new Date(value));
+}
+
+function getPublicVisibilityStatus(business: BusinessReviewRow) {
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+
+  if (business.status === "pending_review") {
+    return {
+      label: "En revisión",
+      detail: "Pendiente de revisión administrativa.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-yellow-100 text-yellow-800",
+    };
+  }
+
+  if (business.status === "approved" && !business.is_published) {
+    return {
+      label: "Aprobado, falta publicar",
+      detail: "Ya está aprobado, pero falta publicarlo.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-blue-100 text-blue-800",
+    };
+  }
+
+  if (business.status === "rejected") {
+    return {
+      label: "Rechazado",
+      detail: "No aparece públicamente porque fue rechazado.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-red-100 text-red-800",
+    };
+  }
+
+  if (business.status === "hidden" || business.hidden_at) {
+    return {
+      label: "Oculto",
+      detail: "No aparece públicamente porque fue ocultado.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-gray-200 text-gray-800",
+    };
+  }
+
+  if (business.status === "suspended") {
+    return {
+      label: "Suspendido",
+      detail: "No aparece públicamente porque está suspendido.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-orange-100 text-orange-800",
+    };
+  }
+
+  if (business.status === "archived") {
+    return {
+      label: "Archivado",
+      detail: "No aparece públicamente porque está archivado.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-zinc-100 text-zinc-800",
+    };
+  }
+
+  if (business.status === "expired" || isExpired) {
+    return {
+      label: "Vencido",
+      detail: "No aparece públicamente porque su vigencia expiró.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-purple-100 text-purple-800",
+    };
+  }
+
+  if (!business.is_published || business.status !== "published") {
+    return {
+      label: "No publicado",
+      detail: "No aparece públicamente porque todavía no está publicado.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-gray-100 text-gray-700",
+    };
+  }
+
+  if (business.is_adult_content) {
+    return {
+      label: "Contenido adulto",
+      detail: "No aparece en el directorio público general por contenido adulto.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-red-100 text-red-800",
+    };
+  }
+
+  if (!business.show_in_search) {
+    return {
+      label: "Fuera de búsqueda",
+      detail: "Está publicado, pero no aparece en el directorio público.",
+      canOpenPublicPage: false,
+      badgeClass: "bg-slate-100 text-slate-800",
+    };
+  }
+
+  if (!business.show_in_home) {
+    return {
+      label: "Visible sin portada",
+      detail: "Aparece en el directorio, pero no se destacará en portada.",
+      canOpenPublicPage: true,
+      badgeClass: "bg-green-100 text-green-800",
+    };
+  }
+
+  return {
+    label: "Visible públicamente",
+    detail: "Aparece en el directorio público.",
+    canOpenPublicPage: true,
+    badgeClass: "bg-green-100 text-green-800",
+  };
 }
 
 function groupByStatus(businesses: BusinessReviewRow[]) {
@@ -136,6 +251,9 @@ export default async function AdminBusinessesPage({
       slug,
       status,
       is_published,
+      is_adult_content,
+      show_in_search,
+      show_in_home,
       short_description,
       submitted_at,
       approved_at,
@@ -277,11 +395,18 @@ export default async function AdminBusinessesPage({
                                 {STATUS_LABELS[business.status]}
                               </span>
 
-                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
-                                {business.is_published
-                                  ? "Visible públicamente"
-                                  : "No publicado"}
-                              </span>
+                              {(() => {
+                                const publicVisibility =
+                                  getPublicVisibilityStatus(business);
+
+                                return (
+                                  <span
+                                    className={`rounded-full px-3 py-1 text-xs font-black ${publicVisibility.badgeClass}`}
+                                  >
+                                    {publicVisibility.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
 
                             <h3 className="mt-4 text-2xl font-black">
@@ -308,6 +433,11 @@ export default async function AdminBusinessesPage({
                                 {business.suspension_reason}
                               </p>
                             ) : null}
+
+                            <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-800">
+                              Visibilidad:{" "}
+                              {getPublicVisibilityStatus(business).detail}
+                            </p>
                           </div>
 
                           <div className="flex shrink-0 flex-col gap-2 text-sm text-gray-600 lg:min-w-72">
@@ -337,12 +467,15 @@ export default async function AdminBusinessesPage({
                             </p>
 
                             <div className="mt-4 flex flex-wrap gap-2">
-                              <Link
-                                href={`/negocio/${business.slug}`}
-                                className="rounded-full bg-gray-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-800"
-                              >
-                                Ver pública
-                              </Link>
+                              {getPublicVisibilityStatus(business)
+                                .canOpenPublicPage ? (
+                                <Link
+                                  href={`/negocio/${business.slug}`}
+                                  className="rounded-full bg-gray-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-800"
+                                >
+                                  Ver pública
+                                </Link>
+                              ) : null}
 
                               <Link
                                 href={`/dashboard/negocios/${business.id}/edit`}
