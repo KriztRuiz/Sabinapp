@@ -98,6 +98,9 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
     )
     .eq("status", "published")
     .eq("is_published", true)
+    .eq("is_adult_content", false)
+    .eq("show_in_search", true)
+    .or("expires_at.is.null,expires_at.gte.now()")
     .order("name", { ascending: true });
 
   const businesses = ((data ?? []) as unknown as BusinessRow[]).filter(

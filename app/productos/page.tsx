@@ -144,6 +144,11 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
     .eq("is_active", true)
     .eq("businesses.status", "published")
     .eq("businesses.is_published", true)
+    .eq("businesses.is_adult_content", false)
+    .eq("businesses.show_in_search", true)
+    .or("expires_at.is.null,expires_at.gte.now()", {
+      foreignTable: "businesses",
+    })
     .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })
     .limit(80);

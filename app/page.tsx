@@ -119,6 +119,8 @@ async function getLatestNews(supabase: SupabaseServerClient) {
 }
 
 async function getFeaturedProducts(supabase: SupabaseServerClient) {
+  const now = new Date().toISOString();
+
   const { data, error } = await supabase
     .from("business_items")
     .select(
@@ -139,6 +141,11 @@ async function getFeaturedProducts(supabase: SupabaseServerClient) {
     .eq("is_featured", true)
     .eq("businesses.status", "published")
     .eq("businesses.is_published", true)
+    .eq("businesses.is_adult_content", false)
+    .eq("businesses.show_in_search", true)
+    .or(`expires_at.is.null,expires_at.gte.${now}`, {
+      foreignTable: "businesses",
+    })
     .limit(30);
 
   if (error) {
@@ -165,14 +172,22 @@ async function getPortalStats(
       .from("businesses")
       .select("id", { count: "exact", head: true })
       .eq("status", "published")
-      .eq("is_published", true),
+      .eq("is_published", true)
+      .eq("is_adult_content", false)
+      .eq("show_in_search", true)
+      .or(`expires_at.is.null,expires_at.gte.${now}`),
 
     supabase
       .from("business_items")
       .select("id, businesses!inner(id)", { count: "exact", head: true })
       .eq("is_active", true)
       .eq("businesses.status", "published")
-      .eq("businesses.is_published", true),
+      .eq("businesses.is_published", true)
+      .eq("businesses.is_adult_content", false)
+      .eq("businesses.show_in_search", true)
+      .or(`expires_at.is.null,expires_at.gte.${now}`, {
+        foreignTable: "businesses",
+      }),
 
     supabase
       .from("local_news")
@@ -189,6 +204,8 @@ async function getPortalStats(
 }
 
 async function getRandomBusinesses(supabase: SupabaseServerClient) {
+  const now = new Date().toISOString();
+
   const { data, error } = await supabase
     .from("businesses")
     .select(
@@ -204,6 +221,9 @@ async function getRandomBusinesses(supabase: SupabaseServerClient) {
     )
     .eq("status", "published")
     .eq("is_published", true)
+    .eq("is_adult_content", false)
+    .eq("show_in_search", true)
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
     .limit(30);
 
   if (error) {
