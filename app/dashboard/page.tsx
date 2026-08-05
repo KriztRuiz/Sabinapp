@@ -73,6 +73,25 @@ export default async function DashboardPage() {
     permission_key: "admin.review_businesses",
   });
 
+  let pendingReviewCount = 0;
+  let approvedWithoutPublishCount = 0;
+
+  if (canReviewBusinesses) {
+    const { count: pendingCount } = await supabase
+      .from("businesses")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending_review");
+
+    const { count: approvedCount } = await supabase
+      .from("businesses")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved")
+      .eq("is_published", false);
+
+    pendingReviewCount = pendingCount ?? 0;
+    approvedWithoutPublishCount = approvedCount ?? 0;
+  }
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
@@ -192,6 +211,28 @@ export default async function DashboardPage() {
             negocios aprobados, oculta negocios visibles o rechaza registros que
             no cumplan los requisitos.
           </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-orange-200 bg-white p-4">
+              <p className="text-sm font-bold text-gray-600">
+                Pendientes de revisión
+              </p>
+
+              <p className="mt-2 text-3xl font-black text-gray-950">
+                {pendingReviewCount}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-orange-200 bg-white p-4">
+              <p className="text-sm font-bold text-gray-600">
+                Aprobados sin publicar
+              </p>
+
+              <p className="mt-2 text-3xl font-black text-gray-950">
+                {approvedWithoutPublishCount}
+              </p>
+            </div>
+          </div>
 
           <Link
             href="/dashboard/admin/negocios"
