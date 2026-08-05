@@ -188,6 +188,10 @@ export default async function DashboardBusinessesPage() {
 
   const businesses = (businessesRaw ?? []) as unknown as BusinessRow[];
 
+  const { data: canCreateBusiness } = await supabase.rpc("has_permission", {
+    permission_key: "business.create",
+  });
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="border-b border-gray-200 pb-6">
@@ -206,6 +210,15 @@ export default async function DashboardBusinessesPage() {
           Administra el contenido básico y el estilo visual de las landing pages
           públicas.
         </p>
+
+        {canCreateBusiness ? (
+          <Link
+            href="/dashboard/negocios/new"
+            className="mt-5 inline-flex rounded-lg bg-gray-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+          >
+            Registrar nuevo negocio
+          </Link>
+        ) : null}
       </header>
 
       <section className="mt-8 grid gap-4">
