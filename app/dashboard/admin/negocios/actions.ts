@@ -53,7 +53,7 @@ export async function approveBusinessForReview(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, status")
+    .select("id, slug, status, expires_at")
     .eq("id", businessId)
     .single();
 
@@ -371,7 +371,7 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, status")
+    .select("id, slug, status, expires_at")
     .eq("id", businessId)
     .single();
 
@@ -382,10 +382,17 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
   }
 
   const archivableStatuses = ["hidden", "rejected", "expired"];
+  const isPublishedExpired =
+    business.status === "published" &&
+    business.expires_at &&
+    new Date(business.expires_at).getTime() < Date.now();
 
-  if (!archivableStatuses.includes(String(business.status))) {
+  if (
+    !archivableStatuses.includes(String(business.status)) &&
+    !isPublishedExpired
+  ) {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20archivar%20negocios%20ocultos%2C%20rechazados%20o%20expirados",
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20archivar%20negocios%20ocultos%2C%20rechazados%20o%20vencidos",
     );
   }
 

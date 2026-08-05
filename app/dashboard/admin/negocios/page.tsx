@@ -204,6 +204,12 @@ function getPublicVisibilityStatus(business: BusinessReviewRow) {
   };
 }
 
+function isBusinessExpired(business: BusinessReviewRow) {
+  return business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+}
+
 function getAdminGroupStatus(business: BusinessReviewRow): BusinessStatus {
   const isExpired = business.expires_at
     ? new Date(business.expires_at).getTime() < Date.now()
@@ -600,7 +606,9 @@ export default async function AdminBusinessesPage({
 
                               {business.status === "hidden" ||
                               business.status === "rejected" ||
-                              business.status === "expired" ? (
+                              business.status === "expired" ||
+                              (business.status === "published" &&
+                                isBusinessExpired(business)) ? (
                                 <form action={archiveBusinessFromAdmin}>
                                   <input
                                     type="hidden"
@@ -656,7 +664,8 @@ export default async function AdminBusinessesPage({
                                 </form>
                               ) : null}
 
-                              {business.status === "published" ? (
+                              {business.status === "published" &&
+                              !isBusinessExpired(business) ? (
                                 <form action={hideBusinessFromPublic}>
                                   <input
                                     type="hidden"
