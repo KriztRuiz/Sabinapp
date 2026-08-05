@@ -22,6 +22,22 @@ type BusinessRow = {
   business_settings: BusinessSettingsRelation;
 };
 
+function getBusinessStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    draft: "Borrador",
+    pending_review: "Pendiente de revisión",
+    approved: "Aprobado",
+    rejected: "Rechazado",
+    published: "Publicado",
+    hidden: "Oculto",
+    suspended: "Suspendido",
+    archived: "Archivado",
+    expired: "Expirado",
+  };
+
+  return labels[status] ?? status;
+}
+
 function getPublicVisibilityStatus(business: BusinessRow) {
   const isExpired = business.expires_at
     ? new Date(business.expires_at).getTime() < Date.now()
@@ -217,7 +233,7 @@ export default async function DashboardBusinessesPage() {
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                        Estado: {business.status}
+                        Estado: {getBusinessStatusLabel(business.status)}
                       </span>
 
                       <span
