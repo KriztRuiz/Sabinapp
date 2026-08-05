@@ -204,10 +204,22 @@ function getPublicVisibilityStatus(business: BusinessReviewRow) {
   };
 }
 
+function getAdminGroupStatus(business: BusinessReviewRow): BusinessStatus {
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+
+  if (business.status === "published" && isExpired) {
+    return "expired";
+  }
+
+  return business.status;
+}
+
 function groupByStatus(businesses: BusinessReviewRow[]) {
   return businesses.reduce<Record<BusinessStatus, BusinessReviewRow[]>>(
     (groups, business) => {
-      groups[business.status].push(business);
+      groups[getAdminGroupStatus(business)].push(business);
       return groups;
     },
     {
@@ -281,17 +293,17 @@ export default async function AdminBusinessesPage({
   const businesses = (data ?? []) as BusinessReviewRow[];
   const grouped = groupByStatus(businesses);
 
-  const reviewQueue = [
+  const reviewQueue: BusinessStatus[] = [
     "pending_review",
     "approved",
     "published",
-    "rejected",
     "hidden",
+    "rejected",
+    "expired",
+    "archived",
     "suspended",
     "draft",
-    "archived",
-    "expired",
-  ] as BusinessStatus[];
+  ];
 
   return (
     <main className="min-h-screen bg-gray-50 px-6 py-10 text-gray-950">
