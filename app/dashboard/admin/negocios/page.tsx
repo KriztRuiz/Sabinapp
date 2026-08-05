@@ -496,8 +496,7 @@ export default async function AdminBusinessesPage({
                             </div>
 
                             <div id="admin-actions" className="mt-5 space-y-3">
-                              {business.status !== "approved" &&
-                              business.status !== "published" ? (
+                              {business.status === "pending_review" ? (
                                 <form action={approveBusinessForReview}>
                                   <input
                                     type="hidden"
@@ -531,7 +530,8 @@ export default async function AdminBusinessesPage({
                                 </form>
                               ) : null}
 
-                              {business.status !== "rejected" ? (
+                              {business.status === "pending_review" ||
+                              business.status === "approved" ? (
                                 <form
                                   action={rejectBusinessForReview}
                                   className="rounded-2xl border border-red-100 bg-red-50 p-3"
@@ -606,8 +606,7 @@ export default async function AdminBusinessesPage({
                                 </form>
                               ) : null}
 
-                              {business.status === "published" ||
-                              business.status === "approved" ? (
+                              {business.status === "published" ? (
                                 <form action={hideBusinessFromPublic}>
                                   <input
                                     type="hidden"

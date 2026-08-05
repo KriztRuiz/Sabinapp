@@ -53,13 +53,19 @@ export async function approveBusinessForReview(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug")
+    .select("id, slug, status")
     .eq("id", businessId)
     .single();
 
   if (businessError || !business) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  if (business.status !== "pending_review") {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20aprobar%20negocios%20pendientes%20de%20revision",
     );
   }
 
@@ -105,13 +111,21 @@ export async function rejectBusinessForReview(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug")
+    .select("id, slug, status")
     .eq("id", businessId)
     .single();
 
   if (businessError || !business) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  const rejectableStatuses = ["pending_review", "approved"];
+
+  if (!rejectableStatuses.includes(String(business.status))) {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20rechazar%20negocios%20en%20revision%20o%20aprobados",
     );
   }
 
@@ -148,13 +162,19 @@ export async function hideBusinessFromPublic(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug")
+    .select("id, slug, status")
     .eq("id", businessId)
     .single();
 
   if (businessError || !business) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  if (business.status !== "published") {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20ocultar%20negocios%20publicados",
     );
   }
 
