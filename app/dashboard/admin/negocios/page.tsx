@@ -3,10 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   approveBusinessForReview,
+  archiveBusinessFromAdmin,
   extendBusinessExpiration,
   hideBusinessFromPublic,
   publishApprovedBusiness,
   rejectBusinessForReview,
+  restoreHiddenBusinessToPublic,
 } from "./actions";
 import { ConfirmAdminActionButton } from "./confirm-admin-action-button";
 
@@ -563,6 +565,42 @@ export default async function AdminBusinessesPage({
                                     className="mt-3 w-full rounded-full bg-red-600 px-4 py-2 text-sm font-black text-white transition hover:bg-red-700"
                                   >
                                     Rechazar
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
+
+                              {business.status === "hidden" ? (
+                                <form action={restoreHiddenBusinessToPublic}>
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres volver a mostrar este negocio? Aparecerá públicamente si no está vencido."
+                                    className="w-full rounded-full bg-green-600 px-4 py-2 text-sm font-black text-white transition hover:bg-green-700"
+                                  >
+                                    Volver a mostrar
+                                  </ConfirmAdminActionButton>
+                                </form>
+                              ) : null}
+
+                              {business.status === "hidden" ||
+                              business.status === "rejected" ||
+                              business.status === "expired" ? (
+                                <form action={archiveBusinessFromAdmin}>
+                                  <input
+                                    type="hidden"
+                                    name="businessId"
+                                    value={business.id}
+                                  />
+
+                                  <ConfirmAdminActionButton
+                                    confirmMessage="¿Seguro que quieres archivar este negocio? No se borrará físicamente, pero saldrá del flujo normal."
+                                    className="w-full rounded-full bg-red-700 px-4 py-2 text-sm font-black text-white transition hover:bg-red-800"
+                                  >
+                                    Archivar negocio
                                   </ConfirmAdminActionButton>
                                 </form>
                               ) : null}

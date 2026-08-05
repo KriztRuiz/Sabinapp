@@ -306,3 +306,110 @@ export async function extendBusinessExpiration(formData: FormData) {
 
   redirect("/dashboard/admin/negocios?message=Vigencia%20actualizada");
 }
+
+export async function restoreHiddenBusinessToPublic(formData: FormData) {
+  const { supabase } = await requireAdminReviewPermission();
+  const businessId = getBusinessId(formData);
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, status, expires_at")
+    .eq("id", businessId)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  if (business.status !== "hidden") {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20restaurar%20negocios%20ocultos",
+    );
+  }
+
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+
+  if (isExpired) {
+    redirect(
+      "/dashboard/admin/negocios?error=Extiende%20la%20vigencia%20antes%20de%20volver%20a%20mostrar%20este%20negocio",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      status: "published",
+      is_published: true,
+      show_in_search: true,
+      show_in_home: true,
+      hidden_at: null,
+      published_at: now,
+      updated_at: now,
+    })
+    .eq("id", businessId);
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudo%20volver%20a%20mostrar%20el%20negocio",
+    );
+  }
+
+  revalidateBusinessPaths(business.slug);
+
+  redirect("/dashboard/admin/negocios?message=Negocio%20visible%20nuevamente");
+}
+
+export async function archiveBusinessFromAdmin(formData: FormData) {
+  const { supabase } = await requireAdminReviewPermission();
+  const businessId = getBusinessId(formData);
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, status")
+    .eq("id", businessId)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  const archivableStatuses = ["hidden", "rejected", "expired"];
+
+  if (!archivableStatuses.includes(String(business.status))) {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20archivar%20negocios%20ocultos%2C%20rechazados%20o%20expirados",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      status: "archived",
+      is_published: false,
+      show_in_search: false,
+      show_in_home: false,
+      archived_at: now,
+      updated_at: now,
+    })
+    .eq("id", businessId);
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudo%20archivar%20el%20negocio",
+    );
+  }
+
+  revalidateBusinessPaths(business.slug);
+
+  redirect("/dashboard/admin/negocios?message=Negocio%20archivado");
+}
