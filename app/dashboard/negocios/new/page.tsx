@@ -21,6 +21,13 @@ type BusinessTypeRow = {
   is_adult_related: boolean;
 };
 
+type CategoryRow = {
+  id: string;
+  business_type_id: string;
+  name: string;
+  slug: string;
+};
+
 export default async function NewBusinessPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const supabase = await createClient();
@@ -47,6 +54,15 @@ export default async function NewBusinessPage({ searchParams }: PageProps) {
     .order("name", { ascending: true });
 
   const businessTypes = (businessTypesRaw ?? []) as BusinessTypeRow[];
+
+  const { data: categoriesRaw, error: categoriesError } = await supabase
+    .from("categories")
+    .select("id, business_type_id, name, slug")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  const categories = (categoriesRaw ?? []) as CategoryRow[];
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -93,20 +109,20 @@ export default async function NewBusinessPage({ searchParams }: PageProps) {
         </section>
       ) : null}
 
-      {businessTypesError ? (
+      {businessTypesError || categoriesError ? (
         <section className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800">
           <h2 className="text-xl font-black">
             No se pudieron cargar los tipos de negocio
           </h2>
 
           <p className="mt-2 text-sm">
-            Revisa la tabla business_types y sus políticas RLS.
+            Revisa las tablas business_types, categories y sus políticas RLS.
           </p>
         </section>
       ) : null}
 
-      {canCreateBusiness && !businessTypesError ? (
-        <NewBusinessForm businessTypes={businessTypes} />
+      {canCreateBusiness && !businessTypesError && !categoriesError ? (
+        <NewBusinessForm businessTypes={businessTypes} categories={categories} />
       ) : null}
     </main>
   );

@@ -13,11 +13,22 @@ type BusinessTypeOption = {
   is_adult_related: boolean;
 };
 
-type NewBusinessFormProps = {
-  businessTypes: BusinessTypeOption[];
+type CategoryOption = {
+  id: string;
+  business_type_id: string;
+  name: string;
+  slug: string;
 };
 
-export function NewBusinessForm({ businessTypes }: NewBusinessFormProps) {
+type NewBusinessFormProps = {
+  businessTypes: BusinessTypeOption[];
+  categories: CategoryOption[];
+};
+
+export function NewBusinessForm({
+  businessTypes,
+  categories,
+}: NewBusinessFormProps) {
   const [selectedBusinessTypeId, setSelectedBusinessTypeId] = useState("");
 
   const selectedBusinessType = useMemo(
@@ -26,6 +37,14 @@ export function NewBusinessForm({ businessTypes }: NewBusinessFormProps) {
         (businessType) => businessType.id === selectedBusinessTypeId,
       ) ?? null,
     [businessTypes, selectedBusinessTypeId],
+  );
+
+  const availableCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) => category.business_type_id === selectedBusinessTypeId,
+      ),
+    [categories, selectedBusinessTypeId],
   );
 
   const showTemporaryDates =
@@ -104,6 +123,43 @@ export function NewBusinessForm({ businessTypes }: NewBusinessFormProps) {
               {selectedBusinessType.description}
             </p>
           ) : null}
+        </div>
+
+        <div>
+          <label htmlFor="categoryId" className="text-sm font-bold text-gray-800">
+            Categoría
+          </label>
+
+          <select
+            id="categoryId"
+            name="categoryId"
+            required
+            disabled={!selectedBusinessTypeId}
+            className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-950 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+          >
+            <option value="">
+              {selectedBusinessTypeId
+                ? "Selecciona una categoría"
+                : "Primero selecciona un tipo de negocio"}
+            </option>
+
+            {availableCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+
+          {selectedBusinessTypeId && availableCategories.length === 0 ? (
+            <p className="mt-2 text-xs font-semibold text-red-600">
+              Este tipo de negocio no tiene categorías activas configuradas.
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-gray-500">
+              La categoría ayuda a que el negocio aparezca mejor en búsquedas y
+              listados.
+            </p>
+          )}
         </div>
 
         <div>

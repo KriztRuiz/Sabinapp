@@ -60,6 +60,7 @@ export async function createBusinessFromDashboard(formData: FormData) {
   const name = getFormText(formData, "name");
   const slugInput = getFormText(formData, "slug");
   const businessTypeId = getFormText(formData, "businessTypeId");
+  const categoryId = getFormText(formData, "categoryId");
   const shortDescription = getFormText(formData, "shortDescription");
   const longDescription = getFormText(formData, "longDescription");
   const startsAtRaw = getFormText(formData, "startsAt");
@@ -76,6 +77,10 @@ export async function createBusinessFromDashboard(formData: FormData) {
 
   if (!businessTypeId) {
     redirectWithError("Selecciona un tipo de negocio.");
+  }
+
+  if (!categoryId) {
+    redirectWithError("Selecciona una categoría.");
   }
 
   const slug = normalizeSlug(slugInput || name);
@@ -101,6 +106,20 @@ export async function createBusinessFromDashboard(formData: FormData) {
     redirectWithError("El tipo de negocio seleccionado no es válido.");
   }
 
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("id, business_type_id")
+    .eq("id", categoryId)
+    .eq("business_type_id", businessType.id)
+    .eq("is_active", true)
+    .single();
+
+  if (categoryError || !category) {
+    redirectWithError(
+      "La categoría seleccionada no corresponde al tipo de negocio.",
+    );
+  }
+
   const startsAt = getDateIso(startsAtRaw);
   const endsAt = getDateIso(endsAtRaw, true);
 
@@ -121,7 +140,7 @@ export async function createBusinessFromDashboard(formData: FormData) {
     .insert({
       owner_id: user.id,
       business_type_id: businessType.id,
-      category_id: null,
+      category_id: category.id,
       name,
       slug,
       short_description: shortDescription,
