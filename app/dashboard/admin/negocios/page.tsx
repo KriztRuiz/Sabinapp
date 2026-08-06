@@ -559,6 +559,8 @@ export default async function AdminBusinessesPage({
                                 {!canOpenPublicPage(business) ? (
                                   <Link
                                     href={`/dashboard/admin/negocios/${business.id}/preview`}
+                                    target="_blank"
+                                    rel="noreferrer"
                                     className="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
                                   >
                                     Vista previa

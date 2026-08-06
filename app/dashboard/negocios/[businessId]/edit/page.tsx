@@ -306,6 +306,28 @@ export default async function EditBusinessPage({
           Editando: <span className="font-semibold">{business.name}</span>
         </p>
 
+        <div className="mt-5 flex flex-wrap gap-2">
+          {business.status === "published" && business.is_published ? (
+            <Link
+              href={`/negocio/${business.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
+            >
+              Ver pública
+            </Link>
+          ) : (
+            <Link
+              href={`/dashboard/negocios/${business.id}/preview`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
+            >
+              Vista previa
+            </Link>
+          )}
+        </div>
+
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
             Estado: {getBusinessStatusLabel(business.status)}
