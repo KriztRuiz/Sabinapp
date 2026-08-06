@@ -204,6 +204,20 @@ function getPublicVisibilityStatus(business: BusinessReviewRow) {
   };
 }
 
+function canOpenPublicPage(business: BusinessReviewRow) {
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+
+  return (
+    business.status === "published" &&
+    business.is_published === true &&
+    business.is_adult_content === false &&
+    business.show_in_search === true &&
+    !isExpired
+  );
+}
+
 function isBusinessExpired(business: BusinessReviewRow) {
   return business.expires_at
     ? new Date(business.expires_at).getTime() < Date.now()
@@ -507,21 +521,52 @@ export default async function AdminBusinessesPage({
                                 </Link>
                               ) : null}
 
-                              <Link
-                                href={`/dashboard/negocios/${business.id}/edit`}
-                                className="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
-                              >
-                                Editar
-                              </Link>
+                              {business.status !== "archived" ? (
+
+
+                                <Link
+
+
+                                  href={`/dashboard/negocios/${business.id}/edit`}
+
+
+                                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
+
+
+                                >
+
+
+                                  Editar
+
+
+                                </Link>
+
+
+                              ) : (
+
+
+                                <span className="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-bold text-gray-500">
+
+
+                                  Archivado sin edición
+
+
+                                </span>
+
+
+                              )}
+
+                                {!canOpenPublicPage(business) ? (
+                                  <Link
+                                    href={`/dashboard/admin/negocios/${business.id}/preview`}
+                                    className="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
+                                  >
+                                    Vista previa
+                                  </Link>
+                                ) : null}
                             </div>
 
                             <div id="admin-actions" className="mt-5 space-y-3">
-                              <Link
-                                href={`/dashboard/admin/negocios/${business.id}/preview`}
-                                className="inline-flex w-fit items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:border-gray-400 hover:bg-gray-50"
-                              >
-                                Vista previa
-                              </Link>
 
                               {business.status === "pending_review" ? (
                                 <form action={approveBusinessForReview}>

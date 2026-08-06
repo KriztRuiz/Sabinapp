@@ -237,6 +237,14 @@ export default async function EditBusinessPage({
 
   const businessRow = data as unknown as BusinessRow;
 
+  if (businessRow.status === "archived") {
+    redirect(
+      `/dashboard/negocios?message=${encodeURIComponent(
+        "Este negocio está archivado y ya no se puede editar.",
+      )}`,
+    );
+  }
+
   const business = {
     id: businessRow.id,
     name: businessRow.name,

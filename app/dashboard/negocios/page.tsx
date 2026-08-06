@@ -268,12 +268,29 @@ export default async function DashboardBusinessesPage() {
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col">
-                    <Link
-                      href={`/dashboard/negocios/${business.id}/edit`}
-                      className="rounded-lg bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
-                    >
-                      Editar landing
-                    </Link>
+                    {business.status !== "archived" ? (
+
+                      <Link
+
+                        href={`/dashboard/negocios/${business.id}/edit`}
+
+                        className="rounded-lg bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
+
+                      >
+
+                        Editar landing
+
+                      </Link>
+
+                    ) : (
+
+                      <span className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-center text-sm font-semibold text-gray-500">
+
+                        Negocio archivado
+
+                      </span>
+
+                    )}
 
                     {publicVisibility.canOpenPublicPage ? (
                       <Link
