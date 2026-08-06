@@ -518,7 +518,7 @@ export default async function AdminBusinessesPage({
                             <div id="admin-actions" className="mt-5 space-y-3">
                               <Link
                                 href={`/dashboard/admin/negocios/${business.id}/preview`}
-                                className="w-full rounded-full border border-yellow-300 bg-yellow-50 px-4 py-2 text-center text-sm font-black text-yellow-900 transition hover:bg-yellow-100"
+                                className="inline-flex w-fit items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:border-gray-400 hover:bg-gray-50"
                               >
                                 Vista previa
                               </Link>
