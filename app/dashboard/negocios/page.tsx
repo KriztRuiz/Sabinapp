@@ -91,7 +91,8 @@ function getPublicVisibilityStatus(business: BusinessRow) {
   if (business.status === "archived") {
     return {
       label: "Archivado",
-      detail: "El negocio está archivado y no aparece públicamente.",
+      detail:
+        "Registro conservado como historial. Este negocio ya no se puede editar.",
       canOpenPublicPage: false,
       badgeClass: "bg-zinc-100 text-zinc-800",
     };
@@ -118,7 +119,8 @@ function getPublicVisibilityStatus(business: BusinessRow) {
   if (business.is_adult_content) {
     return {
       label: "Contenido adulto",
-      detail: "Los negocios con contenido adulto no aparecen en el directorio público general.",
+      detail:
+        "Los negocios con contenido adulto no aparecen en el directorio público general.",
       canOpenPublicPage: false,
       badgeClass: "bg-red-100 text-red-800",
     };
@@ -127,7 +129,8 @@ function getPublicVisibilityStatus(business: BusinessRow) {
   if (!business.show_in_search) {
     return {
       label: "Fuera de búsqueda",
-      detail: "El negocio está publicado, pero no aparece en el directorio público.",
+      detail:
+        "El negocio está publicado, pero no aparece en el directorio público.",
       canOpenPublicPage: false,
       badgeClass: "bg-slate-100 text-slate-800",
     };
@@ -139,6 +142,74 @@ function getPublicVisibilityStatus(business: BusinessRow) {
     canOpenPublicPage: true,
     badgeClass: "bg-green-100 text-green-800",
   };
+}
+
+function BusinessCard({ business }: { business: BusinessRow }) {
+  const visualMode = getBusinessVisualMode(business.business_settings);
+  const publicVisibility = getPublicVisibilityStatus(business);
+  const isArchived = business.status === "archived";
+
+  return (
+    <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-950">{business.name}</h2>
+
+          <p className="mt-2 max-w-2xl text-sm text-gray-600">
+            {business.short_description}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+              Estado: {getBusinessStatusLabel(business.status)}
+            </span>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium ${publicVisibility.badgeClass}`}
+            >
+              {publicVisibility.label}
+            </span>
+
+            <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
+              Estilo: {visualMode}
+            </span>
+          </div>
+
+          {!publicVisibility.canOpenPublicPage ? (
+            <p className="mt-3 max-w-2xl rounded-2xl bg-yellow-50 p-3 text-sm font-medium text-yellow-900">
+              {publicVisibility.detail}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col">
+          {!isArchived ? (
+            <Link
+              href={`/dashboard/negocios/${business.id}/edit`}
+              className="rounded-lg bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
+            >
+              Editar landing
+            </Link>
+          ) : (
+            <span className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-center text-sm font-semibold text-gray-500">
+              Solo lectura
+            </span>
+          )}
+
+          {publicVisibility.canOpenPublicPage ? (
+            <Link
+              href={`/negocio/${business.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+            >
+              Ver pública
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export default async function DashboardBusinessesPage() {
@@ -187,6 +258,12 @@ export default async function DashboardBusinessesPage() {
   }
 
   const businesses = (businessesRaw ?? []) as unknown as BusinessRow[];
+  const activeBusinesses = businesses.filter(
+    (business) => business.status !== "archived",
+  );
+  const archivedBusinesses = businesses.filter(
+    (business) => business.status === "archived",
+  );
 
   const { data: canCreateBusiness } = await supabase.rpc("has_permission", {
     permission_key: "business.create",
@@ -221,98 +298,73 @@ export default async function DashboardBusinessesPage() {
         ) : null}
       </header>
 
-      <section className="mt-8 grid gap-4">
-        {businesses.length > 0 ? (
-          businesses.map((business) => {
-            const visualMode = getBusinessVisualMode(
-              business.business_settings,
-            );
-            const publicVisibility = getPublicVisibilityStatus(business);
+      {businesses.length > 0 ? (
+        <>
+          <section className="mt-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-black text-gray-950">
+                  Negocios activos
+                </h2>
 
-            return (
-              <article
-                key={business.id}
-                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-950">
-                      {business.name}
-                    </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Negocios que todavía forman parte del flujo normal de edición,
+                  revisión o publicación.
+                </p>
+              </div>
 
-                    <p className="mt-2 max-w-2xl text-sm text-gray-600">
-                      {business.short_description}
-                    </p>
+              <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                {activeBusinesses.length} activos
+              </span>
+            </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                        Estado: {getBusinessStatusLabel(business.status)}
-                      </span>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${publicVisibility.badgeClass}`}
-                      >
-                        {publicVisibility.label}
-                      </span>
-
-                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
-                        Estilo: {visualMode}
-                      </span>
-                    </div>
-
-                    {!publicVisibility.canOpenPublicPage ? (
-                      <p className="mt-3 max-w-2xl rounded-2xl bg-yellow-50 p-3 text-sm font-medium text-yellow-900">
-                        {publicVisibility.detail}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col">
-                    {business.status !== "archived" ? (
-
-                      <Link
-
-                        href={`/dashboard/negocios/${business.id}/edit`}
-
-                        className="rounded-lg bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
-
-                      >
-
-                        Editar landing
-
-                      </Link>
-
-                    ) : (
-
-                      <span className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-center text-sm font-semibold text-gray-500">
-
-                        Negocio archivado
-
-                      </span>
-
-                    )}
-
-                    {publicVisibility.canOpenPublicPage ? (
-                      <Link
-                        href={`/negocio/${business.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-lg border border-gray-300 px-4 py-2 text-center text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
-                      >
-                        Ver pública
-                      </Link>
-                    ) : null}
-                  </div>
+            <div className="mt-4 grid gap-4">
+              {activeBusinesses.length > 0 ? (
+                activeBusinesses.map((business) => (
+                  <BusinessCard key={business.id} business={business} />
+                ))
+              ) : (
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 text-gray-600">
+                  No tienes negocios activos en este momento.
                 </div>
-              </article>
-            );
-          })
-        ) : (
+              )}
+            </div>
+          </section>
+
+          {archivedBusinesses.length > 0 ? (
+            <section className="mt-10 border-t border-gray-200 pt-8">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-black text-gray-950">
+                    Historial archivado
+                  </h2>
+
+                  <p className="mt-1 text-sm text-gray-600">
+                    Registros conservados para historial. Ya no forman parte del
+                    flujo normal de edición o publicación.
+                  </p>
+                </div>
+
+                <span className="w-fit rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-700">
+                  {archivedBusinesses.length} archivados
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-4 opacity-90">
+                {archivedBusinesses.map((business) => (
+                  <BusinessCard key={business.id} business={business} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </>
+      ) : (
+        <section className="mt-8">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 text-gray-600">
             Todavía no tienes negocios registrados.
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </main>
   );
 }
