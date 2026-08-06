@@ -64,9 +64,6 @@ export async function createBusinessFromDashboard(formData: FormData) {
   const longDescription = getFormText(formData, "longDescription");
   const startsAtRaw = getFormText(formData, "startsAt");
   const endsAtRaw = getFormText(formData, "endsAt");
-  const confirmedAuthorization =
-    String(formData.get("ownerConfirmedAuthorization") ?? "") === "on";
-
   if (name.length < 2 || name.length > 120) {
     redirectWithError("El nombre debe tener entre 2 y 120 caracteres.");
   }
@@ -79,12 +76,6 @@ export async function createBusinessFromDashboard(formData: FormData) {
 
   if (!businessTypeId) {
     redirectWithError("Selecciona un tipo de negocio.");
-  }
-
-  if (!confirmedAuthorization) {
-    redirectWithError(
-      "Debes confirmar que tienes autorización para administrar este negocio.",
-    );
   }
 
   const slug = normalizeSlug(slugInput || name);
@@ -141,7 +132,7 @@ export async function createBusinessFromDashboard(formData: FormData) {
       requires_age_verification: Boolean(businessType.is_adult_related),
       show_in_home: true,
       show_in_search: true,
-      owner_confirmed_authorization: true,
+      owner_confirmed_authorization: false,
       starts_at: startsAt,
       ends_at: endsAt,
       expires_at: endsAt,
