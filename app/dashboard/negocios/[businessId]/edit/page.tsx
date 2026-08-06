@@ -8,8 +8,9 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BusinessEditForm } from "./business-edit-form";
-import { submitBusinessForReview } from "./actions";
+import { publishApprovedOwnedBusiness, submitBusinessForReview } from "./actions";
 import { SubmitBusinessReviewButton } from "./submit-business-review-button";
+import { PublishOwnedBusinessButton } from "./publish-owned-business-button";
 
 type PageProps = {
   params: Promise<{
@@ -271,9 +272,11 @@ export default async function EditBusinessPage({
     ),
   };
 
-  const canSubmitForReview = ["draft", "rejected", "hidden", "approved"].includes(
+  const canSubmitForReview = ["draft", "rejected", "hidden"].includes(
     business.status,
   );
+
+  const canPublishApprovedBusiness = business.status === "approved";
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -371,6 +374,26 @@ export default async function EditBusinessPage({
 
             <div className="mt-4">
               <SubmitBusinessReviewButton />
+            </div>
+          </form>
+        ) : null}
+
+        {canPublishApprovedBusiness ? (
+          <form
+            action={publishApprovedOwnedBusiness.bind(null, business.id)}
+            className="mt-6 rounded-3xl border border-green-100 bg-green-50 p-5"
+          >
+            <h2 className="text-lg font-black text-green-950">
+              Negocio aprobado
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-green-900">
+              Este negocio ya fue aprobado por administración. Puedes
+              publicarlo cuando quieras que aparezca en Sabinapp.
+            </p>
+
+            <div className="mt-4">
+              <PublishOwnedBusinessButton />
             </div>
           </form>
         ) : null}

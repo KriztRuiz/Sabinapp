@@ -76,6 +76,7 @@ export async function approveBusinessForReview(formData: FormData) {
       is_published: false,
       approved_at: new Date().toISOString(),
       approved_by: user.id,
+      owner_confirmed_authorization: true,
       rejected_at: null,
       rejected_by: null,
       rejection_reason: null,

@@ -1404,3 +1404,90 @@ export async function submitBusinessForReview(businessId: string) {
 
   redirectToEditBusiness(businessId, "Negocio enviado a revisión.");
 }
+
+export async function publishApprovedOwnedBusiness(businessId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?message=Inicia sesión para publicar el negocio.");
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_id, status, expires_at")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      `/dashboard/negocios?message=${encodeURIComponent(
+        "No se encontró el negocio o no tienes permiso.",
+      )}`,
+    );
+  }
+
+  if (business.status !== "approved") {
+    redirectToEditBusiness(
+      businessId,
+      "Solo puedes publicar negocios aprobados por administración.",
+    );
+  }
+
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < Date.now()
+    : false;
+
+  if (isExpired) {
+    redirectToEditBusiness(
+      businessId,
+      "No se puede publicar porque la vigencia ya venció. Solicita una revisión al administrador.",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      status: "published",
+      is_published: true,
+      show_in_search: true,
+      show_in_home: true,
+      published_at: now,
+      rejected_at: null,
+      rejected_by: null,
+      rejection_reason: null,
+      suspended_at: null,
+      suspended_by: null,
+      suspension_reason: null,
+      hidden_at: null,
+      updated_at: now,
+    })
+    .eq("id", businessId)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      "No se pudo publicar el negocio. Intenta de nuevo.",
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/negocios");
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+  revalidatePath("/");
+  revalidatePath("/negocios");
+  revalidatePath("/productos");
+
+  redirect(
+    `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
+      "Negocio publicado correctamente.",
+    )}`,
+  );
+}

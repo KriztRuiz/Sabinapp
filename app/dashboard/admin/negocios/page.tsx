@@ -516,6 +516,13 @@ export default async function AdminBusinessesPage({
                             </div>
 
                             <div id="admin-actions" className="mt-5 space-y-3">
+                              <Link
+                                href={`/dashboard/admin/negocios/${business.id}/preview`}
+                                className="w-full rounded-full border border-yellow-300 bg-yellow-50 px-4 py-2 text-center text-sm font-black text-yellow-900 transition hover:bg-yellow-100"
+                              >
+                                Vista previa
+                              </Link>
+
                               {business.status === "pending_review" ? (
                                 <form action={approveBusinessForReview}>
                                   <input
