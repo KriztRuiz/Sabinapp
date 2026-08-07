@@ -1491,3 +1491,149 @@ export async function publishApprovedOwnedBusiness(businessId: string) {
     )}`,
   );
 }
+
+function getDateIso(value: string, endOfDay = false) {
+  if (!value) {
+    return null;
+  }
+
+  const time = endOfDay ? "23:59:59" : "00:00:00";
+  const date = new Date(`${value}T${time}`);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
+export async function updateBusinessClassification(
+  businessId: string,
+  formData: FormData,
+) {
+  const businessTypeId = getFormValue(formData, "business_type_id");
+  const categoryId = getFormValue(formData, "category_id");
+  const startsAtRaw = getFormValue(formData, "starts_at");
+  const endsAtRaw = getFormValue(formData, "ends_at");
+
+  if (!businessTypeId) {
+    redirectToEditBusiness(businessId, "Selecciona un tipo de negocio.");
+  }
+
+  if (!categoryId) {
+    redirectToEditBusiness(businessId, "Selecciona una categoría.");
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?message=Inicia sesión para editar negocios.");
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_id, status")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      `/dashboard/negocios?message=${encodeURIComponent(
+        "No se encontró el negocio o no tienes permiso.",
+      )}`,
+    );
+  }
+
+  if (business.status === "archived") {
+    redirectToEditBusiness(
+      businessId,
+      "Este negocio está archivado y ya no se puede editar.",
+    );
+  }
+
+  const { data: businessType, error: businessTypeError } = await supabase
+    .from("business_types")
+    .select("id, requires_start_end_dates, is_adult_related")
+    .eq("id", businessTypeId)
+    .eq("is_active", true)
+    .single();
+
+  if (businessTypeError || !businessType) {
+    redirectToEditBusiness(
+      businessId,
+      "El tipo de negocio seleccionado no es válido.",
+    );
+  }
+
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("id, business_type_id")
+    .eq("id", categoryId)
+    .eq("business_type_id", businessType.id)
+    .eq("is_active", true)
+    .single();
+
+  if (categoryError || !category) {
+    redirectToEditBusiness(
+      businessId,
+      "La categoría seleccionada no corresponde al tipo de negocio.",
+    );
+  }
+
+  const startsAt = businessType.requires_start_end_dates
+    ? getDateIso(startsAtRaw)
+    : null;
+  const endsAt = businessType.requires_start_end_dates
+    ? getDateIso(endsAtRaw, true)
+    : null;
+
+  if (businessType.requires_start_end_dates && (!startsAt || !endsAt)) {
+    redirectToEditBusiness(
+      businessId,
+      "Este tipo de negocio requiere fecha de inicio y fecha de finalización.",
+    );
+  }
+
+  if (startsAt && endsAt && new Date(endsAt).getTime() < new Date(startsAt).getTime()) {
+    redirectToEditBusiness(
+      businessId,
+      "La fecha final no puede ser anterior a la fecha inicial.",
+    );
+  }
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      business_type_id: businessType.id,
+      category_id: category.id,
+      is_adult_content: Boolean(businessType.is_adult_related),
+      requires_age_verification: Boolean(businessType.is_adult_related),
+      starts_at: startsAt,
+      ends_at: endsAt,
+      expires_at: endsAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", businessId)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      "No se pudo actualizar la clasificación del negocio.",
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/negocios");
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+
+  redirectToEditBusiness(
+    businessId,
+    "Clasificación actualizada correctamente.",
+  );
+}

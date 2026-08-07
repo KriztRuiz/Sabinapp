@@ -82,6 +82,22 @@ type BusinessLocationRow = {
   is_public: boolean;
 };
 
+type BusinessTypeRow = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  requires_start_end_dates: boolean;
+  is_adult_related: boolean;
+};
+
+type CategoryRow = {
+  id: string;
+  business_type_id: string;
+  name: string;
+  slug: string;
+};
+
 function getBusinessStatusLabel(status: string) {
   const labels: Record<string, string> = {
     draft: "Borrador",
@@ -118,6 +134,11 @@ type BusinessRow = {
   long_description: string | null;
   status: string;
   is_published: boolean;
+  business_type_id: string;
+  category_id: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  expires_at: string | null;
   submitted_at: string | null;
   approved_at: string | null;
   rejected_at: string | null;
@@ -160,6 +181,11 @@ export default async function EditBusinessPage({
       long_description,
       status,
       is_published,
+      business_type_id,
+      category_id,
+      starts_at,
+      ends_at,
+      expires_at,
       submitted_at,
       approved_at,
       rejected_at,
@@ -253,6 +279,11 @@ export default async function EditBusinessPage({
     long_description: businessRow.long_description,
     status: businessRow.status,
     is_published: businessRow.is_published,
+    business_type_id: businessRow.business_type_id,
+    category_id: businessRow.category_id,
+    starts_at: businessRow.starts_at,
+    ends_at: businessRow.ends_at,
+    expires_at: businessRow.expires_at,
     submitted_at: businessRow.submitted_at,
     approved_at: businessRow.approved_at,
     rejected_at: businessRow.rejected_at,
@@ -279,6 +310,33 @@ export default async function EditBusinessPage({
         a.location_type.localeCompare(b.location_type),
     ),
   };
+
+  const { data: businessTypesRaw, error: businessTypesError } = await supabase
+    .from("business_types")
+    .select(
+      "id, key, name, description, requires_start_end_dates, is_adult_related",
+    )
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  const { data: categoriesRaw, error: categoriesError } = await supabase
+    .from("categories")
+    .select("id, business_type_id, name, slug")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (businessTypesError || categoriesError) {
+    redirect(
+      `/dashboard/negocios?message=${encodeURIComponent(
+        "No se pudieron cargar los catálogos de clasificación.",
+      )}`,
+    );
+  }
+
+  const businessTypes = (businessTypesRaw ?? []) as BusinessTypeRow[];
+  const categories = (categoriesRaw ?? []) as CategoryRow[];
 
   const canSubmitForReview = ["draft", "rejected", "hidden"].includes(
     business.status,
@@ -443,7 +501,11 @@ export default async function EditBusinessPage({
       </header>
 
       <section className="mt-8">
-        <BusinessEditForm business={business} />
+        <BusinessEditForm
+          business={business}
+          businessTypes={businessTypes}
+          categories={categories}
+        />
       </section>
     </main>
   );

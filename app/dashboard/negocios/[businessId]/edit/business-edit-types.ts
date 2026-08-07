@@ -91,6 +91,11 @@ export type BusinessEditBusiness = {
   long_description: string | null;
   status: string;
   is_published: boolean;
+  business_type_id: string;
+  category_id: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  expires_at: string | null;
   visual_mode: string;
   media: BusinessMedia[];
   items: BusinessItem[];
@@ -138,3 +143,20 @@ export function formatItemPrice(item: BusinessItem) {
     currency: item.currency || "MXN",
   }).format(numericPrice);
 }
+
+
+export type BusinessTypeOption = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  requires_start_end_dates: boolean;
+  is_adult_related: boolean;
+};
+
+export type CategoryOption = {
+  id: string;
+  business_type_id: string;
+  name: string;
+  slug: string;
+};
