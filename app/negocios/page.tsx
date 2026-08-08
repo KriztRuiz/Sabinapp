@@ -77,6 +77,34 @@ function getUniqueOptions(options: FilterOption[]) {
   );
 }
 
+function buildBusinessesHref({
+  query,
+  selectedType,
+  selectedCategory,
+}: {
+  query: string;
+  selectedType: string;
+  selectedCategory: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (query) {
+    params.set("q", query);
+  }
+
+  if (selectedType) {
+    params.set("tipo", selectedType);
+  }
+
+  if (selectedCategory) {
+    params.set("categoria", selectedCategory);
+  }
+
+  const queryString = params.toString();
+
+  return queryString ? `/negocios?${queryString}` : "/negocios";
+}
+
 function businessMatchesSearch(business: BusinessRow, query: string) {
   if (!query) {
     return true;
@@ -178,14 +206,28 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
       })),
   );
 
+  const selectedCategoryIsAvailable =
+    !selectedCategory ||
+    categoryOptions.some((option) => option.value === selectedCategory);
+
+  const effectiveSelectedCategory = selectedCategoryIsAvailable
+    ? selectedCategory
+    : "";
+
+  const cleanFiltersHref = buildBusinessesHref({
+    query,
+    selectedType,
+    selectedCategory: effectiveSelectedCategory,
+  });
+
   const businesses = allBusinesses.filter(
     (business) =>
       businessMatchesSearch(business, query) &&
       businessMatchesType(business, selectedType) &&
-      businessMatchesCategory(business, selectedCategory),
+      businessMatchesCategory(business, effectiveSelectedCategory),
   );
 
-  const hasFilters = Boolean(query || selectedType || selectedCategory);
+  const hasFilters = Boolean(query || selectedType || effectiveSelectedCategory);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -264,7 +306,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
             <select
               id="business-category-filter"
               name="categoria"
-              defaultValue={selectedCategory}
+              defaultValue={effectiveSelectedCategory}
               className="min-h-12 rounded-2xl border border-gray-300 bg-white px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
             >
               <option value="">Todas las categorías</option>
@@ -292,6 +334,20 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               </Link>
             ) : null}
           </form>
+
+          {selectedCategory && !selectedCategoryIsAvailable ? (
+            <div className="mt-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm font-semibold text-yellow-900">
+              La categoría seleccionada no corresponde al tipo elegido, así que
+              se ignoró para evitar resultados incorrectos.
+
+              <Link
+                href={cleanFiltersHref}
+                className="ml-2 underline underline-offset-4"
+              >
+                Actualizar URL limpia
+              </Link>
+            </div>
+          ) : null}
 
           {hasFilters ? (
             <p className="mt-4 text-sm font-semibold text-gray-500">
