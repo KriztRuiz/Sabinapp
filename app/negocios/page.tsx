@@ -32,6 +32,20 @@ type BusinessTypeRelation = {
   key: string;
 };
 
+type BusinessItemRelation = {
+  name: string;
+  description: string | null;
+  is_active: boolean | null;
+};
+
+type TagRelation = {
+  name: string;
+};
+
+type BusinessTagRelation = {
+  tags: TagRelation | TagRelation[] | null;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -39,6 +53,8 @@ type BusinessRow = {
   short_description: string | null;
   categories: CategoryRelation | CategoryRelation[] | null;
   business_types: BusinessTypeRelation | BusinessTypeRelation[] | null;
+  business_items: BusinessItemRelation[] | null;
+  business_tags: BusinessTagRelation[] | null;
 };
 
 type FilterOption = {
@@ -113,12 +129,22 @@ function businessMatchesSearch(business: BusinessRow, query: string) {
   const category = firstRelation(business.categories);
   const businessType = firstRelation(business.business_types);
 
+  const itemTexts = (business.business_items ?? [])
+    .filter((item) => item.is_active !== false)
+    .flatMap((item) => [item.name, item.description ?? ""]);
+
+  const tagTexts = (business.business_tags ?? [])
+    .map((businessTag) => firstRelation(businessTag.tags)?.name ?? "")
+    .filter(Boolean);
+
   const searchableText = normalizeSearchText(
     [
       business.name,
       business.short_description ?? "",
       category?.name ?? "",
       businessType?.name ?? "",
+      ...itemTexts,
+      ...tagTexts,
     ].join(" "),
   );
 
@@ -171,6 +197,16 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
       business_types (
         name,
         key
+      ),
+      business_items (
+        name,
+        description,
+        is_active
+      ),
+      business_tags (
+        tags (
+          name
+        )
       )
     `,
     )
@@ -178,6 +214,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
     .eq("is_published", true)
     .eq("is_adult_content", false)
     .eq("show_in_search", true)
+    .eq("business_items.is_active", true)
     .or("expires_at.is.null,expires_at.gte.now()")
     .order("name", { ascending: true });
 
@@ -276,7 +313,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               name="q"
               type="search"
               defaultValue={query}
-              placeholder="Buscar tacos, climas, contador, abarrotes..."
+              placeholder="Buscar tacos, climas, contador, productos, servicios..."
               className="min-h-12 rounded-2xl border border-gray-300 px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
             />
 
