@@ -19,12 +19,18 @@ export const metadata: Metadata = {
 type PageProps = {
   searchParams: Promise<{
     q?: string;
+    tipo?: string;
   }>;
 };
 
 type BusinessRelation = {
   name: string;
   slug: string;
+};
+
+type FilterOption = {
+  label: string;
+  value: string;
 };
 
 type ProductRow = {
@@ -48,6 +54,22 @@ function firstRelation<T>(relation: T | T[] | null | undefined) {
   }
 
   return relation ?? null;
+}
+
+function getUniqueOptions(options: FilterOption[]) {
+  const map = new Map<string, FilterOption>();
+
+  for (const option of options) {
+    if (!option.value || map.has(option.value)) {
+      continue;
+    }
+
+    map.set(option.value, option);
+  }
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.label.localeCompare(b.label, "es-MX"),
+  );
 }
 
 function normalizeSearchText(value: string) {
@@ -92,6 +114,14 @@ function itemMatchesSearch(item: ProductRow, query: string) {
   return searchableText.includes(normalizeSearchText(query));
 }
 
+function itemMatchesType(item: ProductRow, selectedType: string) {
+  if (!selectedType) {
+    return true;
+  }
+
+  return item.type === selectedType;
+}
+
 function formatPrice(
   price: ProductRow["price"],
   currency: string | null,
@@ -117,6 +147,7 @@ function formatPrice(
 export default async function PublicProductsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const query = String(params.q ?? "").trim();
+  const selectedType = String(params.tipo ?? "").trim();
 
   const supabase = await createClient();
 
@@ -153,9 +184,20 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
     .order("sort_order", { ascending: true })
     .limit(80);
 
-  const items = ((data ?? []) as unknown as ProductRow[]).filter((item) =>
-    itemMatchesSearch(item, query),
+  const allItems = (data ?? []) as unknown as ProductRow[];
+
+  const itemTypeOptions = getUniqueOptions(
+    allItems.map((item) => ({
+      label: getItemTypeLabel(item.type),
+      value: item.type,
+    })),
   );
+
+  const items = allItems.filter(
+    (item) => itemMatchesSearch(item, query) && itemMatchesType(item, selectedType),
+  );
+
+  const hasFilters = Boolean(query || selectedType);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -195,7 +237,7 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
         </header>
 
         <section className="mt-8 rounded-3xl border border-orange-100 bg-white p-5 shadow-sm">
-          <form className="flex flex-col gap-3 md:flex-row">
+          <form className="grid gap-3 lg:grid-cols-[1.5fr_1fr_auto_auto]">
             <label className="sr-only" htmlFor="product-search">
               Buscar productos o servicios
             </label>
@@ -209,6 +251,25 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
               className="min-h-12 flex-1 rounded-2xl border border-gray-300 px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
             />
 
+            <label className="sr-only" htmlFor="product-type-filter">
+              Filtrar por tipo
+            </label>
+
+            <select
+              id="product-type-filter"
+              name="tipo"
+              defaultValue={selectedType}
+              className="min-h-12 rounded-2xl border border-gray-300 bg-white px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            >
+              <option value="">Todos los tipos</option>
+
+              {itemTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
             <button
               type="submit"
               className="rounded-2xl bg-orange-600 px-6 py-3 text-sm font-black text-white transition hover:bg-orange-700"
@@ -216,7 +277,7 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
               Buscar
             </button>
 
-            {query ? (
+            {hasFilters ? (
               <Link
                 href="/productos"
                 className="rounded-2xl border border-gray-300 px-6 py-3 text-center text-sm font-black text-gray-800 transition hover:bg-gray-50"
@@ -225,6 +286,13 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
               </Link>
             ) : null}
           </form>
+
+          {hasFilters ? (
+            <p className="mt-4 text-sm font-semibold text-gray-500">
+              Filtros activos. Puedes combinar texto y tipo de producto o
+              servicio.
+            </p>
+          ) : null}
         </section>
 
         {error ? (
