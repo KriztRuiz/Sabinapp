@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-
 export const metadata: Metadata = {
   title: "Negocios locales | Sabinapp",
   description:
@@ -15,19 +14,22 @@ export const metadata: Metadata = {
   },
 };
 
-
 type PageProps = {
   searchParams: Promise<{
     q?: string;
+    tipo?: string;
+    categoria?: string;
   }>;
 };
 
 type CategoryRelation = {
   name: string;
+  slug: string;
 };
 
 type BusinessTypeRelation = {
   name: string;
+  key: string;
 };
 
 type BusinessRow = {
@@ -37,6 +39,11 @@ type BusinessRow = {
   short_description: string | null;
   categories: CategoryRelation | CategoryRelation[] | null;
   business_types: BusinessTypeRelation | BusinessTypeRelation[] | null;
+};
+
+type FilterOption = {
+  label: string;
+  value: string;
 };
 
 function firstRelation<T>(relation: T | T[] | null | undefined) {
@@ -52,6 +59,22 @@ function normalizeSearchText(value: string) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "");
+}
+
+function getUniqueOptions(options: FilterOption[]) {
+  const map = new Map<string, FilterOption>();
+
+  for (const option of options) {
+    if (!option.value || map.has(option.value)) {
+      continue;
+    }
+
+    map.set(option.value, option);
+  }
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.label.localeCompare(b.label, "es-MX"),
+  );
 }
 
 function businessMatchesSearch(business: BusinessRow, query: string) {
@@ -74,9 +97,34 @@ function businessMatchesSearch(business: BusinessRow, query: string) {
   return searchableText.includes(normalizeSearchText(query));
 }
 
+function businessMatchesType(business: BusinessRow, selectedType: string) {
+  if (!selectedType) {
+    return true;
+  }
+
+  const businessType = firstRelation(business.business_types);
+
+  return businessType?.key === selectedType;
+}
+
+function businessMatchesCategory(
+  business: BusinessRow,
+  selectedCategory: string,
+) {
+  if (!selectedCategory) {
+    return true;
+  }
+
+  const category = firstRelation(business.categories);
+
+  return category?.slug === selectedCategory;
+}
+
 export default async function PublicBusinessesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const query = String(params.q ?? "").trim();
+  const selectedType = String(params.tipo ?? "").trim();
+  const selectedCategory = String(params.categoria ?? "").trim();
 
   const supabase = await createClient();
 
@@ -89,10 +137,12 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
       slug,
       short_description,
       categories (
-        name
+        name,
+        slug
       ),
       business_types (
-        name
+        name,
+        key
       )
     `,
     )
@@ -103,9 +153,39 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
     .or("expires_at.is.null,expires_at.gte.now()")
     .order("name", { ascending: true });
 
-  const businesses = ((data ?? []) as unknown as BusinessRow[]).filter(
-    (business) => businessMatchesSearch(business, query),
+  const allBusinesses = (data ?? []) as unknown as BusinessRow[];
+
+  const typeOptions = getUniqueOptions(
+    allBusinesses
+      .map((business) => firstRelation(business.business_types))
+      .filter((businessType): businessType is BusinessTypeRelation =>
+        Boolean(businessType),
+      )
+      .map((businessType) => ({
+        label: businessType.name,
+        value: businessType.key,
+      })),
   );
+
+  const categoryOptions = getUniqueOptions(
+    allBusinesses
+      .filter((business) => businessMatchesType(business, selectedType))
+      .map((business) => firstRelation(business.categories))
+      .filter((category): category is CategoryRelation => Boolean(category))
+      .map((category) => ({
+        label: category.name,
+        value: category.slug,
+      })),
+  );
+
+  const businesses = allBusinesses.filter(
+    (business) =>
+      businessMatchesSearch(business, query) &&
+      businessMatchesType(business, selectedType) &&
+      businessMatchesCategory(business, selectedCategory),
+  );
+
+  const hasFilters = Boolean(query || selectedType || selectedCategory);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -144,7 +224,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
         </header>
 
         <section className="mt-8 rounded-3xl border border-orange-100 bg-white p-5 shadow-sm">
-          <form className="flex flex-col gap-3 md:flex-row">
+          <form className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_auto_auto]">
             <label className="sr-only" htmlFor="business-search">
               Buscar negocios
             </label>
@@ -155,8 +235,46 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               type="search"
               defaultValue={query}
               placeholder="Buscar tacos, climas, contador, abarrotes..."
-              className="min-h-12 flex-1 rounded-2xl border border-gray-300 px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              className="min-h-12 rounded-2xl border border-gray-300 px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
             />
+
+            <label className="sr-only" htmlFor="business-type-filter">
+              Filtrar por tipo
+            </label>
+
+            <select
+              id="business-type-filter"
+              name="tipo"
+              defaultValue={selectedType}
+              className="min-h-12 rounded-2xl border border-gray-300 bg-white px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            >
+              <option value="">Todos los tipos</option>
+
+              {typeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <label className="sr-only" htmlFor="business-category-filter">
+              Filtrar por categoría
+            </label>
+
+            <select
+              id="business-category-filter"
+              name="categoria"
+              defaultValue={selectedCategory}
+              className="min-h-12 rounded-2xl border border-gray-300 bg-white px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            >
+              <option value="">Todas las categorías</option>
+
+              {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
 
             <button
               type="submit"
@@ -165,7 +283,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               Buscar
             </button>
 
-            {query ? (
+            {hasFilters ? (
               <Link
                 href="/negocios"
                 className="rounded-2xl border border-gray-300 px-6 py-3 text-center text-sm font-black text-gray-800 transition hover:bg-gray-50"
@@ -174,6 +292,12 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               </Link>
             ) : null}
           </form>
+
+          {hasFilters ? (
+            <p className="mt-4 text-sm font-semibold text-gray-500">
+              Filtros activos. Puedes combinarlos por texto, tipo y categoría.
+            </p>
+          ) : null}
         </section>
 
         {error ? (
@@ -256,6 +380,15 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
                   Intenta con otra palabra más general, por ejemplo “comida”,
                   “servicio”, “tacos”, “climas” o “abarrotes”.
                 </p>
+
+                {hasFilters ? (
+                  <Link
+                    href="/negocios"
+                    className="mt-5 inline-flex rounded-2xl bg-gray-950 px-5 py-3 text-sm font-black text-white transition hover:bg-gray-800"
+                  >
+                    Quitar filtros
+                  </Link>
+                ) : null}
               </article>
             )}
           </section>
