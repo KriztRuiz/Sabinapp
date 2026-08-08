@@ -121,6 +121,19 @@ function buildBusinessesHref({
   return queryString ? `/negocios?${queryString}` : "/negocios";
 }
 
+function getVisibleBusinessItems(business: BusinessRow) {
+  return (business.business_items ?? [])
+    .filter((item) => item.is_active !== false)
+    .slice(0, 3);
+}
+
+function getVisibleBusinessTags(business: BusinessRow) {
+  return (business.business_tags ?? [])
+    .map((businessTag) => firstRelation(businessTag.tags)?.name ?? "")
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
 function businessMatchesSearch(business: BusinessRow, query: string) {
   if (!query) {
     return true;
@@ -426,6 +439,8 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
                 {businesses.map((business) => {
                   const category = firstRelation(business.categories);
                   const businessType = firstRelation(business.business_types);
+                  const visibleItems = getVisibleBusinessItems(business);
+                  const visibleTags = getVisibleBusinessTags(business);
 
                   return (
                     <Link
@@ -455,6 +470,38 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
                         {business.short_description ??
                           "Conoce más sobre este negocio local."}
                       </p>
+
+                      {visibleTags.length > 0 ? (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {visibleTags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-800"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {visibleItems.length > 0 ? (
+                        <div className="mt-4 rounded-2xl bg-gray-50 p-3">
+                          <p className="text-xs font-black uppercase tracking-[0.16em] text-gray-500">
+                            También encontrado por:
+                          </p>
+
+                          <ul className="mt-2 space-y-1">
+                            {visibleItems.map((item) => (
+                              <li
+                                key={item.name}
+                                className="line-clamp-1 text-sm font-semibold text-gray-700"
+                              >
+                                {item.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
 
                       <p className="mt-5 text-sm font-black text-orange-700">
                         Ver negocio →
