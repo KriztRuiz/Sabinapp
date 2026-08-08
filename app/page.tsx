@@ -322,6 +322,31 @@ export default async function Home() {
                 parte de la comunidad.
               </p>
 
+                <form
+                  action="/negocios"
+                  method="get"
+                  className="mt-8 flex max-w-2xl flex-col gap-3 rounded-3xl border border-orange-100 bg-white/90 p-3 shadow-sm sm:flex-row"
+                >
+                  <label htmlFor="home-business-search" className="sr-only">
+                    Buscar negocios, productos o servicios
+                  </label>
+
+                  <input
+                    id="home-business-search"
+                    name="q"
+                    type="search"
+                    placeholder="Busca tacos, mini split, Rib Eye, contador..."
+                    className="min-h-12 flex-1 rounded-2xl border border-gray-200 px-4 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+
+                  <button
+                    type="submit"
+                    className="rounded-2xl bg-orange-600 px-6 py-3 text-sm font-black text-white transition hover:bg-orange-700"
+                  >
+                    Buscar
+                  </button>
+                </form>
+
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
                   href="/negocios"
