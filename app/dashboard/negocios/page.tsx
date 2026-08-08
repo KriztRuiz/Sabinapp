@@ -8,6 +8,15 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+type NamedRelation =
+  | {
+      name: string;
+    }
+  | {
+      name: string;
+    }[]
+  | null;
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -19,8 +28,22 @@ type BusinessRow = {
   expires_at: string | null;
   hidden_at: string | null;
   short_description: string;
+  business_type: NamedRelation;
+  category: NamedRelation;
   business_settings: BusinessSettingsRelation;
 };
+
+function getRelationName(relation: NamedRelation) {
+  if (!relation) {
+    return null;
+  }
+
+  if (Array.isArray(relation)) {
+    return relation[0]?.name ?? null;
+  }
+
+  return relation.name;
+}
 
 function getBusinessStatusLabel(status: string) {
   const labels: Record<string, string> = {
@@ -173,6 +196,14 @@ function BusinessCard({ business }: { business: BusinessRow }) {
             <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
               Estilo: {visualMode}
             </span>
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-800">
+              Tipo: {getRelationName(business.business_type) ?? "Sin tipo"}
+            </span>
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-800">
+              Categoría: {getRelationName(business.category) ?? "Sin categoría"}
+            </span>
           </div>
 
           {!publicVisibility.canOpenPublicPage ? (
@@ -237,6 +268,12 @@ export default async function DashboardBusinessesPage() {
       expires_at,
       hidden_at,
       short_description,
+      business_type:business_types (
+        name
+      ),
+      category:categories (
+        name
+      ),
       business_settings (
         visual_mode
       )

@@ -12,6 +12,15 @@ import {
 } from "./actions";
 import { ConfirmAdminActionButton } from "./confirm-admin-action-button";
 
+type NamedRelation =
+  | {
+      name: string;
+    }
+  | {
+      name: string;
+    }[]
+  | null;
+
 type PageProps = {
   searchParams: Promise<{
     message?: string;
@@ -40,6 +49,8 @@ type BusinessReviewRow = {
   show_in_search: boolean;
   show_in_home: boolean;
   short_description: string;
+  business_type: NamedRelation;
+  category: NamedRelation;
   submitted_at: string | null;
   approved_at: string | null;
   rejected_at: string | null;
@@ -79,6 +90,18 @@ const STATUS_BADGE_CLASSES: Record<BusinessStatus, string> = {
   archived: "bg-zinc-100 text-zinc-800",
   expired: "bg-purple-100 text-purple-800",
 };
+
+function getRelationName(relation: NamedRelation) {
+  if (!relation) {
+    return null;
+  }
+
+  if (Array.isArray(relation)) {
+    return relation[0]?.name ?? null;
+  }
+
+  return relation.name;
+}
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -292,6 +315,12 @@ export default async function AdminBusinessesPage({
       show_in_search,
       show_in_home,
       short_description,
+      business_type:business_types (
+        name
+      ),
+      category:categories (
+        name
+      ),
       submitted_at,
       approved_at,
       rejected_at,
@@ -310,7 +339,7 @@ export default async function AdminBusinessesPage({
     )
     .order("updated_at", { ascending: false });
 
-  const businesses = (data ?? []) as BusinessReviewRow[];
+  const businesses = (data ?? []) as unknown as BusinessReviewRow[];
   const grouped = groupByStatus(businesses);
 
   const reviewQueue: BusinessStatus[] = [
@@ -459,6 +488,16 @@ export default async function AdminBusinessesPage({
                             <p className="mt-3 max-w-3xl leading-7 text-gray-600">
                               {business.short_description}
                             </p>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-800">
+                                Tipo: {getRelationName(business.business_type) ?? "Sin tipo"}
+                              </span>
+
+                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-800">
+                                Categoría: {getRelationName(business.category) ?? "Sin categoría"}
+                              </span>
+                            </div>
 
                             {business.rejection_reason ? (
                               <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-800">
