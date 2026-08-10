@@ -9,6 +9,7 @@ import type {
   BusinessTypeOption,
   CategoryOption,
 } from "./business-edit-types";
+import { FieldGuide } from "./field-guide";
 
 type BusinessClassificationFormProps = {
   business: BusinessEditBusiness;
@@ -74,6 +75,13 @@ export function BusinessClassificationForm({
         Define el tipo y la categoría. Esto ayuda a ordenar el directorio y
         mejorar las búsquedas.
       </p>
+
+      <FieldGuide
+        title="Guía para clasificar el negocio"
+        description="El tipo define la familia general del negocio y la categoría lo vuelve más específico. Esto ayuda a que las personas lo encuentren mejor en el directorio."
+        goodExample="Tipo: Restaurantes y comida. Categoría: Taquería."
+        avoid="Evita elegir una categoría solo porque suena mejor. Usa la que más se acerque a lo que realmente ofrece el negocio."
+      />
 
       <div className="mt-6 grid gap-5">
         <div>

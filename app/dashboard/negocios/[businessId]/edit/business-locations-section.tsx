@@ -1,3 +1,4 @@
+import { FieldGuide } from "./field-guide";
 // app/dashboard/negocios/[businessId]/edit/business-locations-section.tsx
 
 import {
@@ -47,6 +48,13 @@ export function BusinessLocationsSection({
         Estas ubicaciones aparecen en la landing pública del negocio cuando
         están marcadas como públicas.
       </p>
+
+      <FieldGuide
+        title="Guía para ubicaciones públicas"
+        description="Explica dónde atiende el negocio. Puede ser un local físico, servicio a domicilio, punto de entrega, área de servicio o ubicación temporal."
+        goodExample="Local físico en colonia Centro, referencia frente a la plaza. También puedes agregar enlace de Google Maps."
+        avoid="Evita publicar una dirección privada si el negocio solo atiende por contacto o a domicilio."
+      />
 
       <form
         action={addLocationWithBusinessId}

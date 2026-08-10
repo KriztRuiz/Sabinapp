@@ -1,3 +1,4 @@
+import { FieldGuide } from "./field-guide";
 // app/dashboard/negocios/[businessId]/edit/business-media-section.tsx
 
 import {
@@ -24,6 +25,13 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
         Edita las URLs de imágenes, el texto alternativo y cuál imagen se usa
         como portada.
       </p>
+
+      <FieldGuide
+        title="Guía para imágenes actuales"
+        description="Usa imágenes claras del negocio, productos, fachada, menú, instalaciones o trabajos realizados. La imagen de portada será una de las primeras cosas que verá el cliente."
+        goodExample="Fachada del local, producto principal bien iluminado o foto real del servicio terminado."
+        avoid="Evita fotos borrosas, capturas de pantalla, imágenes con demasiado texto o fotos que no representen al negocio."
+      />
 
       <form
         action={addBusinessMediaWithId}

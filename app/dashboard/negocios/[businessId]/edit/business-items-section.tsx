@@ -1,3 +1,4 @@
+import { FieldGuide } from "./field-guide";
 // app/dashboard/negocios/[businessId]/edit/business-items-section.tsx
 
 import {
@@ -56,6 +57,13 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
                 Puedes agregar productos, servicios, paquetes, actividades,
                 amenidades o reglas del negocio.
               </p>
+
+                <FieldGuide
+                  title="Guía para agregar al menú o destacados"
+                  description="Agrega productos, servicios, paquetes, platillos, amenidades o preguntas frecuentes que ayuden al cliente a decidir si quiere contactar al negocio."
+                  goodExample="Taco de trompo, Mantenimiento preventivo, Declaración mensual, Paquete familiar."
+                  avoid="Evita nombres demasiado vagos como “Servicio 1” o “Producto especial” sin explicar qué incluye."
+                />
             </div>
 
             <span className="w-fit rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">

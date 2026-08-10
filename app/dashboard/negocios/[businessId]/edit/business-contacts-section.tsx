@@ -5,6 +5,7 @@ import {
 } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
+import { FieldGuide } from "./field-guide";
 
 type BusinessContactsSectionProps = {
   business: BusinessEditBusiness;
@@ -23,6 +24,13 @@ export function BusinessContactsSection({
         Estos contactos aparecen en la landing pública y en el botón flotante de
         contacto.
       </p>
+
+      <FieldGuide
+        title="Guía para contactos públicos"
+        description="Agrega los medios reales por los que el cliente puede pedir información, cotizar o comprar. El contacto principal debe ser el canal más rápido para atender."
+        goodExample="WhatsApp principal con número local, teléfono del negocio, correo o enlace directo a redes sociales."
+        avoid="Evita poner contactos personales que no atienden clientes o enlaces incompletos que no abren correctamente."
+      />
 
       <form
         action={addContactWithBusinessId}

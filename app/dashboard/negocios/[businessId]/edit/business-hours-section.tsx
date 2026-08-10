@@ -6,6 +6,7 @@ import {
 import type { BusinessEditBusiness } from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
 import { TimeInput } from "./time-input";
+import { FieldGuide } from "./field-guide";
 
 type BusinessHoursSectionProps = {
   business: BusinessEditBusiness;
@@ -39,6 +40,13 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
       <p className="mt-2 text-sm text-gray-600">
         Estos horarios aparecen en la landing pública del negocio.
       </p>
+
+      <FieldGuide
+        title="Guía para horarios públicos"
+        description="Agrega los horarios en que normalmente atiende el negocio. Si hay descansos, turnos partidos o días especiales, usa las notas para aclararlo."
+        goodExample="Lunes a sábado 08:00 - 21:00. Nota: Cerrado de 14:00 a 16:00."
+        avoid="Evita poner horarios que no puedas respetar. Si el horario cambia seguido, acláralo en notas."
+      />
 
       <form
         action={addHourWithBusinessId}
