@@ -1,4 +1,4 @@
-import { FieldGuide } from "./field-guide";
+import { FieldGuide } from "../../_components/field-guide";
 // app/dashboard/negocios/[businessId]/edit/business-media-section.tsx
 
 import {

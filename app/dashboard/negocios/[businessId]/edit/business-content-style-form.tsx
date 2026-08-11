@@ -3,7 +3,7 @@
 import { landingVisualModeOptions } from "@/lib/landing/styles";
 import { updateBusinessLanding } from "./actions";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
-import { FieldGuide } from "./field-guide";
+import { FieldGuide } from "../../_components/field-guide";
 import type { BusinessEditBusiness } from "./business-edit-types";
 
 type BusinessContentStyleFormProps = {

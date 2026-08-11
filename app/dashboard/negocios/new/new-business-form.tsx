@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { FieldGuide } from "../_components/field-guide";
 import { createBusinessFromDashboard } from "./actions";
 
 type BusinessTypeOption = {
@@ -71,6 +72,13 @@ export function NewBusinessForm({
             placeholder="Ejemplo: Tacos Don Pepe"
             className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-950 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
+
+          <FieldGuide
+            title="Guía para el nombre del negocio"
+            description="Escribe el nombre como lo conocen tus clientes. Debe ser claro y fácil de recordar."
+            goodExample="Tacos Don Pepe"
+            avoid="Evita nombres genéricos como “Mi negocio”, “Local 1” o textos con demasiados emojis."
+          />
         </div>
 
         <div>
@@ -90,6 +98,13 @@ export function NewBusinessForm({
             Si lo dejas vacío, se generará desde el nombre. Solo usa letras
             minúsculas, números y guiones.
           </p>
+
+          <FieldGuide
+            title="Guía para el slug público"
+            description="El slug es la parte final del enlace público del negocio. Si no estás seguro, déjalo vacío y Sabinapp lo generará automáticamente."
+            goodExample="tacos-don-pepe"
+            avoid="Evita espacios, mayúsculas, acentos, signos raros o frases demasiado largas."
+          />
         </div>
 
         <div>
@@ -123,6 +138,13 @@ export function NewBusinessForm({
               {selectedBusinessType.description}
             </p>
           ) : null}
+
+          <FieldGuide
+            title="Guía para elegir tipo de negocio"
+            description="El tipo define la familia principal del negocio. Úsalo para decir si es comida, comercio, servicio técnico, servicio profesional, sitio de interés u ocasión especial."
+            goodExample="Una taquería va en Restaurantes y comida. Un técnico de climas va en Servicios técnicos."
+            avoid="Evita elegir un tipo solo porque suena más atractivo. Elige el que describa mejor la actividad real."
+          />
         </div>
 
         <div>
@@ -160,6 +182,13 @@ export function NewBusinessForm({
               listados.
             </p>
           )}
+
+          <FieldGuide
+            title="Guía para elegir categoría"
+            description="La categoría vuelve más específica la clasificación. Ayuda a que las personas encuentren el negocio cuando buscan algo concreto."
+            goodExample="Tipo: Restaurantes y comida. Categoría: Taquería."
+            avoid="Evita usar una categoría que no corresponda solo para aparecer en más búsquedas."
+          />
         </div>
 
         <div>
@@ -180,6 +209,13 @@ export function NewBusinessForm({
             placeholder="Describe brevemente qué ofrece el negocio."
             className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-950 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
+
+          <FieldGuide
+            title="Guía para la descripción corta"
+            description="Resume en una frase qué ofrece el negocio. Esta descripción ayuda a entender rápido si el negocio es relevante para el cliente."
+            goodExample="Tacos de trompo, bistec y gringas para cenar o llevar en Sabinas Hidalgo."
+            avoid="Evita frases vacías como “somos los mejores” sin explicar qué vendes o qué servicio das."
+          />
         </div>
 
         <div>
@@ -197,6 +233,13 @@ export function NewBusinessForm({
             placeholder="Agrega más detalles del negocio, historia, servicios o ventajas."
             className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-950 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
           />
+
+          <FieldGuide
+            title="Guía para la descripción larga"
+            description="Aquí puedes explicar con más calma qué hace el negocio, qué vende, cómo atiende y qué debería saber un cliente antes de contactarlo."
+            goodExample="Somos una taquería familiar con servicio para cenar y llevar. Preparamos tacos de trompo, bistec, gringas y aguas frescas."
+            avoid="Evita repetir exactamente la descripción corta. Usa este espacio para dar más contexto."
+          />
         </div>
 
         {showTemporaryDates ? (
@@ -208,6 +251,13 @@ export function NewBusinessForm({
             <p className="mt-1 text-sm text-gray-600">
               Este tipo requiere fecha de inicio y fecha de finalización.
             </p>
+
+            <FieldGuide
+              title="Guía para fechas temporales"
+              description="Usa estas fechas cuando el negocio, evento, venta o promoción solo estará disponible por un periodo definido."
+              goodExample="Venta de temporada del 10 al 15 de diciembre."
+              avoid="Evita usar fechas temporales para negocios permanentes como tiendas, restaurantes o servicios fijos."
+            />
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>

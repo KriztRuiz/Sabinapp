@@ -9,7 +9,7 @@ import type {
   BusinessTypeOption,
   CategoryOption,
 } from "./business-edit-types";
-import { FieldGuide } from "./field-guide";
+import { FieldGuide } from "../../_components/field-guide";
 
 type BusinessClassificationFormProps = {
   business: BusinessEditBusiness;

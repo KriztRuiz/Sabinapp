@@ -5,7 +5,7 @@ import {
 } from "./actions";
 import type { BusinessEditBusiness } from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
-import { FieldGuide } from "./field-guide";
+import { FieldGuide } from "../../_components/field-guide";
 
 type BusinessContactsSectionProps = {
   business: BusinessEditBusiness;

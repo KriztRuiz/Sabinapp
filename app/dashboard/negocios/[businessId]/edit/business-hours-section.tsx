@@ -6,7 +6,7 @@ import {
 import type { BusinessEditBusiness } from "./business-edit-types";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
 import { TimeInput } from "./time-input";
-import { FieldGuide } from "./field-guide";
+import { FieldGuide } from "../../_components/field-guide";
 
 type BusinessHoursSectionProps = {
   business: BusinessEditBusiness;
