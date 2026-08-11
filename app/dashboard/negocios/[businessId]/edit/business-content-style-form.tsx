@@ -1,7 +1,7 @@
 // app/dashboard/negocios/[businessId]/edit/business-content-style-form.tsx
 
-import { landingVisualModeOptions } from "@/lib/landing/styles";
 import { updateBusinessLanding } from "./actions";
+import { BusinessCustomizationSection } from "./business-customization-section";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
 import { FieldGuide } from "../../_components/field-guide";
 import type { BusinessEditBusiness } from "./business-edit-types";
@@ -20,7 +20,10 @@ export function BusinessContentStyleForm({
 
   return (
     <form action={updateBusinessLandingWithId} className="space-y-8">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <section
+        id="contenido"
+        className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+      >
         <h2 className="text-xl font-bold text-gray-950">
           Contenido de la landing
         </h2>
@@ -104,58 +107,14 @@ export function BusinessContentStyleForm({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-950">Estilo visual</h2>
-
-        <p className="mt-2 text-sm text-gray-600">
-          Elige cómo se verá la landing pública. Esta sección va debajo del
-          contenido porque primero se edita la información y después se decide
-          cómo presentarla.
-        </p>
-
-        <FieldGuide
-          title="Consejo para elegir estilo visual"
-          description="Elige el modo que mejor combine con la personalidad del negocio. No cambia los datos, solo la forma en que se presentan."
-          goodExample="Un restaurante puede usar un estilo cálido o impactante; un contador puede usar uno elegante o clásico."
-          avoid="Evita cambiar de estilo solo por color. Primero piensa si el estilo comunica bien el tipo de negocio."
-        />
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {landingVisualModeOptions.map((mode) => (
-            <label
-              key={mode.key}
-              className="cursor-pointer rounded-2xl border border-gray-200 p-4 transition hover:border-orange-300 hover:bg-orange-50"
-            >
-              <div className="flex items-start gap-3">
-                <input
-                  type="radio"
-                  name="visual_mode"
-                  value={mode.key}
-                  defaultChecked={business.visual_mode === mode.key}
-                  className="mt-1"
-                />
-
-                <span>
-                  <span className="block font-bold text-gray-950">
-                    {mode.name}
-                  </span>
-
-                  <span className="mt-1 block text-sm leading-6 text-gray-600">
-                    {mode.description}
-                  </span>
-                </span>
-              </div>
-            </label>
-          ))}
-        </div>
-      </section>
+      <BusinessCustomizationSection business={business} />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <ConfirmSubmitButton
-          message="¿Guardar los cambios de contenido y estilo de este negocio?"
+          message="¿Guardar los cambios de contenido y personalización de este negocio?"
           className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
         >
-          Guardar contenido y estilo
+          Guardar contenido y personalización
         </ConfirmSubmitButton>
 
         {business.is_published ? (
