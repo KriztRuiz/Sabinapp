@@ -26,3 +26,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Editor de negocios: navegación rápida por secciones */
+.business-edit-panels .business-edit-panel {
+  display: none;
+}
+
+.business-edit-panels .business-content-style-actions {
+  display: none;
+}
+
+.business-edit-panels:not(:has(.business-edit-panel:target)) #contenido {
+  display: block;
+}
+
+.business-edit-panels:not(:has(.business-edit-panel:target))
+  .business-content-style-actions {
+  display: flex;
+}
+
+.business-edit-panels:has(.business-edit-panel:target)
+  .business-edit-panel:target {
+  display: block;
+}
+
+.business-edit-panels:has(#contenido:target) .business-content-style-actions,
+.business-edit-panels:has(#personalizacion:target)
+  .business-content-style-actions {
+  display: flex;
+}

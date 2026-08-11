@@ -3,6 +3,7 @@
 import { BusinessClassificationForm } from "./business-classification-form";
 import { BusinessContentStyleForm } from "./business-content-style-form";
 import { BusinessContactsSection } from "./business-contacts-section";
+import { BusinessEditQuickNav } from "./business-edit-quick-nav";
 import { BusinessHoursSection } from "./business-hours-section";
 import { BusinessLocationsSection } from "./business-locations-section";
 import { BusinessItemsSection } from "./business-items-section";
@@ -25,21 +26,38 @@ export function BusinessEditForm({
   categories,
 }: BusinessEditFormProps) {
   return (
-    <div className="space-y-8">
+    <div className="business-edit-panels space-y-8">
+      <BusinessEditQuickNav />
+
       <BusinessContentStyleForm business={business} />
-      <BusinessClassificationForm
-        business={business}
-        businessTypes={businessTypes}
-        categories={categories}
-      />
-      <BusinessMediaSection business={business} />
-      <BusinessItemsSection business={business} />
 
-      <BusinessContactsSection business={business} />
+      <div id="clasificacion" className="business-edit-panel scroll-mt-24">
+        <BusinessClassificationForm
+          business={business}
+          businessTypes={businessTypes}
+          categories={categories}
+        />
+      </div>
 
-      <BusinessHoursSection business={business} />
+      <div id="imagenes" className="business-edit-panel scroll-mt-24">
+        <BusinessMediaSection business={business} />
+      </div>
 
-      <BusinessLocationsSection business={business} />
+      <div id="menu" className="business-edit-panel scroll-mt-24">
+        <BusinessItemsSection business={business} />
+      </div>
+
+      <div id="contactos" className="business-edit-panel scroll-mt-24">
+        <BusinessContactsSection business={business} />
+      </div>
+
+      <div id="horarios" className="business-edit-panel scroll-mt-24">
+        <BusinessHoursSection business={business} />
+      </div>
+
+      <div id="ubicaciones" className="business-edit-panel scroll-mt-24">
+        <BusinessLocationsSection business={business} />
+      </div>
     </div>
   );
 }

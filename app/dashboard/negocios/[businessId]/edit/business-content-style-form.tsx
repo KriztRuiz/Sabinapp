@@ -20,9 +20,8 @@ export function BusinessContentStyleForm({
 
   return (
     <form action={updateBusinessLandingWithId} className="space-y-8">
-      <section
-        id="contenido"
-        className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+      <section id="contenido"
+        className="business-edit-panel scroll-mt-24 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
       >
         <h2 className="text-xl font-bold text-gray-950">
           Contenido de la landing
@@ -109,7 +108,7 @@ export function BusinessContentStyleForm({
 
       <BusinessCustomizationSection business={business} />
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="business-content-style-actions flex flex-col gap-3 sm:flex-row">
         <ConfirmSubmitButton
           message="¿Guardar los cambios de contenido y personalización de este negocio?"
           className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"

@@ -10,9 +10,8 @@ export function BusinessCustomizationSection({
   business,
 }: BusinessCustomizationSectionProps) {
   return (
-    <section
-      id="personalizacion"
-      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+    <section id="personalizacion"
+      className="business-edit-panel scroll-mt-24 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
     >
       <h2 className="text-xl font-bold text-gray-950">Personalización</h2>
 
