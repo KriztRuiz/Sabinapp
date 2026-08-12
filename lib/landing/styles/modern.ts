@@ -38,16 +38,16 @@ export const modernStyles: LandingStyles = {
     "grid min-h-[calc(100vh-7rem)] items-center gap-12 py-16 lg:grid-cols-[0.92fr_1.08fr] lg:py-24",
 
   heroImageCard:
-    "group relative min-h-[28rem] overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-white/5 p-2 shadow-2xl shadow-cyan-950/50 ring-1 ring-white/10",
+    "group relative min-h-[22rem] overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-white/5 p-2 shadow-2xl shadow-cyan-950/50 ring-1 ring-white/10 md:min-h-[30rem]",
 
   heroImage:
-    "h-full min-h-[28rem] w-full rounded-[1.5rem] object-cover transition duration-700 group-hover:scale-105",
+    "h-full min-h-[22rem] w-full rounded-[1.5rem] object-cover transition duration-700 group-hover:scale-105 md:min-h-[30rem]",
 
   heroPlaceholder:
-    "flex min-h-[28rem] items-center justify-center rounded-[1.5rem] border border-dashed border-cyan-300/30 bg-white/5 p-8 text-center",
+    "flex min-h-[22rem] items-center justify-center rounded-[1.5rem] border border-dashed border-cyan-300/30 bg-white/5 p-8 text-center md:min-h-[30rem]",
 
   heroOverlay:
-    "absolute inset-x-6 bottom-6 rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-5 text-white shadow-2xl backdrop-blur-xl",
+    "absolute inset-x-4 bottom-4 rounded-[1.5rem] border border-white/10 bg-slate-950/75 p-4 text-white shadow-2xl backdrop-blur-xl md:inset-x-6 md:bottom-6 md:p-5",
 
   card:
     "rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-6 shadow-xl shadow-slate-950/30 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-white/[0.09]",
@@ -80,6 +80,6 @@ export const modernStyles: LandingStyles = {
     item:
       "flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-bold text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/10",
     button:
-      "flex h-16 w-16 items-center justify-center rounded-full bg-cyan-300 text-2xl text-slate-950 shadow-2xl shadow-cyan-950/60 transition hover:scale-105 hover:bg-white",
+      "inline-flex min-h-14 min-w-[9.5rem] items-center justify-center rounded-full bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950 shadow-2xl shadow-cyan-950/60 transition hover:scale-105 hover:bg-white",
   },
 };

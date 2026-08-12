@@ -133,6 +133,21 @@ function formatPrice(price: number | null, currency: string | null) {
   }).format(price);
 }
 
+function getUniquePhotosBySrc(photos: PublicLandingData["photos"]) {
+  const seen = new Set<string>();
+
+  return photos.filter((photo) => {
+    const key = photo.src.trim();
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 function getLocationTypeLabel(locationType: string) {
   const labels: Record<string, string> = {
     physical_location: "Local físico",
@@ -176,10 +191,62 @@ function ModernItemCard({
   styles: LandingStylesForModern;
   variant?: "normal" | "featured" | "compact";
 }) {
-  const price = item.showPrice === true ? formatPrice(item.price, item.currency) : null;
+  const price =
+    item.showPrice === true ? formatPrice(item.price, item.currency) : null;
 
-  const imageHeight =
-    variant === "featured" ? "h-64" : variant === "compact" ? "h-28" : "h-44";
+  const shouldContainImage = item.type === "product";
+
+  const imageClass = shouldContainImage
+    ? "object-contain bg-white p-3"
+    : "object-cover";
+
+  if (variant === "compact") {
+    return (
+      <article
+        className={`grid gap-4 rounded-[1.5rem] border p-4 ${styles.divider} sm:grid-cols-[7.5rem_1fr_auto] sm:items-center`}
+      >
+        {item.imageUrl ? (
+          <div className="h-28 overflow-hidden rounded-2xl border border-white/10 bg-white">
+            <img
+              src={item.imageUrl}
+              alt={item.imageAlt ?? item.name}
+              className={`h-full w-full ${imageClass}`}
+            />
+          </div>
+        ) : (
+          <div className="flex h-28 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-2xl">
+            ★
+          </div>
+        )}
+
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={styles.badge}>{getItemTypeLabel(item.type)}</span>
+
+            {item.isFeatured ? <span className={styles.tag}>Destacado</span> : null}
+          </div>
+
+          <h3 className={`${styles.heading} mt-3 text-xl font-black`}>
+            {item.name}
+          </h3>
+
+          {item.description ? (
+            <p className={`${styles.mutedText} mt-1 text-sm leading-6`}>
+              {item.description}
+            </p>
+          ) : null}
+        </div>
+
+        {price ? (
+          <p className={`${styles.price} text-2xl font-black sm:text-right`}>
+            {price}
+          </p>
+        ) : null}
+      </article>
+    );
+  }
+
+  const imageHeight = variant === "featured" ? "h-64" : "h-44";
 
   return (
     <article
@@ -190,11 +257,11 @@ function ModernItemCard({
       }
     >
       {item.imageUrl ? (
-        <div className="mb-5 overflow-hidden rounded-[1.25rem] border border-white/10 bg-white/5">
+        <div className="mb-5 overflow-hidden rounded-[1.25rem] border border-white/10 bg-white">
           <img
             src={item.imageUrl}
             alt={item.imageAlt ?? item.name}
-            className={`${imageHeight} w-full object-cover transition duration-700 hover:scale-105`}
+            className={`${imageHeight} w-full ${imageClass} transition duration-700 hover:scale-105`}
           />
         </div>
       ) : null}
@@ -202,9 +269,7 @@ function ModernItemCard({
       <div className="flex flex-wrap items-center gap-2">
         <span className={styles.badge}>{getItemTypeLabel(item.type)}</span>
 
-        {item.isFeatured ? (
-          <span className={styles.tag}>Destacado</span>
-        ) : null}
+        {item.isFeatured ? <span className={styles.tag}>Destacado</span> : null}
       </div>
 
       <div className="mt-4 flex items-start justify-between gap-4">
@@ -240,13 +305,15 @@ export function ModernBusinessLanding({ data }: Props) {
   const coverPhoto =
     data.photos.find((photo) => photo.isCover) ?? data.photos[0] ?? null;
 
-  const galleryPhotos = data.photos.filter(
+  const gallerySourcePhotos = getUniquePhotosBySrc(data.photos);
+
+  const galleryPhotos = gallerySourcePhotos.filter(
     (photo) => photo.id !== coverPhoto?.id,
   );
 
   const visibleGalleryPhotos = (
-    galleryPhotos.length > 0 ? galleryPhotos : data.photos
-  ).slice(0, 7);
+    galleryPhotos.length > 0 ? galleryPhotos : gallerySourcePhotos
+  ).slice(0, 5);
 
   const primaryContact =
     data.contacts.find((contact) => contact.isPrimary) ??
@@ -258,8 +325,18 @@ export function ModernBusinessLanding({ data }: Props) {
   const highlightItems =
     featuredItems.length > 0 ? featuredItems.slice(0, 4) : data.items.slice(0, 4);
 
-  const previewItems = data.items.slice(0, 6);
-  const extraItems = data.items.slice(6);
+  const catalogItemsWithoutHighlights = data.items.filter(
+    (item) =>
+      !highlightItems.some((highlightItem) => highlightItem.id === item.id),
+  );
+
+  const catalogItems =
+    catalogItemsWithoutHighlights.length > 0
+      ? catalogItemsWithoutHighlights
+      : data.items;
+
+  const previewItems = catalogItems.slice(0, 6);
+  const extraItems = catalogItems.slice(6);
   const offerCopy = getOfferCopy(data);
   const businessIcon = getBusinessIcon(data.businessType, data.category);
 
@@ -327,13 +404,13 @@ export function ModernBusinessLanding({ data }: Props) {
 
         <section
           id="inicio"
-          className="grid min-h-[calc(100vh-7rem)] items-center gap-10 py-12 lg:grid-cols-[0.82fr_1.18fr] lg:py-20"
+          className="grid min-h-[calc(100svh-7rem)] items-center gap-8 py-10 md:grid-cols-[0.86fr_1.14fr] lg:gap-10 lg:py-16"
         >
-          <div className="relative z-10 order-2 lg:order-1">
+          <div className="relative z-10 order-1">
             <div className={styles.badge}>{data.businessType}</div>
 
             <h1
-              className={`${styles.heading} mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl`}
+              className={`${styles.heading} mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight sm:text-5xl xl:text-7xl`}
             >
               {data.name}
             </h1>
@@ -366,7 +443,7 @@ export function ModernBusinessLanding({ data }: Props) {
               ) : null}
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid gap-3 xl:grid-cols-3">
               <article className={styles.card}>
                 <p className={`${styles.sectionLabel} text-xs font-black uppercase tracking-[0.25em]`}>
                   Giro
@@ -396,7 +473,7 @@ export function ModernBusinessLanding({ data }: Props) {
             </div>
           </div>
 
-          <div className="relative order-1 lg:order-2">
+          <div className="relative order-2">
             <div className="absolute -inset-5 rounded-[3rem] bg-cyan-300/10 blur-3xl" />
 
             <div className={styles.heroImageCard}>
