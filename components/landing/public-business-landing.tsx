@@ -7,6 +7,12 @@ import {
   getContactIcon,
   getExternalLinkProps,
 } from "@/lib/landing/contact";
+import {
+  getLandingModeLayout,
+  type LandingModeLayout,
+  type LandingSectionKey,
+  type LandingSectionPresentation,
+} from "@/lib/landing/layouts";
 import { getLandingStyles } from "@/lib/landing/styles";
 import type { PublicLandingData } from "@/lib/landing/styles/types";
 
@@ -248,8 +254,57 @@ function formatHour(hour: PublicLandingData["hours"][number]) {
   return `${hour.opensAt.slice(0, 5)} - ${hour.closesAt.slice(0, 5)}`;
 }
 
+
+function getSectionPresentation(
+  layout: LandingModeLayout,
+  key: LandingSectionKey,
+): LandingSectionPresentation {
+  return layout.sections[key]?.presentation ?? "normal";
+}
+
+function shouldShowSection(layout: LandingModeLayout, key: LandingSectionKey) {
+  return getSectionPresentation(layout, key) !== "hidden";
+}
+
+function getLongDescriptionClassName(
+  styles: ReturnType<typeof getLandingStyles>,
+  presentation: LandingSectionPresentation,
+) {
+  if (presentation === "featured") {
+    return `${styles.text} mt-6 max-w-3xl text-lg leading-8`;
+  }
+
+  if (presentation === "compact") {
+    return `${styles.mutedText} mt-4 max-w-xl text-sm leading-6`;
+  }
+
+  return `${styles.mutedText} mt-4 max-w-2xl leading-7`;
+}
+
 export function PublicBusinessLanding({ data }: Props) {
   const styles = getLandingStyles(data.visualMode);
+  const layout = getLandingModeLayout(data.visualMode);
+
+  const longDescriptionPresentation = getSectionPresentation(
+    layout,
+    "longDescription",
+  );
+
+  const showLongDescription =
+    Boolean(data.longDescription) && shouldShowSection(layout, "longDescription");
+  const showFeaturedItems = shouldShowSection(layout, "featuredItems");
+  const showGallery = shouldShowSection(layout, "gallery");
+  const showItems = shouldShowSection(layout, "items");
+  const showHours = shouldShowSection(layout, "hours");
+  const showLocations = shouldShowSection(layout, "locations");
+  const showTags = shouldShowSection(layout, "tags") && data.tags.length > 0;
+  const showContactHub =
+    shouldShowSection(layout, "contactHub") && data.contacts.length > 0;
+
+  const longDescriptionClassName = getLongDescriptionClassName(
+    styles,
+    longDescriptionPresentation,
+  );
 
   const coverPhoto =
     data.photos.find((photo) => photo.isCover) ?? data.photos[0] ?? null;
@@ -299,15 +354,23 @@ export function PublicBusinessLanding({ data }: Props) {
               <a href="#inicio" className={styles.navPill}>
                 Inicio
               </a>
-              <a href="#menu" className={styles.navPill}>
-                {menuCopy.label}
-              </a>
-              <a href="#destacados" className={styles.navPill}>
-                Destacados
-              </a>
-              <a href="#galeria" className={styles.navPill}>
-                Galería
-              </a>
+              {showItems ? (
+                <a href="#menu" className={styles.navPill}>
+                  {menuCopy.label}
+                </a>
+              ) : null}
+
+              {showFeaturedItems ? (
+                <a href="#destacados" className={styles.navPill}>
+                  Destacados
+                </a>
+              ) : null}
+
+              {showGallery ? (
+                <a href="#galeria" className={styles.navPill}>
+                  Galería
+                </a>
+              ) : null}
               <a href="#contacto" className={styles.navPill}>
                 Contacto
               </a>
@@ -339,8 +402,8 @@ export function PublicBusinessLanding({ data }: Props) {
               {data.shortDescription}
             </p>
 
-            {data.longDescription ? (
-              <p className={`${styles.mutedText} mt-4 max-w-2xl leading-7`}>
+            {showLongDescription ? (
+              <p className={longDescriptionClassName}>
                 {data.longDescription}
               </p>
             ) : null}
@@ -356,12 +419,14 @@ export function PublicBusinessLanding({ data }: Props) {
                 </a>
               ) : null}
 
-              <a href="#menu" className={styles.buttonSecondary}>
-                Ver {menuCopy.label.toLowerCase()}
-              </a>
+              {showItems ? (
+                <a href="#menu" className={styles.buttonSecondary}>
+                  Ver {menuCopy.label.toLowerCase()}
+                </a>
+              ) : null}
             </div>
 
-            {data.tags.length > 0 ? (
+            {showTags ? (
               <div className="mt-8 flex flex-wrap gap-2">
                 {data.tags.map((tag) => (
                   <span key={tag} className={styles.tag}>
@@ -400,7 +465,7 @@ export function PublicBusinessLanding({ data }: Props) {
           </div>
         </section>
 
-        <section className="grid gap-4 py-8 md:grid-cols-3">
+        <section className={`grid gap-4 py-8 ${showLocations ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
           <article className={styles.card}>
             <span className="text-3xl">🏷️</span>
             <h3 className={`${styles.heading} mt-4 text-xl font-black`}>
@@ -411,6 +476,7 @@ export function PublicBusinessLanding({ data }: Props) {
             </p>
           </article>
 
+          {showLocations ? (
           <article className={styles.card}>
             <span className="text-3xl">📍</span>
             <h3 className={`${styles.heading} mt-4 text-xl font-black`}>
@@ -422,6 +488,7 @@ export function PublicBusinessLanding({ data }: Props) {
                 : "Consulta ubicación por contacto."}
             </p>
           </article>
+          ) : null}
 
           <article className={styles.card}>
             <span className="text-3xl">💬</span>
@@ -627,6 +694,7 @@ export function PublicBusinessLanding({ data }: Props) {
           id="contacto"
           className="grid gap-6 py-20 lg:grid-cols-[0.95fr_1.05fr]"
         >
+          {showHours ? (
           <article className={styles.card}>
             <p
               className={`${styles.sectionLabel} text-sm font-bold uppercase tracking-[0.3em]`}
@@ -659,10 +727,11 @@ export function PublicBusinessLanding({ data }: Props) {
               )}
             </div>
           </article>
+          ) : null}
 
           <article className={styles.featuredCard}>
             <h2 className={`${styles.heading} text-4xl font-black`}>
-              Contacto y ubicación
+              {showLocations ? "Contacto y ubicación" : "Contacto"}
             </h2>
 
             <p className={`${styles.mutedText} mt-4 leading-8`}>
@@ -698,7 +767,7 @@ export function PublicBusinessLanding({ data }: Props) {
                 </article>
               )}
 
-              {mainLocation?.mapUrl ? (
+              {showLocations && mainLocation?.mapUrl ? (
                 <a
                   href={mainLocation.mapUrl}
                   className={`${styles.card} transition hover:-translate-y-1`}
@@ -715,7 +784,7 @@ export function PublicBusinessLanding({ data }: Props) {
               ) : null}
             </div>
 
-            {data.locations.length > 0 ? (
+            {showLocations && data.locations.length > 0 ? (
               <div className="mt-8">
                 <h3 className={`${styles.heading} text-2xl font-black`}>
                   Ubicaciones disponibles
@@ -776,7 +845,9 @@ export function PublicBusinessLanding({ data }: Props) {
         </section>
       </div>
 
-      <ContactHub contacts={data.contacts} styles={styles.contactHub} />
+      {showContactHub ? (
+        <ContactHub contacts={data.contacts} styles={styles.contactHub} />
+      ) : null}
     </main>
   );
 }
