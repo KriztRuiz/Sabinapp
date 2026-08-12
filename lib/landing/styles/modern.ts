@@ -1,50 +1,85 @@
-// lib/landing/styles/modern.ts
-
 import type { LandingStyles } from "./types";
 
 export const modernStyles: LandingStyles = {
-  page: "min-h-screen overflow-hidden bg-[#080605] text-orange-50",
+  page:
+    "min-h-screen overflow-hidden bg-slate-950 text-white selection:bg-cyan-300 selection:text-slate-950",
+
   background:
-    "pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.32),transparent_34%),radial-gradient(circle_at_top_right,rgba(239,68,68,0.20),transparent_28%),linear-gradient(180deg,#080605,#140d09)]",
-  container: "relative mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8",
-  nav: "sticky top-4 z-40 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-orange-50 shadow-2xl shadow-black/30 backdrop-blur-xl",
+    "pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.26),transparent_34%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.22),transparent_32%),radial-gradient(circle_at_bottom,rgba(59,130,246,0.14),transparent_36%),linear-gradient(135deg,#020617_0%,#0f172a_45%,#111827_100%)]",
+
+  container:
+    "mx-auto w-full max-w-7xl px-5 py-5 sm:px-6 lg:px-8",
+
+  nav:
+    "sticky top-4 z-40 rounded-full border border-white/10 bg-slate-950/75 px-5 py-3 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl",
+
   navPill:
-    "rounded-full px-3 py-1.5 text-sm text-orange-100/75 transition hover:bg-white/10 hover:text-white",
+    "rounded-full px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white",
+
   brandIcon:
-    "grid h-10 w-10 place-items-center rounded-full bg-orange-500 text-lg text-white shadow-lg shadow-orange-950/40",
+    "flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-300/10 text-2xl shadow-lg shadow-cyan-950/40",
+
   badge:
-    "inline-flex w-fit rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-200",
-  heading: "text-white",
-  text: "text-orange-50/90",
-  mutedText: "text-orange-100/60",
-  sectionLabel: "text-orange-300",
+    "inline-flex w-fit items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-black uppercase tracking-[0.22em] text-cyan-200",
+
+  heading:
+    "text-white",
+
+  text:
+    "text-slate-100",
+
+  mutedText:
+    "text-slate-300",
+
+  sectionLabel:
+    "text-cyan-300",
+
   heroGrid:
-    "grid min-h-[78vh] items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr]",
+    "grid min-h-[calc(100vh-7rem)] items-center gap-12 py-16 lg:grid-cols-[0.92fr_1.08fr] lg:py-24",
+
   heroImageCard:
-    "relative rounded-[2rem] border border-white/10 bg-white/[0.07] p-3 shadow-2xl shadow-black/40 backdrop-blur-xl",
-  heroImage: "h-[520px] w-full rounded-[1.5rem] object-cover",
+    "group relative min-h-[28rem] overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-white/5 p-2 shadow-2xl shadow-cyan-950/50 ring-1 ring-white/10",
+
+  heroImage:
+    "h-full min-h-[28rem] w-full rounded-[1.5rem] object-cover transition duration-700 group-hover:scale-105",
+
   heroPlaceholder:
-    "grid h-[420px] place-items-center rounded-[1.5rem] border border-dashed border-orange-400/30 bg-white/5 p-8 text-center",
+    "flex min-h-[28rem] items-center justify-center rounded-[1.5rem] border border-dashed border-cyan-300/30 bg-white/5 p-8 text-center",
+
   heroOverlay:
-    "absolute bottom-7 left-7 right-7 rounded-3xl border border-white/15 bg-black/45 p-5 text-white backdrop-blur-xl",
-  card: "rounded-[2rem] border border-white/10 bg-white/[0.06] p-6 shadow-xl shadow-black/25 backdrop-blur-xl",
+    "absolute inset-x-6 bottom-6 rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-5 text-white shadow-2xl backdrop-blur-xl",
+
+  card:
+    "rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-6 shadow-xl shadow-slate-950/30 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-white/[0.09]",
+
   featuredCard:
-    "rounded-[2rem] border border-orange-400/30 bg-gradient-to-br from-orange-500/15 via-white/[0.06] to-red-500/10 p-5 shadow-2xl shadow-black/30",
+    "rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-white/[0.12] via-white/[0.07] to-cyan-300/[0.08] p-6 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-cyan-300/50",
+
   galleryCard:
-    "overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] shadow-xl shadow-black/25",
+    "group overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] p-2 shadow-xl shadow-slate-950/40 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40",
+
   buttonPrimary:
-    "rounded-full bg-orange-500 px-7 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/40 transition hover:-translate-y-0.5 hover:bg-orange-400",
+    "inline-flex items-center justify-center rounded-full bg-cyan-300 px-6 py-3 text-sm font-black text-slate-950 shadow-xl shadow-cyan-950/40 transition hover:-translate-y-0.5 hover:bg-white",
+
   buttonSecondary:
-    "rounded-full border border-white/15 bg-white/[0.06] px-7 py-4 text-center font-bold text-orange-50 transition hover:-translate-y-0.5 hover:bg-white/[0.12]",
-  tag: "rounded-full border border-orange-400/20 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-100",
-  price: "text-orange-300",
-  divider: "border-white/10",
+    "inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-6 py-3 text-sm font-black text-white shadow-xl shadow-slate-950/30 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/10",
+
+  tag:
+    "inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-slate-200",
+
+  price:
+    "text-cyan-300",
+
+  divider:
+    "border-white/10 bg-white/[0.04]",
+
   contactHub: {
     wrapper: "fixed bottom-5 right-5 z-50",
     panel:
-      "mb-3 w-72 rounded-3xl border border-white/10 bg-[#130d09]/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-xl",
-    item: "flex items-center gap-3 rounded-2xl px-3 py-3 text-orange-50 transition hover:bg-white/10",
+      "mb-3 grid gap-2 rounded-[1.5rem] border border-cyan-300/20 bg-slate-950/85 p-3 shadow-2xl shadow-cyan-950/50 backdrop-blur-xl",
+    item:
+      "flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-bold text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/10",
     button:
-      "rounded-full bg-orange-500 px-5 py-4 font-semibold text-white shadow-2xl shadow-orange-950/50 transition hover:scale-105 hover:bg-orange-400",
+      "flex h-16 w-16 items-center justify-center rounded-full bg-cyan-300 text-2xl text-slate-950 shadow-2xl shadow-cyan-950/60 transition hover:scale-105 hover:bg-white",
   },
 };

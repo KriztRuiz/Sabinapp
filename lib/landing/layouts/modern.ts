@@ -4,7 +4,7 @@ export const modernLayout: LandingModeLayout = {
   mode: "modern",
   name: "Modern",
   intent:
-    "Página visual, actual y de alto contraste. Prioriza impacto inicial y contacto rápido.",
+    "Landing visual, actual y orientada a conversión. Prioriza impacto inicial, destacados, fotos y contacto rápido.",
   heroStyle: "visual",
   primaryFocus: ["featuredItems", "gallery", "contactHub"],
   sections: {
@@ -12,49 +12,57 @@ export const modernLayout: LandingModeLayout = {
       key: "longDescription",
       order: 40,
       presentation: "compact",
-      reason: "El texto largo no debe competir con el impacto visual.",
+      reason:
+        "El texto largo debe existir solo como apoyo; la primera impresión debe ser visual y directa.",
     },
     featuredItems: {
       key: "featuredItems",
       order: 10,
       presentation: "featured",
-      reason: "Los destacados deben aparecer pronto y con fuerza visual.",
+      reason:
+        "Una landing moderna debe mostrar pronto lo más vendible del negocio.",
     },
     gallery: {
       key: "gallery",
       order: 20,
-      presentation: "normal",
-      reason: "La galería refuerza el aspecto visual del modo moderno.",
+      presentation: "featured",
+      reason:
+        "Las fotos deben reforzar confianza, deseo y percepción profesional.",
     },
     items: {
       key: "items",
       order: 30,
       presentation: "normal",
-      reason: "El listado se mantiene disponible sin ser lo primero.",
+      reason:
+        "El listado completo se mantiene disponible, pero no debe ser lo primero.",
     },
     hours: {
       key: "hours",
       order: 50,
       presentation: "compact",
-      reason: "El horario debe verse, pero no dominar la página.",
+      reason:
+        "El horario importa, pero debe consultarse rápido sin ocupar demasiado espacio.",
     },
     locations: {
       key: "locations",
       order: 60,
       presentation: "compact",
-      reason: "La ubicación se muestra de forma resumida.",
+      reason:
+        "La ubicación se muestra como dato práctico, no como sección protagonista.",
     },
     tags: {
       key: "tags",
       order: 70,
       presentation: "hidden",
-      reason: "Las etiquetas pueden ensuciar una presentación moderna.",
+      reason:
+        "Las etiquetas pueden ensuciar una presentación moderna y distraer del contacto.",
     },
     contactHub: {
       key: "contactHub",
       order: 80,
       presentation: "featured",
-      reason: "El contacto rápido es clave en una página moderna.",
+      reason:
+        "El contacto rápido es el principal valor de una landing moderna local.",
     },
   },
 };

@@ -25,7 +25,8 @@ export const landingVisualModeOptions: {
   {
     key: "modern",
     name: "Modern",
-    description: "Oscuro, llamativo, con alto contraste y estética actual.",
+    description:
+      "Visual, actual y orientado a contacto rápido. Destaca fotos, productos fuertes y llamada a la acción.",
   },
   {
     key: "classic",
