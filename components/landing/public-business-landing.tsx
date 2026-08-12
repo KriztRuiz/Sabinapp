@@ -1,6 +1,7 @@
 // components/landing/public-business-landing.tsx
 
 import { ClassicBusinessLanding } from "./modes/classic-business-landing";
+import { ModernBusinessLanding } from "./modes/modern-business-landing";
 import type { PublicLandingData } from "@/lib/landing/styles/types";
 
 type Props = {
@@ -25,7 +26,7 @@ export function PublicBusinessLanding({ data }: Props) {
 
   switch (data.visualMode) {
     case "modern":
-      return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
+      return <ModernBusinessLanding data={data} />;
 
     case "compact":
       return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
