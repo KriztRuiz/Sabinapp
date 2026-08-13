@@ -2,6 +2,7 @@
 
 import { ClassicBusinessLanding } from "./modes/classic-business-landing";
 import { ModernBusinessLanding } from "./modes/modern-business-landing";
+import { WarmBusinessLanding } from "./modes/warm-business-landing";
 import type { PublicLandingData } from "@/lib/landing/styles/types";
 
 type Props = {
@@ -32,7 +33,7 @@ export function PublicBusinessLanding({ data }: Props) {
       return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
 
     case "warm":
-      return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
+      return <WarmBusinessLanding data={data} />;
 
     case "elegant":
       return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
