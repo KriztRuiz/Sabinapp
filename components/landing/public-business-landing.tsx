@@ -1,6 +1,7 @@
 // components/landing/public-business-landing.tsx
 
 import { ClassicBusinessLanding } from "./modes/classic-business-landing";
+import { CompactBusinessLanding } from "./modes/compact-business-landing";
 import { ModernBusinessLanding } from "./modes/modern-business-landing";
 import { WarmBusinessLanding } from "./modes/warm-business-landing";
 import type { PublicLandingData } from "@/lib/landing/styles/types";
@@ -30,7 +31,7 @@ export function PublicBusinessLanding({ data }: Props) {
       return <ModernBusinessLanding data={data} />;
 
     case "compact":
-      return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
+      return <CompactBusinessLanding data={data} />;
 
     case "warm":
       return <WarmBusinessLanding data={data} />;
