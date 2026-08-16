@@ -128,4 +128,13 @@ export function getLandingStyles(mode?: string | null) {
   return landingStylesByMode[normalizeLandingVisualMode(mode)];
 }
 
+export function getLandingVisualModeOption(mode?: string | null) {
+  const normalizedMode = normalizeLandingVisualMode(mode);
+
+  return (
+    landingVisualModeOptions.find((option) => option.key === normalizedMode) ??
+    landingVisualModeOptions[0]
+  );
+}
+
 export type { LandingStyles, LandingVisualMode };

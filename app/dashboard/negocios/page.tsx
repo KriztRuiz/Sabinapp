@@ -4,6 +4,7 @@ import {
   getBusinessVisualMode,
   type BusinessSettingsRelation,
 } from "@/lib/landing/business-settings";
+import { getLandingVisualModeOption } from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -169,6 +170,7 @@ function getPublicVisibilityStatus(business: BusinessRow) {
 
 function BusinessCard({ business }: { business: BusinessRow }) {
   const visualMode = getBusinessVisualMode(business.business_settings);
+  const visualModeOption = getLandingVisualModeOption(visualMode);
   const publicVisibility = getPublicVisibilityStatus(business);
   const isArchived = business.status === "archived";
 
@@ -194,7 +196,7 @@ function BusinessCard({ business }: { business: BusinessRow }) {
             </span>
 
             <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
-              Estilo: {visualMode}
+              Estilo: {visualModeOption.name}
             </span>
 
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-800">
