@@ -1,4 +1,7 @@
-import { landingVisualModeOptions } from "@/lib/landing/styles";
+import {
+  getLandingVisualModeOption,
+  landingVisualModeOptions,
+} from "@/lib/landing/styles";
 import { FieldGuide } from "../../_components/field-guide";
 import type { BusinessEditBusiness } from "./business-edit-types";
 
@@ -9,6 +12,10 @@ type BusinessCustomizationSectionProps = {
 export function BusinessCustomizationSection({
   business,
 }: BusinessCustomizationSectionProps) {
+  const currentVisualModeOption = getLandingVisualModeOption(
+    business.visual_mode,
+  );
+
   return (
     <section
       id="personalizacion"
@@ -33,7 +40,7 @@ export function BusinessCustomizationSection({
 
         <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-950">
           <p className="font-bold">Modo actual</p>
-          <p className="mt-1 capitalize">{business.visual_mode}</p>
+          <p className="mt-1">{currentVisualModeOption.name}</p>
         </div>
       </div>
 
