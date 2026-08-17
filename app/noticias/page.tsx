@@ -68,21 +68,20 @@ export default async function LocalNewsPage() {
           </h1>
 
           <p className="mt-4 max-w-2xl leading-7 text-gray-600">
-            Esta página mostrará noticias resumidas previamente por IA y
-            guardadas en Supabase. Cada noticia conserva enlace a su fuente
-            original.
+            Consulta avisos, notas y noticias relevantes para la comunidad.
+            Cada publicación conserva enlace a su fuente original.
           </p>
         </header>
 
         {error ? (
           <section className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800">
             <h2 className="text-xl font-black">
-              No se pudieron cargar las noticias
+              No pudimos cargar las noticias
             </h2>
 
             <p className="mt-2 text-sm">
-              Revisa que la tabla local_news exista y que tenga política de
-              lectura pública para noticias activas.
+              Intenta de nuevo más tarde. Si el problema continúa, revisaremos
+              la sección de noticias.
             </p>
           </section>
         ) : null}
@@ -90,13 +89,12 @@ export default async function LocalNewsPage() {
         {!error && news.length === 0 ? (
           <section className="mt-8 rounded-3xl border border-dashed border-orange-200 bg-white p-8 shadow-sm">
             <h2 className="text-2xl font-black">
-              Todavía no hay noticias guardadas
+              Todavía no hay noticias publicadas
             </h2>
 
             <p className="mt-3 max-w-2xl leading-7 text-gray-600">
-              La página ya está lista. El siguiente paso será alimentar
-              local_news con noticias reales resumidas, ya sea manualmente al
-              inicio o mediante un proceso automático con IA.
+              Cuando haya noticias, avisos o comunicados relevantes para
+              Sabinas Hidalgo, aparecerán aquí con enlace a su fuente original.
             </p>
           </section>
         ) : null}
