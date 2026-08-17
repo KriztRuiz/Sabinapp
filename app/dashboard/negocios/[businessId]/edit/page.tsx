@@ -4,6 +4,7 @@ import {
   getBusinessVisualMode,
   type BusinessSettingsRelation,
 } from "@/lib/landing/business-settings";
+import { getLandingVisualModeOption } from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -400,7 +401,7 @@ export default async function EditBusinessPage({
           </span>
 
           <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
-            Estilo: {business.visual_mode}
+            Estilo: {getLandingVisualModeOption(business.visual_mode).name}
           </span>
         </div>
 
