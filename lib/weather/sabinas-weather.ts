@@ -61,7 +61,7 @@ export function getWeatherCodeLabel(code: number | null) {
 
 export function getWeatherAdvice(weather: SabinasWeather | null) {
   if (!weather) {
-    return "Consulta el detalle del clima antes de salir.";
+    return "Por ahora no pudimos cargar el clima. Vuelve a intentar más tarde.";
   }
 
   const temperature = weather.temperature ?? weather.apparentTemperature;

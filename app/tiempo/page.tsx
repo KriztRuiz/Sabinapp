@@ -19,6 +19,24 @@ export const metadata: Metadata = {
   },
 };
 
+function formatWeatherTime(value: string | null | undefined) {
+  if (!value) {
+    return "sin dato";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "sin dato";
+  }
+
+  return new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/Monterrey",
+  }).format(date);
+}
+
 
 export default async function WeatherPage() {
   const weather = await getSabinasWeather();
@@ -76,7 +94,7 @@ export default async function WeatherPage() {
               </p>
 
               <p className="mt-4 text-sm text-gray-500">
-                Actualización aproximada: {weather?.time ?? "sin dato"}
+                Actualización aproximada: {formatWeatherTime(weather?.time)}
               </p>
             </article>
 
