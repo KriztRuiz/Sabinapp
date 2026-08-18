@@ -227,7 +227,6 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
     .eq("is_published", true)
     .eq("is_adult_content", false)
     .eq("show_in_search", true)
-    .eq("business_items.is_active", true)
     .or("expires_at.is.null,expires_at.gte.now()")
     .order("name", { ascending: true });
 
@@ -310,7 +309,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               href="/auth/sign-up"
               className="w-fit rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
             >
-              Crear cuenta
+              Registrar mi negocio
             </Link>
           </div>
         </header>
@@ -413,8 +412,8 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
             </h2>
 
             <p className="mt-2 text-sm">
-              Revisa la conexión con Supabase y las políticas de lectura pública
-              de negocios publicados.
+              Intenta de nuevo más tarde. Si el problema continúa, revisaremos
+              el directorio de negocios.
             </p>
           </section>
         ) : null}
