@@ -323,8 +323,7 @@ export default async function DashboardBusinessesPage() {
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Mis negocios</h1>
 
         <p className="mt-2 max-w-2xl text-gray-600">
-          Administra el contenido básico y el estilo visual de las landing pages
-          públicas.
+          Administra el contenido básico y el estilo visual de tus negocios.
         </p>
 
         {canCreateBusiness ? (
