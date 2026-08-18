@@ -359,7 +359,7 @@ export default async function Home() {
                   href={user ? "/dashboard" : "/auth/sign-up"}
                   className="rounded-full border border-gray-300 bg-white px-7 py-4 text-center font-black text-gray-950 transition hover:-translate-y-0.5 hover:bg-gray-50"
                 >
-                  {user ? "Ir a mi panel" : "Crear cuenta gratis"}
+                  {user ? "Ir a mi panel" : "Registrar mi negocio gratis"}
                 </Link>
               </div>
             </div>
@@ -546,12 +546,12 @@ export default async function Home() {
             >
               <span className="text-3xl">👤</span>
               <h3 className="mt-4 font-black">
-                {user ? "Mi cuenta" : "Crear cuenta"}
+                {user ? "Mi cuenta" : "Registrar negocio"}
               </h3>
               <p className="mt-2 text-sm leading-6 text-white/70">
                 {user
                   ? "Entra a tu panel y administra tu actividad."
-                  : "Únete para usar funciones futuras de Sabinapp."}
+                  : "Publica tu negocio local y forma parte del directorio."}
               </p>
             </Link>
           </div>
@@ -574,8 +574,8 @@ export default async function Home() {
 
           <div className="max-w-xl">
             <p className="text-sm leading-6 text-gray-600">
-              Esta sección queda preparada para mostrar 3 noticias resumidas por
-              IA, cada una con enlace a su fuente original.
+              Consulta avisos, notas y noticias relevantes para la comunidad,
+              siempre con enlace a su fuente original.
             </p>
 
             <Link
@@ -617,12 +617,11 @@ export default async function Home() {
           ) : (
             <article className="rounded-3xl border border-dashed border-orange-200 bg-orange-50 p-6 md:col-span-3">
               <h3 className="text-xl font-black">
-                Noticias inteligentes en preparación
+                Todavía no hay noticias publicadas
               </h3>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                La tabla ya está lista. En la siguiente fase conectaremos el
-                proceso que buscará noticias locales, las resumirá con IA y las
-                guardará para mostrarlas aquí.
+                Cuando haya noticias, avisos o comunicados relevantes para
+                Sabinas Hidalgo, aparecerán aquí con enlace a su fuente original.
               </p>
             </article>
           )}
