@@ -21,11 +21,10 @@ function getClassicLandingData(data: PublicLandingData): PublicLandingData {
 
 export function PublicBusinessLanding({ data }: Props) {
   /*
-    Router visual de landing.
+    Router visual del negocio público.
 
-    Classic queda como base segura.
-    Por ahora los demás modos caen en Classic mientras creamos
-    componentes propios para Modern, Compact, Warm, Elegant e Impact.
+    Cada modo visual tiene su propio componente.
+    Classic queda como base segura y fallback.
   */
 
   switch (data.visualMode) {

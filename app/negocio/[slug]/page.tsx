@@ -44,6 +44,7 @@ type BusinessQueryRow = {
         url: string | null;
         is_primary: boolean;
         sort_order: number | null;
+        is_active: boolean | null;
       }[]
     | null;
   business_media:
@@ -54,6 +55,7 @@ type BusinessQueryRow = {
         alt_text: string | null;
         is_cover: boolean;
         sort_order: number | null;
+        is_active: boolean | null;
       }[]
     | null;
   business_hours:
@@ -92,6 +94,7 @@ type BusinessQueryRow = {
         image_url: string | null;
         image_alt: string | null;
         sort_order: number | null;
+        is_active: boolean | null;
       }[]
     | null;
   business_tags:
@@ -141,6 +144,7 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
   const visualMode = getBusinessVisualMode(row.business_settings);
 
   const contacts: PublicLandingContact[] = (row.contact_methods ?? [])
+    .filter((contact) => contact.is_active !== false)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((contact) => ({
       id: contact.id,
@@ -152,6 +156,7 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
     }));
 
   const photos: PublicLandingPhoto[] = (row.business_media ?? [])
+    .filter((photo) => photo.is_active !== false)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((photo) => ({
       id: photo.id,
@@ -188,6 +193,7 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
     }));
 
   const items: PublicLandingItem[] = (row.business_items ?? [])
+    .filter((item) => item.is_active !== false)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((item) => ({
       id: item.id,
@@ -227,6 +233,7 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
+  const now = new Date().toISOString();
 
   const { data } = await supabase
     .from("businesses")
@@ -234,6 +241,9 @@ export async function generateMetadata({ params }: PageProps) {
     .eq("slug", slug)
     .eq("status", "published")
     .eq("is_published", true)
+    .eq("is_adult_content", false)
+    .eq("show_in_search", true)
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
     .maybeSingle();
 
   if (!data) {
@@ -251,6 +261,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PublicBusinessPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
+  const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("businesses")
@@ -285,7 +296,8 @@ export default async function PublicBusinessPage({ params }: PageProps) {
         url,
         alt_text,
         is_cover,
-        sort_order
+        sort_order,
+        is_active
       ),
       business_hours (
         id,
@@ -317,7 +329,8 @@ export default async function PublicBusinessPage({ params }: PageProps) {
         is_featured,
         image_url,
         image_alt,
-        sort_order
+        sort_order,
+        is_active
       ),
       business_tags (
         tags (
@@ -329,10 +342,9 @@ export default async function PublicBusinessPage({ params }: PageProps) {
     .eq("slug", slug)
     .eq("status", "published")
     .eq("is_published", true)
-    .eq("contact_methods.is_active", true)
-    .eq("business_media.is_active", true)
-    .eq("business_items.is_active", true)
-    .eq("business_locations.is_public", true)
+    .eq("is_adult_content", false)
+    .eq("show_in_search", true)
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
     .maybeSingle();
 
   if (error || !data) {
