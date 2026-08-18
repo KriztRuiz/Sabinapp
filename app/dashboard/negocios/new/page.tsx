@@ -116,7 +116,7 @@ export default async function NewBusinessPage({ searchParams }: PageProps) {
           </h2>
 
           <p className="mt-2 text-sm">
-            Revisa las tablas business_types, categories y sus políticas RLS.
+            Intenta de nuevo más tarde. Si el problema continúa, revisaremos las opciones de registro.
           </p>
         </section>
       ) : null}

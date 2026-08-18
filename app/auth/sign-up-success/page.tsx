@@ -11,7 +11,7 @@ export default function SignUpSuccessPage() {
         </h1>
 
         <p className="mt-4 text-sm text-gray-600">
-          Tu cuenta fue creada. Si Supabase requiere confirmación de correo,
+          Tu cuenta fue creada. Si se solicita confirmación de correo,
           revisa tu bandeja de entrada. Si no requiere confirmación, ya puedes
           iniciar sesión.
         </p>

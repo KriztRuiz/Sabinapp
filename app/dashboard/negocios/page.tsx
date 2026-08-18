@@ -221,7 +221,7 @@ function BusinessCard({ business }: { business: BusinessRow }) {
               href={`/dashboard/negocios/${business.id}/edit`}
               className="rounded-lg bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-gray-800"
             >
-              Editar landing
+              Editar negocio
             </Link>
           ) : (
             <span className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-center text-sm font-semibold text-gray-500">

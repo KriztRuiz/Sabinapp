@@ -52,7 +52,7 @@ function getElegantCopy(data: PublicLandingData) {
       secondaryAction: "Ver servicios",
       sectionTitle: "Servicios principales",
       sectionDescription:
-        "Una selección clara de servicios para conocer la propuesta del negocio sin saturar la página.",
+        "Una selección clara de servicios para conocer la propuesta del negocio sin saturar al visitante.",
       aboutTitle: "Sobre el servicio",
     };
   }

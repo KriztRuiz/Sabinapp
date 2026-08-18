@@ -45,7 +45,7 @@ export function BusinessLocationsSection({
       <h2 className="text-xl font-bold text-gray-950">Ubicaciones públicas</h2>
 
       <p className="mt-2 text-sm text-gray-600">
-        Estas ubicaciones aparecen en la landing pública del negocio cuando
+        Estas ubicaciones aparecen en el negocio público cuando
         están marcadas como públicas.
       </p>
 

@@ -90,7 +90,7 @@ function getMenuCopy(data: PublicLandingData) {
       label: "Productos",
       title: "Productos disponibles",
       description:
-        "Artículos, productos básicos o mercancía que el negocio quiere enseñar en su página.",
+        "Artículos, productos básicos o mercancía que el negocio quiere mostrar públicamente.",
     };
   }
 

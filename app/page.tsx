@@ -423,7 +423,7 @@ export default async function Home() {
                 href="/tiempo"
                 className="mt-5 inline-flex rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
               >
-                Ver página del tiempo
+                Ver clima completo
               </Link>
             </section>
           </div>

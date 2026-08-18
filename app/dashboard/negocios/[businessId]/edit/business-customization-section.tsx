@@ -32,7 +32,7 @@ export function BusinessCustomizationSection({
           </h2>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
-            Elige cómo se presentará la página pública del negocio. Cada modo no
+            Elige cómo se presentará tu negocio al público. Cada modo no
             solo cambia colores: cambia la forma de ordenar, destacar y resumir
             la información.
           </p>

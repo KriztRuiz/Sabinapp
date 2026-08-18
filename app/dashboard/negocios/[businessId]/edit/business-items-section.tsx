@@ -33,7 +33,7 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
 
         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
           Aquí se controla lo que el cliente verá como productos, servicios,
-          paquetes, reglas, amenidades o elementos destacados en la landing
+          paquetes, reglas, amenidades o elementos destacados en el negocio público
           pública.
         </p>
       </div>

@@ -358,7 +358,7 @@ export default async function EditBusinessPage({
         <p className="mt-6 text-sm font-medium text-orange-600">Sabinapp</p>
 
         <h1 className="mt-2 text-3xl font-bold text-gray-950">
-          Editar landing
+          Editar negocio
         </h1>
 
         <p className="mt-2 text-gray-600">

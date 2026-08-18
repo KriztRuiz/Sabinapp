@@ -24,11 +24,11 @@ export function BusinessContentStyleForm({
         className="business-edit-panel scroll-mt-24 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
       >
         <h2 className="text-xl font-bold text-gray-950">
-          Contenido de la landing
+          Contenido del negocio
         </h2>
 
         <p className="mt-2 text-sm text-gray-600">
-          Esta información alimenta la página pública del negocio.
+          Esta información se muestra en el negocio público.
         </p>
 
         <div className="mt-6 space-y-5">
@@ -123,7 +123,7 @@ export function BusinessContentStyleForm({
             rel="noreferrer"
             className="rounded-lg border border-gray-300 px-5 py-3 text-center text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
           >
-            Ver página pública
+            Ver negocio público
           </a>
         ) : null}
       </div>

@@ -21,7 +21,7 @@ export function BusinessContactsSection({
       <h2 className="text-xl font-bold text-gray-950">Contactos públicos</h2>
 
       <p className="mt-2 text-sm text-gray-600">
-        Estos contactos aparecen en la landing pública y en el botón flotante de
+        Estos contactos aparecen en el negocio público y en el botón flotante de
         contacto.
       </p>
 
@@ -90,7 +90,7 @@ export function BusinessContactsSection({
               htmlFor="new-contact-value"
               className="block text-sm font-semibold text-gray-800"
             >
-              Texto visible en la landing
+              Texto visible en el negocio
             </label>
 
             <input
@@ -232,7 +232,7 @@ export function BusinessContactsSection({
                       htmlFor={`contact-value-${contact.id}`}
                       className="block text-sm font-semibold text-gray-800"
                     >
-                      Texto visible en la landing
+                      Texto visible en el negocio
                     </label>
 
                     <input

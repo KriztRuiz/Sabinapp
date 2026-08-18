@@ -625,7 +625,7 @@ export function ModernBusinessLanding({ data }: Props) {
 
                 <p className={`${styles.mutedText} mt-4 leading-8`}>
                   Se muestran primero las opciones principales para no saturar
-                  la página. El resto queda disponible para quien quiera revisar más.
+                  el negocio. El resto queda disponible para quien quiera revisar más.
                 </p>
               </div>
 

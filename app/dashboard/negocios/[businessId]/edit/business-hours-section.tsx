@@ -38,7 +38,7 @@ export function BusinessHoursSection({ business }: BusinessHoursSectionProps) {
       <h2 className="text-xl font-bold text-gray-950">Horarios públicos</h2>
 
       <p className="mt-2 text-sm text-gray-600">
-        Estos horarios aparecen en la landing pública del negocio.
+        Estos horarios aparecen en el negocio público.
       </p>
 
       <FieldGuide

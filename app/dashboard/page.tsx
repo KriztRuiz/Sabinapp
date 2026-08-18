@@ -104,7 +104,7 @@ export default async function DashboardPage() {
 
           <p className="mt-2 max-w-2xl text-gray-600">
             Administra tus negocios, revisa su estado y actualiza la información
-            que aparece en sus páginas públicas.
+            que aparece en sus negocios públicos.
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
 
         <p className="mt-2 text-sm text-gray-600">
           Edita contenido, imágenes, menú, destacados, contactos, horarios y
-          estilo visual de tus páginas públicas.
+          estilo visual de tus negocios públicos.
         </p>
 
         <Link

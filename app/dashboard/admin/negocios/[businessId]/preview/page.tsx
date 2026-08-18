@@ -364,8 +364,8 @@ export default async function PublicBusinessPage({ params }: PageProps) {
           <div>
             <p className="font-black">Vista previa privada de administrador</p>
             <p className="mt-1">
-              Esta página no es pública. Sirve para revisar cómo se verá la
-              landing antes de aprobar o publicar el negocio.
+              Esta vista no es pública. Sirve para revisar cómo se verá la
+              negocio antes de aprobar o publicar el negocio.
             </p>
           </div>
 
