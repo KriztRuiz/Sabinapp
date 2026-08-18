@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 
 export default async function DbTestPage() {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   const supabase = await createClient();
 
   /**
