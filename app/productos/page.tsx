@@ -302,8 +302,8 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
             </h2>
 
             <p className="mt-2 text-sm">
-              Revisa la conexión con Supabase y las políticas de lectura pública
-              de items activos en negocios publicados.
+              Intenta de nuevo más tarde. Si el problema continúa, revisaremos
+              la vitrina de productos y servicios.
             </p>
           </section>
         ) : null}
@@ -408,6 +408,15 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
                   Intenta con otra palabra más general, por ejemplo “comida”,
                   “servicio”, “paquete”, “tacos”, “climas” o “combo”.
                 </p>
+
+                {hasFilters ? (
+                  <Link
+                    href="/productos"
+                    className="mt-5 inline-flex rounded-2xl bg-gray-950 px-5 py-3 text-sm font-black text-white transition hover:bg-gray-800"
+                  >
+                    Quitar filtros
+                  </Link>
+                ) : null}
               </article>
             )}
           </section>
