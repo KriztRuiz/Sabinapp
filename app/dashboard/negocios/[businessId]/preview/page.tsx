@@ -237,19 +237,11 @@ export async function generateMetadata({ params }: PageProps) {
     redirect("/auth/login?message=Inicia sesión para ver la vista previa.");
   }
 
-  const { data: canReviewBusinesses } = await supabase.rpc("has_permission", {
-    permission_key: "admin.review_businesses",
-  });
-
-  if (!canReviewBusinesses) {
-    redirect("/dashboard");
-  }
-
-
   const { data } = await supabase
     .from("businesses")
     .select("name, short_description")
     .eq("id", businessId)
+    .eq("owner_id", user.id)
     .maybeSingle();
 
   if (!data) {
