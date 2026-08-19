@@ -103,7 +103,7 @@ export default async function NewBusinessPage({ searchParams }: PageProps) {
           <h2 className="text-xl font-black">No puedes crear negocios</h2>
 
           <p className="mt-2 text-sm">
-            Tu cuenta no tiene el permiso business.create. Revisa tus roles o
+            Tu cuenta todavía no tiene permiso para registrar negocios. Revisa tu acceso o
             solicita acceso.
           </p>
         </section>

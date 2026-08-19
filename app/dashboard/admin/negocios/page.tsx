@@ -408,8 +408,7 @@ export default async function AdminBusinessesPage({
             </h2>
 
             <p className="mt-2 text-sm">
-              Revisa permisos RLS y que tu usuario tenga
-              admin.review_businesses.
+              No pudimos cargar la revisión de negocios. Verifica que tu cuenta tenga permisos de administración.
             </p>
           </section>
         ) : null}
