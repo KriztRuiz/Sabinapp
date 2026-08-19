@@ -194,6 +194,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
   const selectedCategory = String(params.categoria ?? "").trim();
 
   const supabase = await createClient();
+  const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("businesses")
@@ -227,7 +228,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
     .eq("is_published", true)
     .eq("is_adult_content", false)
     .eq("show_in_search", true)
-    .or("expires_at.is.null,expires_at.gte.now()")
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
     .order("name", { ascending: true });
 
   const allBusinesses = (data ?? []) as unknown as BusinessRow[];

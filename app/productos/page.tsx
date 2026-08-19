@@ -150,6 +150,7 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
   const selectedType = String(params.tipo ?? "").trim();
 
   const supabase = await createClient();
+  const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("business_items")
@@ -177,7 +178,7 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
     .eq("businesses.is_published", true)
     .eq("businesses.is_adult_content", false)
     .eq("businesses.show_in_search", true)
-    .or("expires_at.is.null,expires_at.gte.now()", {
+    .or(`expires_at.is.null,expires_at.gte.${now}`, {
       foreignTable: "businesses",
     })
     .order("is_featured", { ascending: false })
