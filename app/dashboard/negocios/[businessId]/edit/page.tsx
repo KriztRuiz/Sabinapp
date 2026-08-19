@@ -9,8 +9,10 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BusinessEditForm } from "./business-edit-form";
-import { publishApprovedOwnedBusiness, submitBusinessForReview } from "./actions";
+import { pausePublishedOwnedBusiness,
+  publishApprovedOwnedBusiness, submitBusinessForReview } from "./actions";
 import { SubmitBusinessReviewButton } from "./submit-business-review-button";
+import { PauseOwnedBusinessButton } from "./pause-owned-business-button";
 import { PublishOwnedBusinessButton } from "./publish-owned-business-button";
 
 type PageProps = {
@@ -344,6 +346,8 @@ export default async function EditBusinessPage({
   );
 
   const canPublishApprovedBusiness = business.status === "approved";
+  const canPausePublishedBusiness =
+    business.status === "published" && business.is_published;
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -483,6 +487,27 @@ export default async function EditBusinessPage({
 
             <div className="mt-4">
               <PublishOwnedBusinessButton />
+            </div>
+          </form>
+        ) : null}
+
+        {canPausePublishedBusiness ? (
+          <form
+            action={pausePublishedOwnedBusiness.bind(null, business.id)}
+            className="mt-6 rounded-3xl border border-amber-100 bg-amber-50 p-5"
+          >
+            <h2 className="text-lg font-black text-amber-950">
+              Negocio publicado
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-amber-900">
+              Si necesitas pausar la publicación, puedes retirar este negocio
+              del público. Para volver a publicarlo, deberás enviarlo nuevamente
+              a revisión.
+            </p>
+
+            <div className="mt-4">
+              <PauseOwnedBusinessButton />
             </div>
           </form>
         ) : null}

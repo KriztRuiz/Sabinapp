@@ -1492,6 +1492,77 @@ export async function publishApprovedOwnedBusiness(businessId: string) {
   );
 }
 
+
+export async function pausePublishedOwnedBusiness(businessId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?message=Inicia sesión para administrar negocios.");
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_id, status, is_published")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      `/dashboard/negocios?message=${encodeURIComponent(
+        "No se encontró el negocio o no tienes permiso.",
+      )}`,
+    );
+  }
+
+  if (business.status !== "published" || !business.is_published) {
+    redirectToEditBusiness(
+      businessId,
+      "Sólo puedes retirar del público un negocio publicado.",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      status: "hidden",
+      is_published: false,
+      show_in_search: false,
+      show_in_home: false,
+      hidden_at: now,
+      updated_at: now,
+    })
+    .eq("id", businessId)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      "No se pudo retirar el negocio del público. Intenta de nuevo.",
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/negocios");
+  revalidateBusinessEditAndPublic(businessId, business.slug);
+  revalidatePath("/");
+  revalidatePath("/negocios");
+  revalidatePath("/productos");
+
+  redirect(
+    `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
+      "Negocio retirado del público correctamente.",
+    )}`,
+  );
+}
+
+
 function getDateIso(value: string, endOfDay = false) {
   if (!value) {
     return null;
