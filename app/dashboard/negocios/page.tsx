@@ -53,7 +53,7 @@ function getBusinessStatusLabel(status: string) {
     approved: "Aprobado",
     rejected: "Rechazado",
     published: "Publicado",
-    hidden: "Oculto",
+    hidden: "Retirado del público",
     suspended: "Suspendido",
     archived: "Archivado",
     expired: "Expirado",
@@ -96,8 +96,8 @@ function getPublicVisibilityStatus(business: BusinessRow) {
 
   if (business.status === "hidden" || business.hidden_at) {
     return {
-      label: "Oculto",
-      detail: "El negocio fue ocultado y no aparece públicamente.",
+      label: "Retirado del público",
+      detail: "El negocio no aparece públicamente. Puedes editarlo y enviarlo nuevamente a revisión cuando quieras publicarlo otra vez.",
       canOpenPublicPage: false,
       badgeClass: "bg-gray-200 text-gray-800",
     };

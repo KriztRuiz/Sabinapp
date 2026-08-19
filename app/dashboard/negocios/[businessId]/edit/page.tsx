@@ -108,7 +108,7 @@ function getBusinessStatusLabel(status: string) {
     approved: "Aprobado",
     rejected: "Rechazado",
     published: "Publicado",
-    hidden: "Oculto",
+    hidden: "Retirado del público",
     suspended: "Suspendido",
     archived: "Archivado",
     expired: "Expirado",
@@ -437,7 +437,7 @@ export default async function EditBusinessPage({
             </p>
 
             <p>
-              <strong>Ocultado:</strong>{" "}
+              <strong>Retirado/Ocultado:</strong>{" "}
               {formatModerationDate(business.hidden_at)}
             </p>
           </div>

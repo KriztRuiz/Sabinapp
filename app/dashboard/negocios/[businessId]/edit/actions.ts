@@ -1522,7 +1522,7 @@ export async function pausePublishedOwnedBusiness(businessId: string) {
   if (business.status !== "published" || !business.is_published) {
     redirectToEditBusiness(
       businessId,
-      "Sólo puedes retirar del público un negocio publicado.",
+      "Solo puedes retirar del público un negocio publicado.",
     );
   }
 
