@@ -1,8 +1,9 @@
 # Sabinapp - Contexto técnico
 
-Sabinapp es un directorio local moderado de negocios de Sabinas Hidalgo, Nuevo León.
+Sabinapp es un directorio local moderado de negocios de Sabinas Hidalgo, Nuevo León, México.
 
 ## Stack
+
 - Next.js 16.2 App Router
 - TypeScript
 - Tailwind CSS
@@ -10,31 +11,49 @@ Sabinapp es un directorio local moderado de negocios de Sabinas Hidalgo, Nuevo L
 - PostgreSQL
 - @supabase/supabase-js
 - @supabase/ssr
+- Git Bash en Windows
 
 ## Estado actual
+
 - Base de datos Supabase creada.
 - Auth funcionando.
 - Recuperación de contraseña funcionando.
 - Dashboard funcionando.
-- Ruta pública /negocio/[slug] funcionando.
-- Landing pública funcionando.
-- ContactHub flotante abre/cierra opciones.
-- Menú y Destacados separados.
-- Panel de edición de landing creado.
+- Ruta pública `/negocio/[slug]` funcionando.
+- Directorio público funcionando.
+- Vitrina de productos funcionando.
+- Página de clima funcionando.
+- Página de noticias funcionando.
+- ContactHub flotante abre y cierra opciones de contacto.
+- Menú y destacados separados.
+- Panel de edición del negocio creado.
 - Selector visual debajo del contenido.
-- SQL confirma que cambios se guardan.
+- Cambios guardados en Supabase.
+- Ruta `/dev/db-test` protegida en producción.
 
-## Rutas
-- /auth/login
-- /auth/sign-up
-- /auth/forgot-password
-- /auth/update-password
-- /dashboard
-- /dashboard/negocios
-- /dashboard/negocios/[businessId]/edit
-- /negocio/[slug]
+## Rutas principales
+
+- `/`
+- `/auth/login`
+- `/auth/sign-up`
+- `/auth/forgot-password`
+- `/auth/update-password`
+- `/dashboard`
+- `/dashboard/negocios`
+- `/dashboard/negocios/new`
+- `/dashboard/negocios/[businessId]/edit`
+- `/dashboard/negocios/[businessId]/preview`
+- `/dashboard/admin/negocios`
+- `/dashboard/admin/negocios/[businessId]/preview`
+- `/dev/db-test`
+- `/negocios`
+- `/productos`
+- `/noticias`
+- `/tiempo`
+- `/negocio/[slug]`
 
 ## Modos visuales
+
 - classic
 - modern
 - warm
@@ -43,8 +62,10 @@ Sabinapp es un directorio local moderado de negocios de Sabinas Hidalgo, Nuevo L
 - impact
 
 ## Reglas
+
 - Componentes llenados desde Supabase.
-- Estilos visuales separados en lib/landing/styles.
-- Cada modo visual en archivo propio.
+- Estilos visuales separados en `lib/landing/styles`.
+- Cada modo visual debe estar en archivo propio.
+- El lenguaje visible para usuarios debe usar “negocio” en vez del término técnico anterior.
 - SQL siempre completo para copiar y pegar.
-- Validar con npm run lint y npm run build.
+- Validar con `npm run lint` y `npm run build`.
