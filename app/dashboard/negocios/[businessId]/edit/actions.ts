@@ -60,7 +60,7 @@ export async function updateBusinessLanding(
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, owner_id")
+    .select("id, name, slug, owner_id, status, short_description, long_description")
     .eq("id", businessId)
     .eq("owner_id", user.id)
     .single();
@@ -72,6 +72,32 @@ export async function updateBusinessLanding(
       )}`,
     );
   }
+
+  const { data: currentSettings } = await supabase
+    .from("business_settings")
+    .select("visual_mode")
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  const previousPublicData = {
+    name: business.name,
+    short_description: business.short_description,
+    long_description: business.long_description,
+    visual_mode: currentSettings?.visual_mode ?? null,
+  };
+
+  const nextPublicData = {
+    name,
+    short_description: shortDescription,
+    long_description: longDescription || null,
+    visual_mode: visualMode,
+  };
+
+  const hasPublicDataChanges =
+    previousPublicData.name !== nextPublicData.name ||
+    previousPublicData.short_description !== nextPublicData.short_description ||
+    previousPublicData.long_description !== nextPublicData.long_description ||
+    previousPublicData.visual_mode !== nextPublicData.visual_mode;
 
   const { data: updatedBusiness, error: updateBusinessError } = await supabase
     .from("businesses")
@@ -117,6 +143,32 @@ export async function updateBusinessLanding(
         }`,
       )}`,
     );
+  }
+
+  if (business.status === "published" && hasPublicDataChanges) {
+    const { error: changeEventError } = await supabase
+      .from("business_change_events")
+      .insert({
+        business_id: businessId,
+        business_name_snapshot: updatedBusiness.name,
+        business_slug_snapshot: updatedBusiness.slug,
+        actor_id: user.id,
+        actor_email_snapshot: user.email ?? null,
+        action_key: "business_public_content_updated",
+        target_table: "businesses",
+        target_id: businessId,
+        summary: "El dueño actualizó contenido o estilo de un negocio publicado.",
+        before_data: previousPublicData,
+        after_data: nextPublicData,
+      });
+
+    if (changeEventError) {
+      redirect(
+        `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
+          "Los cambios se guardaron, pero no se pudo crear el aviso para administración.",
+        )}`,
+      );
+    }
   }
 
   revalidatePath("/dashboard");
