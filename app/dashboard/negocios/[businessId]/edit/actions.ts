@@ -1620,10 +1620,12 @@ export async function updateBusinessClassification(
     );
   }
 
-  if (business.status === "archived") {
+  const allowedClassificationEditStatuses = ["draft", "rejected", "hidden"];
+
+  if (!allowedClassificationEditStatuses.includes(String(business.status))) {
     redirectToEditBusiness(
       businessId,
-      "Este negocio está archivado y ya no se puede editar.",
+      "Para cambiar la clasificación o vigencia, el negocio debe estar en borrador, rechazado o retirado del público.",
     );
   }
 
