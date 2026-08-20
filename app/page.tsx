@@ -107,7 +107,7 @@ async function getLatestNews(supabase: SupabaseServerClient) {
     .from("local_news")
     .select("id, title, summary, source_name, source_url, published_at")
     .eq("is_active", true)
-    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
     .order("published_at", { ascending: false })
     .limit(3);
 
@@ -193,7 +193,7 @@ async function getPortalStats(
       .from("local_news")
       .select("id", { count: "exact", head: true })
       .eq("is_active", true)
-      .or(`expires_at.is.null,expires_at.gt.${now}`),
+      .or(`expires_at.is.null,expires_at.gte.${now}`),
   ]);
 
   return {
