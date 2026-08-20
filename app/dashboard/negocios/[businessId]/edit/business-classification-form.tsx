@@ -57,6 +57,10 @@ export function BusinessClassificationForm({
   const showTemporaryDates =
     selectedBusinessType?.requires_start_end_dates === true;
 
+  const canEditClassification = ["draft", "rejected", "hidden"].includes(
+    business.status,
+  );
+
   const updateBusinessClassificationWithId = updateBusinessClassification.bind(
     null,
     business.id,
@@ -82,6 +86,17 @@ export function BusinessClassificationForm({
         goodExample="Tipo: Restaurantes y comida. Categoría: Taquería."
         avoid="Evita elegir una categoría solo porque suena mejor. Usa la que más se acerque a lo que realmente ofrece el negocio."
       />
+
+      {!canEditClassification ? (
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-black">Clasificación bloqueada temporalmente</p>
+
+          <p className="mt-1 leading-6">
+            La clasificación y vigencia sólo pueden cambiarse cuando el negocio
+            está en borrador, rechazado o retirado del público.
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-5">
         <div>
@@ -181,7 +196,8 @@ export function BusinessClassificationForm({
                   type="date"
                   required={showTemporaryDates}
                   defaultValue={getDateInputValue(business.starts_at)}
-                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  disabled={!canEditClassification}
+                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                 />
               </div>
 
@@ -199,7 +215,8 @@ export function BusinessClassificationForm({
                   type="date"
                   required={showTemporaryDates}
                   defaultValue={getDateInputValue(business.ends_at)}
-                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  disabled={!canEditClassification}
+                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                 />
               </div>
             </div>
@@ -207,14 +224,20 @@ export function BusinessClassificationForm({
         ) : null}
       </div>
 
-      <div className="mt-6">
-        <ConfirmSubmitButton
-          message="¿Guardar la clasificación de este negocio?"
-          className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-        >
-          Guardar clasificación
-        </ConfirmSubmitButton>
-      </div>
+      {canEditClassification ? (
+        <div className="mt-6">
+          <ConfirmSubmitButton
+            message="¿Guardar la clasificación de este negocio?"
+            className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+          >
+            Guardar clasificación
+          </ConfirmSubmitButton>
+        </div>
+      ) : (
+        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-500">
+          Esta sección no se puede cambiar desde el estado actual del negocio.
+        </div>
+      )}
     </form>
   );
 }
