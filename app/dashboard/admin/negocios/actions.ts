@@ -248,7 +248,6 @@ export async function publishApprovedBusiness(formData: FormData) {
       suspended_by: null,
       suspension_reason: null,
       hidden_at: null,
-      updated_at: now,
     })
     .eq("id", businessId);
 
@@ -351,7 +350,6 @@ export async function restoreHiddenBusinessToPublic(formData: FormData) {
       show_in_home: true,
       hidden_at: null,
       published_at: now,
-      updated_at: now,
     })
     .eq("id", businessId);
 
@@ -407,7 +405,6 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
       show_in_search: false,
       show_in_home: false,
       archived_at: now,
-      updated_at: now,
     })
     .eq("id", businessId);
 
@@ -420,4 +417,173 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
   revalidateBusinessPaths(business.slug);
 
   redirect("/dashboard/admin/negocios?message=Negocio%20archivado");
+}
+
+function getChangeEventId(formData: FormData) {
+  const changeEventId = String(formData.get("changeEventId") ?? "").trim();
+
+  if (!changeEventId) {
+    throw new Error("No se recibió el cambio.");
+  }
+
+  return changeEventId;
+}
+
+export async function markBusinessChangeEventSeen(formData: FormData) {
+  const { supabase, user } = await requireAdminReviewPermission();
+  const changeEventId = getChangeEventId(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("business_change_events")
+    .update({
+      review_status: "seen",
+      seen_at: now,
+      seen_by: user.id,
+    })
+    .eq("id", changeEventId)
+    .eq("review_status", "unseen");
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudo%20marcar%20el%20cambio%20como%20visto",
+    );
+  }
+
+  revalidatePath("/dashboard/admin/negocios");
+
+  redirect("/dashboard/admin/negocios?message=Cambio%20marcado%20como%20visto");
+}
+
+export async function markAllBusinessChangeEventsSeenForBusiness(
+  formData: FormData,
+) {
+  const { supabase, user } = await requireAdminReviewPermission();
+  const businessId = getBusinessId(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("business_change_events")
+    .update({
+      review_status: "seen",
+      seen_at: now,
+      seen_by: user.id,
+    })
+    .eq("business_id", businessId)
+    .eq("review_status", "unseen");
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudieron%20marcar%20los%20cambios%20como%20vistos",
+    );
+  }
+
+  revalidatePath("/dashboard/admin/negocios");
+
+  redirect(
+    "/dashboard/admin/negocios?message=Cambios%20del%20negocio%20marcados%20como%20vistos",
+  );
+}
+
+export async function sendBusinessChangeBackToReview(formData: FormData) {
+  const { supabase, user } = await requireAdminReviewPermission();
+  const changeEventId = getChangeEventId(formData);
+
+  const { data: changeEvent, error: changeEventError } = await supabase
+    .from("business_change_events")
+    .select("id, business_id, business_slug_snapshot")
+    .eq("id", changeEventId)
+    .single();
+
+  if (changeEventError || !changeEvent?.business_id) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20cambio%20o%20el%20negocio",
+    );
+  }
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, slug")
+    .eq("id", changeEvent.business_id)
+    .single();
+
+  if (businessError || !business) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { error: businessUpdateError } = await supabase
+    .from("businesses")
+    .update({
+      status: "pending_review",
+      is_published: false,
+      show_in_search: false,
+      show_in_home: false,
+      submitted_at: now,
+      published_at: null,
+      hidden_at: now,
+      rejected_at: null,
+      rejected_by: null,
+      rejection_reason: null,
+    })
+    .eq("id", business.id);
+
+  if (businessUpdateError) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudo%20mandar%20el%20negocio%20a%20revision",
+    );
+  }
+
+  const { error: changeEventsUpdateError } = await supabase
+    .from("business_change_events")
+    .update({
+      review_status: "sent_to_review",
+      resolved_at: now,
+      resolved_by: user.id,
+      admin_note:
+        "El negocio fue retirado del público y enviado nuevamente a revisión.",
+    })
+    .eq("business_id", business.id)
+    .eq("review_status", "unseen");
+
+  if (changeEventsUpdateError) {
+    redirect(
+      "/dashboard/admin/negocios?error=El%20negocio%20se%20mando%20a%20revision%2C%20pero%20no%20se%20pudieron%20actualizar%20los%20avisos",
+    );
+  }
+
+  revalidateBusinessPaths(business.slug);
+
+  redirect(
+    "/dashboard/admin/negocios?message=Negocio%20retirado%20del%20publico%20y%20enviado%20a%20revision",
+  );
+}
+
+export async function markAllBusinessChangeEventsSeen() {
+  const { supabase, user } = await requireAdminReviewPermission();
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("business_change_events")
+    .update({
+      review_status: "seen",
+      seen_at: now,
+      seen_by: user.id,
+    })
+    .eq("review_status", "unseen");
+
+  if (error) {
+    redirect(
+      "/dashboard/admin/negocios?error=No%20se%20pudieron%20marcar%20todos%20los%20cambios%20como%20vistos",
+    );
+  }
+
+  revalidatePath("/dashboard/admin/negocios");
+
+  redirect(
+    "/dashboard/admin/negocios?message=Todos%20los%20cambios%20pendientes%20fueron%20marcados%20como%20vistos",
+  );
 }

@@ -6,9 +6,13 @@ import {
   archiveBusinessFromAdmin,
   extendBusinessExpiration,
   hideBusinessFromPublic,
+  markAllBusinessChangeEventsSeen,
+  markAllBusinessChangeEventsSeenForBusiness,
+  markBusinessChangeEventSeen,
   publishApprovedBusiness,
   rejectBusinessForReview,
   restoreHiddenBusinessToPublic,
+  sendBusinessChangeBackToReview,
 } from "./actions";
 import { ConfirmAdminActionButton } from "./confirm-admin-action-button";
 
@@ -38,6 +42,22 @@ type BusinessStatus =
   | "suspended"
   | "archived"
   | "expired";
+
+type BusinessChangeEventRow = {
+  id: string;
+  business_id: string | null;
+  business_name_snapshot: string;
+  business_slug_snapshot: string;
+  actor_email_snapshot: string | null;
+  action_key: string;
+  target_table: string;
+  target_id: string | null;
+  summary: string;
+  before_data: Record<string, unknown>;
+  after_data: Record<string, unknown>;
+  review_status: string;
+  created_at: string;
+};
 
 type BusinessReviewRow = {
   id: string;
@@ -101,6 +121,103 @@ function getRelationName(relation: NamedRelation) {
   }
 
   return relation.name;
+}
+
+const CHANGE_FIELD_LABELS: Record<string, string> = {
+  name: "Nombre",
+  short_description: "Descripción corta",
+  long_description: "Descripción larga",
+  visual_mode: "Estilo visual",
+};
+
+const VISUAL_MODE_LABELS: Record<string, string> = {
+  classic: "Clásico",
+  modern: "Moderno",
+  warm: "Cálido",
+  compact: "Compacto",
+  elegant: "Elegante",
+  impact: "Impacto",
+};
+
+function formatChangeValue(fieldKey: string, value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return "Sin dato";
+  }
+
+  if (fieldKey === "visual_mode" && typeof value === "string") {
+    return VISUAL_MODE_LABELS[value] ?? value;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return String(value);
+}
+
+function getChangedFields(event: BusinessChangeEventRow) {
+  const beforeData = event.before_data ?? {};
+  const afterData = event.after_data ?? {};
+
+  const keys = Array.from(
+    new Set([...Object.keys(beforeData), ...Object.keys(afterData)]),
+  );
+
+  return keys
+    .filter((key) => {
+      return JSON.stringify(beforeData[key]) !== JSON.stringify(afterData[key]);
+    })
+    .map((key) => ({
+      key,
+      label: CHANGE_FIELD_LABELS[key] ?? key,
+      beforeValue: formatChangeValue(key, beforeData[key]),
+      afterValue: formatChangeValue(key, afterData[key]),
+    }));
+}
+
+function groupChangeEventsByBusiness(events: BusinessChangeEventRow[]) {
+  const groups = new Map<
+    string,
+    {
+      businessId: string | null;
+      businessName: string;
+      businessSlug: string;
+      latestCreatedAt: string;
+      events: BusinessChangeEventRow[];
+    }
+  >();
+
+  for (const event of events) {
+    const groupKey = event.business_id ?? event.business_slug_snapshot;
+    const currentGroup = groups.get(groupKey);
+
+    if (!currentGroup) {
+      groups.set(groupKey, {
+        businessId: event.business_id,
+        businessName: event.business_name_snapshot,
+        businessSlug: event.business_slug_snapshot,
+        latestCreatedAt: event.created_at,
+        events: [event],
+      });
+
+      continue;
+    }
+
+    currentGroup.events.push(event);
+
+    if (
+      new Date(event.created_at).getTime() >
+      new Date(currentGroup.latestCreatedAt).getTime()
+    ) {
+      currentGroup.latestCreatedAt = event.created_at;
+    }
+  }
+
+  return Array.from(groups.values()).sort(
+    (a, b) =>
+      new Date(b.latestCreatedAt).getTime() -
+      new Date(a.latestCreatedAt).getTime(),
+  );
 }
 
 function formatDate(value: string | null) {
@@ -339,6 +456,34 @@ export default async function AdminBusinessesPage({
     )
     .order("updated_at", { ascending: false });
 
+  const { data: changeEventsRaw, error: changeEventsError } = await supabase
+    .from("business_change_events")
+    .select(
+      `
+      id,
+      business_id,
+      business_name_snapshot,
+      business_slug_snapshot,
+      actor_email_snapshot,
+      action_key,
+      target_table,
+      target_id,
+      summary,
+      before_data,
+      after_data,
+      review_status,
+      created_at
+    `,
+    )
+    .eq("review_status", "unseen")
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  const changeEvents =
+    (changeEventsRaw ?? []) as unknown as BusinessChangeEventRow[];
+
+  const groupedChangeEvents = groupChangeEventsByBusiness(changeEvents);
+
   const businesses = (data ?? []) as unknown as BusinessReviewRow[];
   const grouped = groupByStatus(businesses);
 
@@ -401,15 +546,208 @@ export default async function AdminBusinessesPage({
           </section>
         ) : null}
 
-        {error ? (
+        {changeEventsError ? (
           <section className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800">
             <h2 className="text-xl font-black">
-              No se pudieron cargar los negocios
+              No se pudieron cargar los avisos de cambios
             </h2>
 
             <p className="mt-2 text-sm">
-              No pudimos cargar la revisión de negocios. Verifica que tu cuenta tenga permisos de administración.
+              Los negocios cargaron correctamente, pero no se pudieron cargar
+              los cambios pendientes de revisión.
             </p>
+          </section>
+        ) : null}
+
+        {!changeEventsError && changeEvents.length > 0 ? (
+          <section className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.22em] text-amber-700">
+                  Cambios pendientes
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black text-amber-950">
+                  Cambios hechos por dueños en negocios publicados
+                </h2>
+
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-amber-900">
+                  Los cambios se agrupan por negocio. Sólo se muestran los
+                  campos que realmente cambiaron.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row lg:items-center">
+                <span className="w-fit rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-900">
+                  {changeEvents.length} cambio
+                  {changeEvents.length === 1 ? "" : "s"} sin ver
+                </span>
+
+                <form action={markAllBusinessChangeEventsSeen}>
+                  <ConfirmAdminActionButton
+                    confirmMessage="¿Marcar todos los cambios pendientes de todos los negocios como vistos?"
+                    className="w-full rounded-full bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-gray-800"
+                  >
+                    Marcar todos vistos
+                  </ConfirmAdminActionButton>
+                </form>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-5">
+              {groupedChangeEvents.map((group) => (
+                <article
+                  key={group.businessId ?? group.businessSlug}
+                  className="rounded-3xl border border-amber-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">
+                          {group.events.length} cambio
+                          {group.events.length === 1 ? "" : "s"} sin ver
+                        </span>
+
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                          Más reciente: {formatDate(group.latestCreatedAt)}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-3 text-xl font-black text-gray-950">
+                        {group.businessName}
+                      </h3>
+
+                      <p className="mt-1 text-sm text-gray-600">
+                        /negocio/{group.businessSlug}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row xl:flex-col">
+                      {group.businessId ? (
+                        <form action={markAllBusinessChangeEventsSeenForBusiness}>
+                          <input
+                            type="hidden"
+                            name="businessId"
+                            value={group.businessId}
+                          />
+
+                          <ConfirmAdminActionButton
+                            confirmMessage="¿Marcar todos los cambios de este negocio como vistos?"
+                            className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-black text-gray-800 transition hover:bg-gray-50"
+                          >
+                            Marcar negocio visto
+                          </ConfirmAdminActionButton>
+                        </form>
+                      ) : null}
+
+                      {group.events[0]?.business_id ? (
+                        <form action={sendBusinessChangeBackToReview}>
+                          <input
+                            type="hidden"
+                            name="changeEventId"
+                            value={group.events[0].id}
+                          />
+
+                          <ConfirmAdminActionButton
+                            confirmMessage="¿Retirar este negocio del público y mandarlo nuevamente a revisión? El negocio dejará de aparecer públicamente."
+                            className="w-full rounded-full bg-red-700 px-4 py-2 text-sm font-black text-white transition hover:bg-red-800"
+                          >
+                            Retirar y revisar
+                          </ConfirmAdminActionButton>
+                        </form>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-4">
+                    {group.events.map((event) => {
+                      const changedFields = getChangedFields(event);
+
+                      return (
+                        <div
+                          key={event.id}
+                          className="rounded-2xl border border-gray-200 bg-gray-50 p-4"
+                        >
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                              <p className="text-sm font-black text-gray-950">
+                                {event.summary}
+                              </p>
+
+                              <div className="mt-2 grid gap-1 text-xs font-semibold text-gray-500 sm:grid-cols-2">
+                                <p>
+                                  Usuario:{" "}
+                                  {event.actor_email_snapshot ?? "Sin correo"}
+                                </p>
+
+                                <p>Fecha: {formatDate(event.created_at)}</p>
+                              </div>
+                            </div>
+
+                            <form action={markBusinessChangeEventSeen}>
+                              <input
+                                type="hidden"
+                                name="changeEventId"
+                                value={event.id}
+                              />
+
+                              <ConfirmAdminActionButton
+                                confirmMessage="¿Marcar este cambio como visto?"
+                                className="w-full rounded-full bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-gray-800"
+                              >
+                                Marcar visto
+                              </ConfirmAdminActionButton>
+                            </form>
+                          </div>
+
+                          <div className="mt-4 grid gap-3">
+                            {changedFields.length > 0 ? (
+                              changedFields.map((field) => (
+                                <div
+                                  key={field.key}
+                                  className="rounded-2xl border border-gray-200 bg-white p-4"
+                                >
+                                  <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-500">
+                                    {field.label}
+                                  </p>
+
+                                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                                    <div className="rounded-2xl bg-red-50 p-3">
+                                      <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">
+                                        Antes
+                                      </p>
+
+                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-800">
+                                        {field.beforeValue}
+                                      </p>
+                                    </div>
+
+                                    <div className="rounded-2xl bg-green-50 p-3">
+                                      <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+                                        Después
+                                      </p>
+
+                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-800">
+                                        {field.afterValue}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+                                No se detectaron diferencias específicas en este
+                                aviso.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </article>
+              ))}
+            </div>
           </section>
         ) : null}
 
