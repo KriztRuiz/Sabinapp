@@ -756,7 +756,13 @@ export default async function AdminBusinessesPage({
                         >
                           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                             <div>
-                              <p className="text-sm font-black text-gray-950">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-800">
+                                  {formatChangeActionKey(event.action_key)}
+                                </span>
+                              </div>
+
+                              <p className="mt-3 text-sm font-black text-gray-950">
                                 {event.summary}
                               </p>
 
