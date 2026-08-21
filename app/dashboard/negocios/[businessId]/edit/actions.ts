@@ -430,6 +430,82 @@ function getNowIsoTimestamp() {
   return new Date().toISOString();
 }
 
+type BusinessChangeData = Record<string, string | number | boolean | null>;
+
+function normalizeBusinessChangeData(data: BusinessChangeData) {
+  return Object.fromEntries(
+    Object.entries(data).map(([key, value]) => [key, value ?? null]),
+  ) as BusinessChangeData;
+}
+
+function hasBusinessChangeDataChanges(
+  beforeData: BusinessChangeData,
+  afterData: BusinessChangeData,
+) {
+  return JSON.stringify(beforeData) !== JSON.stringify(afterData);
+}
+
+async function recordPublishedBusinessChangeEvent({
+  supabase,
+  user,
+  business,
+  actionKey,
+  targetTable,
+  targetId,
+  summary,
+  beforeData,
+  afterData,
+}: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  user: { id: string; email?: string | null };
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+    status: string;
+  };
+  actionKey: string;
+  targetTable: string;
+  targetId: string | null;
+  summary: string;
+  beforeData: BusinessChangeData;
+  afterData: BusinessChangeData;
+}) {
+  if (business.status !== "published") {
+    return;
+  }
+
+  const normalizedBeforeData = normalizeBusinessChangeData(beforeData);
+  const normalizedAfterData = normalizeBusinessChangeData(afterData);
+
+  if (
+    !hasBusinessChangeDataChanges(normalizedBeforeData, normalizedAfterData)
+  ) {
+    return;
+  }
+
+  const { error } = await supabase.from("business_change_events").insert({
+    business_id: business.id,
+    business_name_snapshot: business.name,
+    business_slug_snapshot: business.slug,
+    actor_id: user.id,
+    actor_email_snapshot: user.email ?? null,
+    action_key: actionKey,
+    target_table: targetTable,
+    target_id: targetId,
+    summary,
+    before_data: normalizedBeforeData,
+    after_data: normalizedAfterData,
+  });
+
+  if (error) {
+    redirectToEditBusiness(
+      business.id,
+      "El cambio se guardó, pero no se pudo crear el aviso para administración.",
+    );
+  }
+}
+
 async function getOwnedBusinessContextOrRedirect(
   businessId: string,
   loginMessage: string,
@@ -446,7 +522,7 @@ async function getOwnedBusinessContextOrRedirect(
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, owner_id")
+    .select("id, name, slug, owner_id, status")
     .eq("id", businessId)
     .eq("owner_id", user.id)
     .single();
@@ -460,6 +536,7 @@ async function getOwnedBusinessContextOrRedirect(
 
   return {
     supabase,
+    user,
     business,
   };
 }
@@ -875,7 +952,7 @@ export async function addBusinessContact(
     redirectToEditBusiness(businessId, "El texto visible del contacto es obligatorio.");
   }
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para agregar contactos.",
   );
@@ -924,6 +1001,26 @@ export async function addBusinessContact(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_contact_added",
+    targetTable: "contact_methods",
+    targetId: insertedContact.id,
+    summary: "El dueño agregó un contacto en un negocio publicado.",
+    beforeData: {},
+    afterData: {
+      type,
+      label,
+      value,
+      url: url || null,
+      is_primary: isPrimary,
+      is_active: isActive,
+      sort_order: nextSortOrder,
+    },
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Contacto agregado correctamente.");
@@ -933,10 +1030,26 @@ export async function deleteBusinessContact(
   businessId: string,
   contactId: string,
 ) {
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para eliminar contactos.",
   );
+
+  const { data: currentContact, error: currentContactError } = await supabase
+    .from("contact_methods")
+    .select("id, type, label, value, url, is_primary, is_active, sort_order")
+    .eq("id", contactId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentContactError || !currentContact) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró el contacto: ${
+        currentContactError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
 
   const { data: deletedContact, error: deleteContactError } = await supabase
     .from("contact_methods")
@@ -954,6 +1067,26 @@ export async function deleteBusinessContact(
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_contact_deleted",
+    targetTable: "contact_methods",
+    targetId: contactId,
+    summary: "El dueño eliminó un contacto de un negocio publicado.",
+    beforeData: {
+      type: currentContact.type,
+      label: currentContact.label,
+      value: currentContact.value,
+      url: currentContact.url,
+      is_primary: currentContact.is_primary,
+      is_active: currentContact.is_active,
+      sort_order: currentContact.sort_order,
+    },
+    afterData: {},
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
@@ -986,10 +1119,36 @@ export async function updateBusinessContactDetails(
     redirectToEditBusiness(businessId, "El valor del contacto es obligatorio.");
   }
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para editar contactos.",
   );
+
+  const { data: currentContact, error: currentContactError } = await supabase
+    .from("contact_methods")
+    .select("id, type, label, value, url, is_primary, is_active, sort_order")
+    .eq("id", contactId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentContactError || !currentContact) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró el contacto: ${
+        currentContactError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
+
+  const nextContactData = {
+    type,
+    label,
+    value,
+    url: url || null,
+    is_primary: isPrimary,
+    is_active: isActive,
+    sort_order: sortOrder,
+  };
 
   if (isPrimary) {
     await unsetOtherPrimaryContacts(supabase, businessId, contactId);
@@ -998,13 +1157,7 @@ export async function updateBusinessContactDetails(
   const { data: updatedContact, error: updateContactError } = await supabase
     .from("contact_methods")
     .update({
-      type,
-      label,
-      value,
-      url: url || null,
-      is_primary: isPrimary,
-      is_active: isActive,
-      sort_order: sortOrder,
+      ...nextContactData,
       updated_at: getNowIsoTimestamp(),
     })
     .eq("id", contactId)
@@ -1020,6 +1173,26 @@ export async function updateBusinessContactDetails(
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_contact_updated",
+    targetTable: "contact_methods",
+    targetId: contactId,
+    summary: "El dueño actualizó un contacto de un negocio publicado.",
+    beforeData: {
+      type: currentContact.type,
+      label: currentContact.label,
+      value: currentContact.value,
+      url: currentContact.url,
+      is_primary: currentContact.is_primary,
+      is_active: currentContact.is_active,
+      sort_order: currentContact.sort_order,
+    },
+    afterData: nextContactData,
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
