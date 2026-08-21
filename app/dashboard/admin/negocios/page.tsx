@@ -135,6 +135,12 @@ const CHANGE_FIELD_LABELS: Record<string, string> = {
   is_primary: "Contacto principal",
   is_active: "Activo",
   sort_order: "Orden",
+  day_of_week: "Día",
+  period_order: "Orden del horario",
+  opens_at: "Abre",
+  closes_at: "Cierra",
+  is_closed: "Cerrado",
+  notes: "Notas",
 };
 
 const VISUAL_MODE_LABELS: Record<string, string> = {
@@ -146,6 +152,20 @@ const VISUAL_MODE_LABELS: Record<string, string> = {
   impact: "Impacto",
 };
 
+const CHANGE_ACTION_LABELS: Record<string, string> = {
+  business_public_content_updated: "Contenido o estilo actualizado",
+  business_contact_added: "Contacto agregado",
+  business_contact_updated: "Contacto actualizado",
+  business_contact_deleted: "Contacto eliminado",
+  business_hour_added: "Horario agregado",
+  business_hour_updated: "Horario actualizado",
+  business_hour_deleted: "Horario eliminado",
+};
+
+function formatChangeActionKey(actionKey: string) {
+  return CHANGE_ACTION_LABELS[actionKey] ?? actionKey;
+}
+
 function formatChangeValue(fieldKey: string, value: unknown) {
   if (value === null || value === undefined || value === "") {
     return "Sin dato";
@@ -153,6 +173,27 @@ function formatChangeValue(fieldKey: string, value: unknown) {
 
   if (fieldKey === "visual_mode" && typeof value === "string") {
     return VISUAL_MODE_LABELS[value] ?? value;
+  }
+
+  if (fieldKey === "day_of_week" && typeof value === "number") {
+    const dayLabels: Record<number, string> = {
+      0: "Domingo",
+      1: "Lunes",
+      2: "Martes",
+      3: "Miércoles",
+      4: "Jueves",
+      5: "Viernes",
+      6: "Sábado",
+    };
+
+    return dayLabels[value] ?? String(value);
+  }
+
+  if (
+    (fieldKey === "opens_at" || fieldKey === "closes_at") &&
+    typeof value === "string"
+  ) {
+    return value.slice(0, 5);
   }
 
   if (fieldKey === "type" && typeof value === "string") {

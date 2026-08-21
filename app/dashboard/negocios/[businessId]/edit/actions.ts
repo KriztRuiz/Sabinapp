@@ -799,7 +799,7 @@ export async function addBusinessHour(
     );
   }
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para agregar horarios.",
   );
@@ -828,6 +828,25 @@ export async function addBusinessHour(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_hour_added",
+    targetTable: "business_hours",
+    targetId: insertedHour.id,
+    summary: "El dueño agregó un horario en un negocio publicado.",
+    beforeData: {},
+    afterData: {
+      day_of_week: dayOfWeek,
+      period_order: periodOrder,
+      opens_at: opensAt,
+      closes_at: closesAt,
+      is_closed: isClosed,
+      notes: notes || null,
+    },
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Horario agregado correctamente.");
@@ -837,10 +856,26 @@ export async function deleteBusinessHour(
   businessId: string,
   hourId: string,
 ) {
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para eliminar horarios.",
   );
+
+  const { data: currentHour, error: currentHourError } = await supabase
+    .from("business_hours")
+    .select("id, day_of_week, period_order, opens_at, closes_at, is_closed, notes")
+    .eq("id", hourId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentHourError || !currentHour) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró el horario: ${
+        currentHourError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
 
   const { data: deletedHour, error: deleteHourError } = await supabase
     .from("business_hours")
@@ -858,6 +893,25 @@ export async function deleteBusinessHour(
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_hour_deleted",
+    targetTable: "business_hours",
+    targetId: hourId,
+    summary: "El dueño eliminó un horario de un negocio publicado.",
+    beforeData: {
+      day_of_week: currentHour.day_of_week,
+      period_order: currentHour.period_order,
+      opens_at: currentHour.opens_at,
+      closes_at: currentHour.closes_at,
+      is_closed: currentHour.is_closed,
+      notes: currentHour.notes,
+    },
+    afterData: {},
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
@@ -895,19 +949,40 @@ export async function updateBusinessHourDetails(
     );
   }
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para editar horarios.",
   );
 
+  const { data: currentHour, error: currentHourError } = await supabase
+    .from("business_hours")
+    .select("id, day_of_week, period_order, opens_at, closes_at, is_closed, notes")
+    .eq("id", hourId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentHourError || !currentHour) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró el horario: ${
+        currentHourError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
+
+  const nextHourData = {
+    day_of_week: currentHour.day_of_week,
+    period_order: periodOrder,
+    opens_at: opensAt,
+    closes_at: closesAt,
+    is_closed: isClosed,
+    notes: notes || null,
+  };
+
   const { data: updatedHour, error: updateHourError } = await supabase
     .from("business_hours")
     .update({
-      period_order: periodOrder,
-      opens_at: opensAt,
-      closes_at: closesAt,
-      is_closed: isClosed,
-      notes: notes || null,
+      ...nextHourData,
       updated_at: getNowIsoTimestamp(),
     })
     .eq("id", hourId)
@@ -923,6 +998,25 @@ export async function updateBusinessHourDetails(
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_hour_updated",
+    targetTable: "business_hours",
+    targetId: hourId,
+    summary: "El dueño actualizó un horario de un negocio publicado.",
+    beforeData: {
+      day_of_week: currentHour.day_of_week,
+      period_order: currentHour.period_order,
+      opens_at: currentHour.opens_at,
+      closes_at: currentHour.closes_at,
+      is_closed: currentHour.is_closed,
+      notes: currentHour.notes,
+    },
+    afterData: nextHourData,
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
