@@ -128,6 +128,13 @@ const CHANGE_FIELD_LABELS: Record<string, string> = {
   short_description: "Descripción corta",
   long_description: "Descripción larga",
   visual_mode: "Estilo visual",
+  type: "Tipo",
+  label: "Etiqueta",
+  value: "Valor visible",
+  url: "Enlace",
+  is_primary: "Contacto principal",
+  is_active: "Activo",
+  sort_order: "Orden",
 };
 
 const VISUAL_MODE_LABELS: Record<string, string> = {
@@ -148,11 +155,50 @@ function formatChangeValue(fieldKey: string, value: unknown) {
     return VISUAL_MODE_LABELS[value] ?? value;
   }
 
+  if (fieldKey === "type" && typeof value === "string") {
+    const contactTypeLabels: Record<string, string> = {
+      phone: "Teléfono",
+      whatsapp: "WhatsApp",
+      email: "Correo electrónico",
+      facebook: "Facebook",
+      instagram: "Instagram",
+      website: "Sitio web",
+      other: "Otro",
+    };
+
+    return contactTypeLabels[value] ?? value;
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Sí" : "No";
+  }
+
   if (typeof value === "string") {
     return value;
   }
 
   return String(value);
+}
+
+function getDisplayDataForCreatedOrDeletedChange(
+  data: Record<string, unknown>,
+) {
+  return Object.keys(data).map((key) => ({
+    key,
+    label: CHANGE_FIELD_LABELS[key] ?? key,
+    value: formatChangeValue(key, data[key]),
+    rawValue: data[key],
+  }));
+}
+
+function isUrlLikeValue(value: unknown) {
+  return (
+    typeof value === "string" &&
+    (value.startsWith("http://") ||
+      value.startsWith("https://") ||
+      value.startsWith("mailto:") ||
+      value.startsWith("tel:"))
+  );
 }
 
 function getChangedFields(event: BusinessChangeEventRow) {
@@ -476,8 +522,7 @@ export default async function AdminBusinessesPage({
     `,
     )
     .eq("review_status", "unseen")
-    .order("created_at", { ascending: false })
-    .limit(30);
+    .order("created_at", { ascending: false });
 
   const changeEvents =
     (changeEventsRaw ?? []) as unknown as BusinessChangeEventRow[];
@@ -700,46 +745,109 @@ export default async function AdminBusinessesPage({
                             </form>
                           </div>
 
-                          <div className="mt-4 grid gap-3">
-                            {changedFields.length > 0 ? (
-                              changedFields.map((field) => (
-                                <div
-                                  key={field.key}
-                                  className="rounded-2xl border border-gray-200 bg-white p-4"
-                                >
-                                  <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-500">
-                                    {field.label}
-                                  </p>
+                          <div className="mt-4">
+                            {(() => {
+                              const isCreatedChange =
+                                Object.keys(event.before_data ?? {}).length ===
+                                  0 &&
+                                Object.keys(event.after_data ?? {}).length > 0;
 
-                                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                                    <div className="rounded-2xl bg-red-50 p-3">
-                                      <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">
-                                        Antes
-                                      </p>
+                              const isDeletedChange =
+                                Object.keys(event.after_data ?? {}).length ===
+                                  0 &&
+                                Object.keys(event.before_data ?? {}).length > 0;
 
-                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-800">
-                                        {field.beforeValue}
-                                      </p>
-                                    </div>
+                              if (isCreatedChange || isDeletedChange) {
+                                const displayFields =
+                                  getDisplayDataForCreatedOrDeletedChange(
+                                    isCreatedChange
+                                      ? event.after_data
+                                      : event.before_data,
+                                  );
 
-                                    <div className="rounded-2xl bg-green-50 p-3">
-                                      <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
-                                        Después
-                                      </p>
+                                return (
+                                  <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                                    <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-500">
+                                      {isCreatedChange
+                                        ? "Datos agregados"
+                                        : "Datos eliminados"}
+                                    </p>
 
-                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-800">
-                                        {field.afterValue}
-                                      </p>
+                                    <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                                      {displayFields.map((field) => (
+                                        <div
+                                          key={field.key}
+                                          className="rounded-2xl bg-gray-50 p-3"
+                                        >
+                                          <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-500">
+                                            {field.label}
+                                          </p>
+
+                                          {isUrlLikeValue(field.rawValue) ? (
+                                            <a
+                                              href={String(field.rawValue)}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="mt-2 block break-words text-sm font-bold leading-6 text-orange-700 hover:text-orange-800"
+                                            >
+                                              {field.value}
+                                            </a>
+                                          ) : (
+                                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-gray-800">
+                                              {field.value}
+                                            </p>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
+                                );
+                              }
+
+                              return (
+                                <div className="grid gap-3">
+                                  {changedFields.length > 0 ? (
+                                    changedFields.map((field) => (
+                                      <div
+                                        key={field.key}
+                                        className="rounded-2xl border border-gray-200 bg-white p-4"
+                                      >
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-500">
+                                          {field.label}
+                                        </p>
+
+                                        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                                          <div className="rounded-2xl bg-red-50 p-3">
+                                            <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">
+                                              Antes
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-gray-800">
+                                              {field.beforeValue}
+                                            </p>
+                                          </div>
+
+                                          <div className="rounded-2xl bg-green-50 p-3">
+                                            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+                                              Después
+                                            </p>
+
+                                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-gray-800">
+                                              {field.afterValue}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+                                      No se detectaron diferencias específicas en este
+                                      aviso.
+                                    </p>
+                                  )}
                                 </div>
-                              ))
-                            ) : (
-                              <p className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
-                                No se detectaron diferencias específicas en este
-                                aviso.
-                              </p>
-                            )}
+                              );
+                            })()}
                           </div>
                         </div>
                       );
