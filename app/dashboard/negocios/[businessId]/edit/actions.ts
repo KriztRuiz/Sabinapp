@@ -576,7 +576,7 @@ export async function addBusinessLocation(
     );
   }
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para agregar ubicaciones.",
   );
@@ -626,6 +626,27 @@ export async function addBusinessLocation(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_location_added",
+    targetTable: "business_locations",
+    targetId: insertedLocation.id,
+    summary: "El dueño agregó una ubicación en un negocio publicado.",
+    beforeData: {},
+    afterData: {
+      location_type: locationType,
+      address_text: addressText || null,
+      neighborhood: neighborhood || null,
+      reference_notes: referenceNotes || null,
+      service_area_text: serviceAreaText || null,
+      map_url: mapUrl || null,
+      is_primary: shouldBePrimary,
+      is_public: isPublic,
+    },
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Ubicación agregada correctamente.");
@@ -635,10 +656,26 @@ export async function deleteBusinessLocation(
   businessId: string,
   locationId: string,
 ) {
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para eliminar ubicaciones.",
   );
+
+  const { data: currentLocation, error: currentLocationError } = await supabase
+    .from("business_locations")
+    .select("id, location_type, address_text, neighborhood, reference_notes, service_area_text, map_url, is_primary, is_public")
+    .eq("id", locationId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentLocationError || !currentLocation) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró la ubicación: ${
+        currentLocationError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
 
   const { data: deletedLocation, error: deleteLocationError } = await supabase
     .from("business_locations")
@@ -694,6 +731,27 @@ export async function deleteBusinessLocation(
     }
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_location_deleted",
+    targetTable: "business_locations",
+    targetId: locationId,
+    summary: "El dueño eliminó una ubicación de un negocio publicado.",
+    beforeData: {
+      location_type: currentLocation.location_type,
+      address_text: currentLocation.address_text,
+      neighborhood: currentLocation.neighborhood,
+      reference_notes: currentLocation.reference_notes,
+      service_area_text: currentLocation.service_area_text,
+      map_url: currentLocation.map_url,
+      is_primary: currentLocation.is_primary,
+      is_public: currentLocation.is_public,
+    },
+    afterData: {},
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Ubicación eliminada correctamente.");
@@ -727,10 +785,37 @@ export async function updateBusinessLocationDetails(
     );
   }
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para editar ubicaciones.",
   );
+
+  const { data: currentLocation, error: currentLocationError } = await supabase
+    .from("business_locations")
+    .select("id, location_type, address_text, neighborhood, reference_notes, service_area_text, map_url, is_primary, is_public")
+    .eq("id", locationId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentLocationError || !currentLocation) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró la ubicación: ${
+        currentLocationError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
+
+  const nextLocationData = {
+    location_type: currentLocation.location_type,
+    address_text: addressText || null,
+    neighborhood: neighborhood || null,
+    reference_notes: referenceNotes || null,
+    service_area_text: serviceAreaText || null,
+    map_url: mapUrl || null,
+    is_primary: isPrimary,
+    is_public: isPublic,
+  };
 
   if (isPrimary) {
     await unsetOtherPrimaryLocations(supabase, businessId, locationId);
@@ -739,13 +824,7 @@ export async function updateBusinessLocationDetails(
   const { data: updatedLocation, error: updateLocationError } = await supabase
     .from("business_locations")
     .update({
-      address_text: addressText || null,
-      neighborhood: neighborhood || null,
-      reference_notes: referenceNotes || null,
-      service_area_text: serviceAreaText || null,
-      map_url: mapUrl || null,
-      is_primary: isPrimary,
-      is_public: isPublic,
+      ...nextLocationData,
       updated_at: getNowIsoTimestamp(),
     })
     .eq("id", locationId)
@@ -761,6 +840,27 @@ export async function updateBusinessLocationDetails(
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_location_updated",
+    targetTable: "business_locations",
+    targetId: locationId,
+    summary: "El dueño actualizó una ubicación de un negocio publicado.",
+    beforeData: {
+      location_type: currentLocation.location_type,
+      address_text: currentLocation.address_text,
+      neighborhood: currentLocation.neighborhood,
+      reference_notes: currentLocation.reference_notes,
+      service_area_text: currentLocation.service_area_text,
+      map_url: currentLocation.map_url,
+      is_primary: currentLocation.is_primary,
+      is_public: currentLocation.is_public,
+    },
+    afterData: nextLocationData,
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 

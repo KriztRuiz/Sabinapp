@@ -141,6 +141,13 @@ const CHANGE_FIELD_LABELS: Record<string, string> = {
   closes_at: "Cierra",
   is_closed: "Cerrado",
   notes: "Notas",
+  location_type: "Tipo de ubicación",
+  address_text: "Dirección",
+  neighborhood: "Colonia",
+  reference_notes: "Referencias",
+  service_area_text: "Área de servicio",
+  map_url: "Enlace de mapa",
+  is_public: "Visible públicamente",
 };
 
 const VISUAL_MODE_LABELS: Record<string, string> = {
@@ -160,6 +167,9 @@ const CHANGE_ACTION_LABELS: Record<string, string> = {
   business_hour_added: "Horario agregado",
   business_hour_updated: "Horario actualizado",
   business_hour_deleted: "Horario eliminado",
+  business_location_added: "Ubicación agregada",
+  business_location_updated: "Ubicación actualizada",
+  business_location_deleted: "Ubicación eliminada",
 };
 
 function formatChangeActionKey(actionKey: string) {
@@ -194,6 +204,19 @@ function formatChangeValue(fieldKey: string, value: unknown) {
     typeof value === "string"
   ) {
     return value.slice(0, 5);
+  }
+
+  if (fieldKey === "location_type" && typeof value === "string") {
+    const locationTypeLabels: Record<string, string> = {
+      physical_location: "Local físico",
+      home_service: "Servicio a domicilio",
+      pickup_point: "Punto de entrega",
+      contact_only: "Sólo contacto",
+      temporary_event: "Evento temporal",
+      service_area: "Área de servicio",
+    };
+
+    return locationTypeLabels[value] ?? value;
   }
 
   if (fieldKey === "type" && typeof value === "string") {
