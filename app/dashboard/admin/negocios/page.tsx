@@ -148,6 +148,13 @@ const CHANGE_FIELD_LABELS: Record<string, string> = {
   service_area_text: "Área de servicio",
   map_url: "Enlace de mapa",
   is_public: "Visible públicamente",
+  media_type: "Tipo de imagen",
+  image_url: "Imagen",
+  alt_text: "Texto alternativo",
+  is_cover: "Portada",
+  cover_media_id: "ID de imagen de portada",
+  cover_image_url: "Imagen de portada",
+  cover_alt_text: "Texto alternativo de portada",
 };
 
 const VISUAL_MODE_LABELS: Record<string, string> = {
@@ -170,6 +177,10 @@ const CHANGE_ACTION_LABELS: Record<string, string> = {
   business_location_added: "Ubicación agregada",
   business_location_updated: "Ubicación actualizada",
   business_location_deleted: "Ubicación eliminada",
+  business_media_added: "Imagen agregada",
+  business_media_updated: "Imagen actualizada",
+  business_media_deleted: "Imagen eliminada",
+  business_media_cover_changed: "Portada cambiada",
 };
 
 function formatChangeActionKey(actionKey: string) {
@@ -204,6 +215,15 @@ function formatChangeValue(fieldKey: string, value: unknown) {
     typeof value === "string"
   ) {
     return value.slice(0, 5);
+  }
+
+  if (fieldKey === "media_type" && typeof value === "string") {
+    const mediaTypeLabels: Record<string, string> = {
+      cover: "Portada",
+      gallery: "Galería",
+    };
+
+    return mediaTypeLabels[value] ?? value;
   }
 
   if (fieldKey === "location_type" && typeof value === "string") {

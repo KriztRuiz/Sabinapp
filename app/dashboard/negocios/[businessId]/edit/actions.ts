@@ -1403,10 +1403,35 @@ export async function updateBusinessMediaDetails(
   const sortOrder = parseNonNegativeIntegerOrZero(businessId, sortOrderValue);
   const isActive = formData.get("is_active") === "on";
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para editar imágenes.",
   );
+
+  const { data: currentMedia, error: currentMediaError } = await supabase
+    .from("business_media")
+    .select("id, type, url, alt_text, is_active, is_cover, sort_order")
+    .eq("id", mediaId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentMediaError || !currentMedia) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró la imagen: ${
+        currentMediaError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
+
+  const nextMediaChangeData = {
+    media_type: currentMedia.type,
+    image_url: url,
+    alt_text: altText || null,
+    is_active: isActive,
+    is_cover: currentMedia.is_cover,
+    sort_order: sortOrder,
+  };
 
   const { data: updatedMedia, error: updateMediaError } = await supabase
     .from("business_media")
@@ -1431,6 +1456,25 @@ export async function updateBusinessMediaDetails(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_media_updated",
+    targetTable: "business_media",
+    targetId: mediaId,
+    summary: "El dueño actualizó una imagen de un negocio publicado.",
+    beforeData: {
+      media_type: currentMedia.type,
+      image_url: currentMedia.url,
+      alt_text: currentMedia.alt_text,
+      is_active: currentMedia.is_active,
+      is_cover: currentMedia.is_cover,
+      sort_order: currentMedia.sort_order,
+    },
+    afterData: nextMediaChangeData,
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Imagen actualizada correctamente.");
@@ -1440,14 +1484,14 @@ export async function setBusinessMediaAsCover(
   businessId: string,
   mediaId: string,
 ) {
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para editar imágenes.",
   );
 
   const { data: existingMedia, error: existingMediaError } = await supabase
     .from("business_media")
-    .select("id")
+    .select("id, type, url, alt_text, is_active, is_cover, sort_order")
     .eq("id", mediaId)
     .eq("business_id", businessId)
     .single();
@@ -1458,6 +1502,13 @@ export async function setBusinessMediaAsCover(
       "No se encontró la imagen seleccionada.",
     );
   }
+
+  const { data: currentCover } = await supabase
+    .from("business_media")
+    .select("id, url, alt_text")
+    .eq("business_id", businessId)
+    .eq("is_cover", true)
+    .maybeSingle();
 
   const { error: resetCoverError } = await supabase
     .from("business_media")
@@ -1498,6 +1549,26 @@ export async function setBusinessMediaAsCover(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_media_cover_changed",
+    targetTable: "business_media",
+    targetId: mediaId,
+    summary: "El dueño cambió la portada de un negocio publicado.",
+    beforeData: {
+      cover_media_id: currentCover?.id ?? null,
+      cover_image_url: currentCover?.url ?? null,
+      cover_alt_text: currentCover?.alt_text ?? null,
+    },
+    afterData: {
+      cover_media_id: existingMedia.id,
+      cover_image_url: existingMedia.url,
+      cover_alt_text: existingMedia.alt_text,
+    },
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Portada actualizada correctamente.");
@@ -1507,10 +1578,26 @@ export async function deleteBusinessMedia(
   businessId: string,
   mediaId: string,
 ) {
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para eliminar imágenes.",
   );
+
+  const { data: currentMedia, error: currentMediaError } = await supabase
+    .from("business_media")
+    .select("id, type, url, alt_text, is_active, is_cover, sort_order")
+    .eq("id", mediaId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentMediaError || !currentMedia) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró la imagen: ${
+        currentMediaError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
 
   const { data: deletedMedia, error: deleteMediaError } = await supabase
     .from("business_media")
@@ -1529,6 +1616,25 @@ export async function deleteBusinessMedia(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_media_deleted",
+    targetTable: "business_media",
+    targetId: mediaId,
+    summary: "El dueño eliminó una imagen de un negocio publicado.",
+    beforeData: {
+      media_type: currentMedia.type,
+      image_url: currentMedia.url,
+      alt_text: currentMedia.alt_text,
+      is_active: currentMedia.is_active,
+      is_cover: currentMedia.is_cover,
+      sort_order: currentMedia.sort_order,
+    },
+    afterData: {},
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Imagen eliminada correctamente.");
@@ -1537,7 +1643,7 @@ export async function deleteBusinessMedia(
 export async function addBusinessMedia(businessId: string, formData: FormData) {
   const { url, altText } = getBusinessMediaFormInput(businessId, formData);
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para agregar imágenes.",
   );
@@ -1582,6 +1688,25 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_media_added",
+    targetTable: "business_media",
+    targetId: createdMedia.id,
+    summary: "El dueño agregó una imagen en un negocio publicado.",
+    beforeData: {},
+    afterData: {
+      media_type: shouldBeCover ? "cover" : "gallery",
+      image_url: url,
+      alt_text: altText || null,
+      is_active: true,
+      is_cover: shouldBeCover,
+      sort_order: nextSortOrder,
+    },
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
