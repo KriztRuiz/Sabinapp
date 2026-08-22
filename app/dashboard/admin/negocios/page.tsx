@@ -155,6 +155,13 @@ const CHANGE_FIELD_LABELS: Record<string, string> = {
   cover_media_id: "ID de imagen de portada",
   cover_image_url: "Imagen de portada",
   cover_alt_text: "Texto alternativo de portada",
+  item_type: "Tipo",
+  description: "Descripción",
+  price: "Precio",
+  currency: "Moneda",
+  show_price: "Mostrar precio",
+  is_featured: "Destacado",
+  image_alt: "Texto alternativo de imagen",
 };
 
 const VISUAL_MODE_LABELS: Record<string, string> = {
@@ -181,6 +188,9 @@ const CHANGE_ACTION_LABELS: Record<string, string> = {
   business_media_updated: "Imagen actualizada",
   business_media_deleted: "Imagen eliminada",
   business_media_cover_changed: "Portada cambiada",
+  business_item_added: "Item agregado",
+  business_item_updated: "Item actualizado",
+  business_item_deleted: "Item eliminado",
 };
 
 function formatChangeActionKey(actionKey: string) {
@@ -215,6 +225,26 @@ function formatChangeValue(fieldKey: string, value: unknown) {
     typeof value === "string"
   ) {
     return value.slice(0, 5);
+  }
+
+  if (fieldKey === "item_type" && typeof value === "string") {
+    const itemTypeLabels: Record<string, string> = {
+      menu_item: "Menú",
+      product: "Producto",
+      service: "Servicio",
+      promotion: "Promoción",
+      other: "Otro",
+    };
+
+    return itemTypeLabels[value] ?? value;
+  }
+
+  if (fieldKey === "price" && typeof value === "number") {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 2,
+    }).format(value);
   }
 
   if (fieldKey === "media_type" && typeof value === "string") {

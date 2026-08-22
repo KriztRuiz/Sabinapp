@@ -1744,10 +1744,40 @@ export async function updateBusinessItemDetails(
   const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para editar items.",
   );
+
+  const { data: currentItem, error: currentItemError } = await supabase
+    .from("business_items")
+    .select("id, type, name, description, price, currency, show_price, is_featured, is_active, image_url, image_alt, sort_order")
+    .eq("id", itemId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentItemError || !currentItem) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró el item: ${
+        currentItemError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
+
+  const nextItemData = {
+    item_type: type,
+    name,
+    description: description || null,
+    price,
+    currency,
+    show_price: showPrice,
+    is_featured: isFeatured,
+    is_active: isActive,
+    image_url: imageUrl || null,
+    image_alt: imageAlt || null,
+    sort_order: sortOrder,
+  };
 
   const { data: updatedItem, error: updateItemError } = await supabase
     .from("business_items")
@@ -1779,6 +1809,30 @@ export async function updateBusinessItemDetails(
     );
   }
 
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_item_updated",
+    targetTable: "business_items",
+    targetId: itemId,
+    summary: "El dueño actualizó un item de un negocio publicado.",
+    beforeData: {
+      item_type: currentItem.type,
+      name: currentItem.name,
+      description: currentItem.description,
+      price: currentItem.price,
+      currency: currentItem.currency,
+      show_price: currentItem.show_price,
+      is_featured: currentItem.is_featured,
+      is_active: currentItem.is_active,
+      image_url: currentItem.image_url,
+      image_alt: currentItem.image_alt,
+      sort_order: currentItem.sort_order,
+    },
+    afterData: nextItemData,
+  });
+
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
   redirectToEditBusiness(businessId, "Item actualizado correctamente.");
@@ -1788,10 +1842,26 @@ export async function deleteBusinessItem(
   businessId: string,
   itemId: string,
 ) {
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para eliminar items.",
   );
+
+  const { data: currentItem, error: currentItemError } = await supabase
+    .from("business_items")
+    .select("id, type, name, description, price, currency, show_price, is_featured, is_active, image_url, image_alt, sort_order")
+    .eq("id", itemId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (currentItemError || !currentItem) {
+    redirectToEditBusiness(
+      businessId,
+      `No se encontró el item: ${
+        currentItemError?.message ?? "sin filas encontradas"
+      }`,
+    );
+  }
 
   const { data: deletedItem, error: deleteItemError } = await supabase
     .from("business_items")
@@ -1809,6 +1879,30 @@ export async function deleteBusinessItem(
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_item_deleted",
+    targetTable: "business_items",
+    targetId: itemId,
+    summary: "El dueño eliminó un item de un negocio publicado.",
+    beforeData: {
+      item_type: currentItem.type,
+      name: currentItem.name,
+      description: currentItem.description,
+      price: currentItem.price,
+      currency: currentItem.currency,
+      show_price: currentItem.show_price,
+      is_featured: currentItem.is_featured,
+      is_active: currentItem.is_active,
+      image_url: currentItem.image_url,
+      image_alt: currentItem.image_alt,
+      sort_order: currentItem.sort_order,
+    },
+    afterData: {},
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
@@ -1836,7 +1930,7 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
   const price = parseOptionalNonNegativePrice(businessId, priceValue);
 
 
-  const { supabase, business } = await getOwnedBusinessContextOrRedirect(
+  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
     businessId,
     "Inicia sesión para agregar items.",
   );
@@ -1882,6 +1976,30 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
       }`,
     );
   }
+
+  await recordPublishedBusinessChangeEvent({
+    supabase,
+    user,
+    business,
+    actionKey: "business_item_added",
+    targetTable: "business_items",
+    targetId: createdItem.id,
+    summary: "El dueño agregó un item en un negocio publicado.",
+    beforeData: {},
+    afterData: {
+      item_type: type,
+      name,
+      description: description || null,
+      price,
+      currency,
+      show_price: showPrice,
+      is_featured: isFeatured,
+      is_active: true,
+      image_url: imageUrl || null,
+      image_alt: imageAlt || null,
+      sort_order: nextSortOrder,
+    },
+  });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
