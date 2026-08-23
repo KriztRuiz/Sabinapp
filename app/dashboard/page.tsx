@@ -20,6 +20,11 @@ type BusinessRow = {
   is_published: boolean;
 };
 
+type PendingChangeEventRow = {
+  business_id: string | null;
+  business_slug_snapshot: string | null;
+};
+
 function getBusinessStatusLabel(status: string) {
   const labels: Record<string, string> = {
     draft: "Borrador",
@@ -75,6 +80,8 @@ export default async function DashboardPage() {
 
   let pendingReviewCount = 0;
   let approvedWithoutPublishCount = 0;
+  let pendingChangeEventsCount = 0;
+  let pendingChangeBusinessesCount = 0;
 
   if (canReviewBusinesses) {
     const { count: pendingCount } = await supabase
@@ -88,8 +95,22 @@ export default async function DashboardPage() {
       .eq("status", "approved")
       .eq("is_published", false);
 
+    const { data: pendingChangeEventsRaw } = await supabase
+      .from("business_change_events")
+      .select("business_id, business_slug_snapshot")
+      .eq("review_status", "unseen");
+
+    const pendingChangeEvents =
+      (pendingChangeEventsRaw ?? []) as PendingChangeEventRow[];
+
+    const pendingChangeBusinessKeys = pendingChangeEvents
+      .map((event) => event.business_id ?? event.business_slug_snapshot)
+      .filter((key): key is string => Boolean(key));
+
     pendingReviewCount = pendingCount ?? 0;
     approvedWithoutPublishCount = approvedCount ?? 0;
+    pendingChangeEventsCount = pendingChangeEvents.length;
+    pendingChangeBusinessesCount = new Set(pendingChangeBusinessKeys).size;
   }
 
   return (
@@ -212,7 +233,7 @@ export default async function DashboardPage() {
             no cumplan los requisitos.
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
             <div className="rounded-2xl border border-orange-200 bg-white p-4">
               <p className="text-sm font-bold text-gray-600">
                 Pendientes de revisión
@@ -230,6 +251,21 @@ export default async function DashboardPage() {
 
               <p className="mt-2 text-3xl font-black text-gray-950">
                 {approvedWithoutPublishCount}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-orange-200 bg-white p-4">
+              <p className="text-sm font-bold text-gray-600">
+                Cambios pendientes
+              </p>
+
+              <p className="mt-2 text-3xl font-black text-gray-950">
+                {pendingChangeEventsCount}
+              </p>
+
+              <p className="mt-1 text-xs font-semibold text-gray-500">
+                En {pendingChangeBusinessesCount} negocio
+                {pendingChangeBusinessesCount === 1 ? "" : "s"}
               </p>
             </div>
           </div>

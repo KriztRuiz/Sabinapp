@@ -59,6 +59,15 @@ type BusinessChangeEventRow = {
   created_at: string;
 };
 
+type BusinessChangeSummaryRow = {
+  business_id: string | null;
+  business_name_snapshot: string;
+  business_slug_snapshot: string;
+  action_key: string;
+  review_status: string;
+  created_at: string;
+};
+
 type BusinessReviewRow = {
   id: string;
   name: string;
@@ -536,6 +545,82 @@ function getAdminGroupStatus(business: BusinessReviewRow): BusinessStatus {
   return business.status;
 }
 
+
+function countChangeEventsByPrefix(
+  events: BusinessChangeEventRow[],
+  prefix: string,
+) {
+  return events.filter((event) => event.action_key.startsWith(prefix)).length;
+}
+
+function groupAllChangeEventsByBusiness(events: BusinessChangeSummaryRow[]) {
+  const groups = new Map<
+    string,
+    {
+      businessId: string | null;
+      businessName: string;
+      businessSlug: string;
+      total: number;
+      unseen: number;
+      seen: number;
+      sentToReview: number;
+      other: number;
+      latestCreatedAt: string;
+    }
+  >();
+
+  for (const event of events) {
+    const groupKey = event.business_id ?? event.business_slug_snapshot;
+    const currentGroup = groups.get(groupKey);
+
+    if (!currentGroup) {
+      groups.set(groupKey, {
+        businessId: event.business_id,
+        businessName: event.business_name_snapshot,
+        businessSlug: event.business_slug_snapshot,
+        total: 1,
+        unseen: event.review_status === "unseen" ? 1 : 0,
+        seen: event.review_status === "seen" ? 1 : 0,
+        sentToReview: event.review_status === "sent_to_review" ? 1 : 0,
+        other:
+          event.review_status !== "unseen" &&
+          event.review_status !== "seen" &&
+          event.review_status !== "sent_to_review"
+            ? 1
+            : 0,
+        latestCreatedAt: event.created_at,
+      });
+
+      continue;
+    }
+
+    currentGroup.total += 1;
+
+    if (event.review_status === "unseen") {
+      currentGroup.unseen += 1;
+    } else if (event.review_status === "seen") {
+      currentGroup.seen += 1;
+    } else if (event.review_status === "sent_to_review") {
+      currentGroup.sentToReview += 1;
+    } else {
+      currentGroup.other += 1;
+    }
+
+    if (
+      new Date(event.created_at).getTime() >
+      new Date(currentGroup.latestCreatedAt).getTime()
+    ) {
+      currentGroup.latestCreatedAt = event.created_at;
+    }
+  }
+
+  return Array.from(groups.values()).sort(
+    (a, b) =>
+      new Date(b.latestCreatedAt).getTime() -
+      new Date(a.latestCreatedAt).getTime(),
+  );
+}
+
 function groupByStatus(businesses: BusinessReviewRow[]) {
   return businesses.reduce<Record<BusinessStatus, BusinessReviewRow[]>>(
     (groups, business) => {
@@ -641,7 +726,73 @@ export default async function AdminBusinessesPage({
   const changeEvents =
     (changeEventsRaw ?? []) as unknown as BusinessChangeEventRow[];
 
+  const { data: allChangeEventsRaw, error: allChangeEventsError } =
+    await supabase
+      .from("business_change_events")
+      .select(
+        `
+        business_id,
+        business_name_snapshot,
+        business_slug_snapshot,
+        action_key,
+        review_status,
+        created_at
+      `,
+      )
+      .order("created_at", { ascending: false });
+
+  const allChangeEvents =
+    (allChangeEventsRaw ?? []) as unknown as BusinessChangeSummaryRow[];
+
+  const groupedAllChangeEvents =
+    groupAllChangeEventsByBusiness(allChangeEvents);
+
+  const allChangeEventsSeenCount = allChangeEvents.filter(
+    (event) => event.review_status === "seen",
+  ).length;
+
+  const allChangeEventsSentToReviewCount = allChangeEvents.filter(
+    (event) => event.review_status === "sent_to_review",
+  ).length;
+
   const groupedChangeEvents = groupChangeEventsByBusiness(changeEvents);
+
+  const changeSummaryCards = [
+    {
+      label: "Cambios sin ver",
+      value: changeEvents.length,
+    },
+    {
+      label: "Negocios con cambios pendientes",
+      value: groupedChangeEvents.length,
+    },
+    {
+      label: "Cambios registrados",
+      value: allChangeEvents.length,
+    },
+    {
+      label: "Negocios con historial",
+      value: groupedAllChangeEvents.length,
+    },
+    {
+      label: "Cambios vistos",
+      value: allChangeEventsSeenCount,
+    },
+    {
+      label: "Enviados a revisión",
+      value: allChangeEventsSentToReviewCount,
+    },
+    {
+      label: "Contactos pendientes",
+      value: countChangeEventsByPrefix(changeEvents, "business_contact_"),
+    },
+    {
+      label: "Contenido pendiente",
+      value: changeEvents.filter(
+        (event) => event.action_key === "business_public_content_updated",
+      ).length,
+    },
+  ];
 
   const businesses = (data ?? []) as unknown as BusinessReviewRow[];
   const grouped = groupByStatus(businesses);
@@ -715,6 +866,102 @@ export default async function AdminBusinessesPage({
               Los negocios cargaron correctamente, pero no se pudieron cargar
               los cambios pendientes de revisión.
             </p>
+          </section>
+        ) : null}
+
+        {!changeEventsError ? (
+          <section className="mt-8 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.22em] text-amber-700">
+                  Resumen de cambios
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black text-gray-950">
+                  Cambios pendientes por revisar
+                </h2>
+
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
+                  Este resumen separa los cambios pendientes del historial
+                  completo de actividad. La información detallada se mantiene
+                  agrupada para evitar saturar la página.
+                </p>
+              </div>
+
+              {allChangeEventsError ? (
+                <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">
+                  No se pudo cargar el historial completo de cambios.
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {changeSummaryCards.map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-2xl border border-amber-100 bg-amber-50 p-4"
+                >
+                  <p className="text-sm font-bold text-gray-600">
+                    {card.label}
+                  </p>
+
+                  <p className="mt-2 text-3xl font-black text-gray-950">
+                    {card.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {!allChangeEventsError && groupedAllChangeEvents.length > 0 ? (
+              <details className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <summary className="cursor-pointer text-sm font-black text-amber-900">
+                  Ver actividad histórica por negocio
+                </summary>
+
+                <div className="mt-4 grid gap-3">
+                  {groupedAllChangeEvents.map((group) => (
+                    <article
+                      key={group.businessId ?? group.businessSlug}
+                      className="rounded-2xl border border-amber-100 bg-white p-4"
+                    >
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <h3 className="font-black text-gray-950">
+                            {group.businessName}
+                          </h3>
+
+                          <p className="mt-1 text-sm text-gray-600">
+                            /negocio/{group.businessSlug}
+                          </p>
+
+                          <p className="mt-1 text-xs font-semibold text-gray-500">
+                            Último cambio: {formatDate(group.latestCreatedAt)}
+                          </p>
+                        </div>
+
+                        <div className="grid gap-2 text-sm sm:grid-cols-4">
+                          <span className="rounded-full bg-gray-100 px-3 py-1 font-bold text-gray-700">
+                            Total: {group.total}
+                          </span>
+
+                          <span className="rounded-full bg-amber-100 px-3 py-1 font-bold text-amber-900">
+                            Sin ver: {group.unseen}
+                          </span>
+
+                          <span className="rounded-full bg-green-100 px-3 py-1 font-bold text-green-800">
+                            Vistos: {group.seen}
+                          </span>
+
+                          <span className="rounded-full bg-red-100 px-3 py-1 font-bold text-red-800">
+                            A revisión: {group.sentToReview}
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </section>
         ) : null}
 
