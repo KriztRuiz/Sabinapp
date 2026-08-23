@@ -102,7 +102,7 @@ const STATUS_LABELS: Record<BusinessStatus, string> = {
   approved: "Aprobado",
   rejected: "Rechazado",
   published: "Publicado",
-  hidden: "Oculto",
+  hidden: "Retirado del público",
   suspended: "Suspendido",
   archived: "Archivado",
   expired: "Expirado",
@@ -831,9 +831,8 @@ export default async function AdminBusinessesPage({
               </h1>
 
               <p className="mt-3 max-w-2xl leading-7 text-gray-600">
-                Panel interno para revisar el estado de los negocios registrados
-                en Sabinapp. En esta fase solo mostramos la información; las
-                acciones de aprobar o rechazar se agregan después.
+                Panel interno para revisar negocios, cambios recientes, estados,
+                vigencia y acciones de moderación dentro de Sabinapp.
               </p>
             </div>
 
@@ -1246,7 +1245,23 @@ export default async function AdminBusinessesPage({
         ) : null}
 
         {!error ? (
-          <section className="mt-8 space-y-8">
+          <section className="mt-8 space-y-4">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-black uppercase tracking-[0.22em] text-gray-500">
+                Listado de negocios
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black text-gray-950">
+                Negocios por estado
+              </h2>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
+                Abre sólo el grupo que necesites revisar. Los negocios
+                pendientes o aprobados aparecen abiertos por defecto cuando
+                existan.
+              </p>
+            </div>
+
             {reviewQueue.map((status) => {
               const items = grouped[status];
 
@@ -1255,10 +1270,29 @@ export default async function AdminBusinessesPage({
               }
 
               return (
-                <div key={status}>
-                  <h2 className="text-2xl font-black">
-                    {STATUS_LABELS[status]}
-                  </h2>
+                <details
+                  key={status}
+                  className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
+                  open={status === "pending_review" || status === "approved"}
+                >
+                  <summary className="cursor-pointer list-none">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h2 className="text-2xl font-black text-gray-950">
+                          {STATUS_LABELS[status]}
+                        </h2>
+
+                        <p className="mt-1 text-sm font-semibold text-gray-500">
+                          {items.length} negocio
+                          {items.length === 1 ? "" : "s"} en este estado
+                        </p>
+                      </div>
+
+                      <span className="w-fit rounded-full bg-gray-100 px-4 py-2 text-sm font-black text-gray-800">
+                        Abrir / cerrar
+                      </span>
+                    </div>
+                  </summary>
 
                   <div className="mt-4 grid gap-4">
                     {items.map((business) => (
@@ -1592,7 +1626,7 @@ export default async function AdminBusinessesPage({
                       </article>
                     ))}
                   </div>
-                </div>
+                </details>
               );
             })}
           </section>
