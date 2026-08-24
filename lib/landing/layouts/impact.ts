@@ -4,7 +4,7 @@ export const impactLayout: LandingModeLayout = {
   mode: "impact",
   name: "Impact",
   intent:
-    "Página promocional, fuerte y orientada a conversión. Ideal para eventos, ofertas o ventas temporales.",
+    "Publicación promocional, fuerte y orientada a conversión. Ideal para eventos, ofertas o ventas temporales.",
   heroStyle: "promotional",
   primaryFocus: ["featuredItems", "items", "contactHub"],
   sections: {

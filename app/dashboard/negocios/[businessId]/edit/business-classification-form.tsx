@@ -89,7 +89,7 @@ export function BusinessClassificationForm({
 
       {!canEditClassification ? (
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <p className="font-black">Clasificación bloqueada temporalmente</p>
+          <p className="font-black">Clasificación no editable en este estado</p>
 
           <p className="mt-1 leading-6">
             La clasificación y vigencia sólo pueden cambiarse cuando el negocio

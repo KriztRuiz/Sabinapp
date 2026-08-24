@@ -19,15 +19,15 @@ export default async function DbTestPage() {
 
   return (
     <main className="mx-auto max-w-3xl p-8">
-      <h1 className="text-3xl font-bold">Prueba de conexión Supabase</h1>
+      <h1 className="text-3xl font-bold">Prueba de conexión de datos</h1>
 
       <p className="mt-3 text-gray-600">
-        Esta página verifica que Next.js pueda leer datos desde Supabase.
+        Esta pantalla verifica que la app pueda leer datos de prueba.
       </p>
 
       {error ? (
         <div className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
-          <h2 className="font-semibold">Error de Supabase</h2>
+          <h2 className="font-semibold">Error de conexión de datos</h2>
           <pre className="mt-2 whitespace-pre-wrap text-sm">
             {JSON.stringify(error, null, 2)}
           </pre>
