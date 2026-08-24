@@ -836,10 +836,6 @@ export default async function AdminBusinessesPage({
               </p>
             </div>
 
-            <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-              <p className="text-sm font-bold text-gray-500">Total</p>
-              <p className="mt-1 text-4xl font-black">{businesses.length}</p>
-            </div>
           </div>
         </header>
 
@@ -1226,43 +1222,70 @@ export default async function AdminBusinessesPage({
         ) : null}
 
         {!error ? (
-          <section className="mt-8 grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {reviewQueue.map((status) => (
-              <article
-                key={status}
-                className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
-              >
+          <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.22em] text-gray-500">
+                Resumen de negocios
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black text-gray-950">
+                Negocios existentes por estado
+              </h2>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
+                Este resumen muestra el total de negocios registrados y cómo se
+                distribuyen según su estado actual.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+              <article className="rounded-3xl border border-gray-200 bg-gray-50 p-5">
                 <p className="text-sm font-bold text-gray-500">
-                  {STATUS_LABELS[status]}
+                  Total de negocios existentes
                 </p>
 
                 <p className="mt-2 text-3xl font-black">
-                  {grouped[status].length}
+                  {businesses.length}
                 </p>
               </article>
-            ))}
+
+              {reviewQueue.map((status) => (
+                <article
+                  key={status}
+                  className="rounded-3xl border border-gray-200 bg-white p-5"
+                >
+                  <p className="text-sm font-bold text-gray-500">
+                    {STATUS_LABELS[status]}
+                  </p>
+
+                  <p className="mt-2 text-3xl font-black">
+                    {grouped[status].length}
+                  </p>
+                </article>
+              ))}
+            </div>
           </section>
         ) : null}
 
         {!error ? (
-          <section className="mt-8 space-y-4">
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-gray-500">
-                Listado de negocios
+Detalle de negocios
               </p>
 
               <h2 className="mt-2 text-2xl font-black text-gray-950">
-                Negocios por estado
+Detalle de negocios por estado
               </h2>
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
-                Abre sólo el grupo que necesites revisar. Los negocios
-                pendientes o aprobados aparecen abiertos por defecto cuando
-                existan.
+                Abre sólo el grupo que necesites revisar. Esta sección muestra
+                los registros completos y sus acciones de moderación.
               </p>
             </div>
 
-            {reviewQueue.map((status) => {
+            <div className="mt-5 space-y-4">
+              {reviewQueue.map((status) => {
               const items = grouped[status];
 
               if (items.length === 0) {
@@ -1272,7 +1295,7 @@ export default async function AdminBusinessesPage({
               return (
                 <details
                   key={status}
-                  className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
+                  className="rounded-3xl border border-gray-200 bg-gray-50 p-5"
                   open={status === "pending_review" || status === "approved"}
                 >
                   <summary className="cursor-pointer list-none">
@@ -1628,7 +1651,8 @@ export default async function AdminBusinessesPage({
                   </div>
                 </details>
               );
-            })}
+              })}
+            </div>
           </section>
         ) : null}
       </div>
