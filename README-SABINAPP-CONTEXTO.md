@@ -69,3 +69,9 @@ Sabinapp es un directorio local moderado de negocios de Sabinas Hidalgo, Nuevo L
 - El lenguaje visible para usuarios debe usar “negocio” en vez del término técnico anterior.
 - SQL siempre completo para copiar y pegar.
 - Validar con `npm run lint` y `npm run build`.
+
+## Auditoría de cambios públicos
+
+La auditoría de cambios públicos del dueño está documentada en `docs/05-auditoria-cambios-publicos.md`.
+
+Regla principal: el dueño puede editar un negocio publicado, pero Sabinapp registra los cambios importantes para revisión administrativa.
