@@ -1,5 +1,6 @@
 // components/landing/public-business-landing.tsx
 
+import { BusinessReviewsSection } from "./business-reviews-section";
 import { ClassicBusinessLanding } from "./modes/classic-business-landing";
 import { CompactBusinessLanding } from "./modes/compact-business-landing";
 import { ElegantBusinessLanding } from "./modes/elegant-business-landing";
@@ -19,14 +20,7 @@ function getClassicLandingData(data: PublicLandingData): PublicLandingData {
   };
 }
 
-export function PublicBusinessLanding({ data }: Props) {
-  /*
-    Router visual del negocio público.
-
-    Cada modo visual tiene su propio componente.
-    Classic queda como base segura y fallback.
-  */
-
+function getLandingByMode(data: PublicLandingData) {
   switch (data.visualMode) {
     case "modern":
       return <ModernBusinessLanding data={data} />;
@@ -47,4 +41,13 @@ export function PublicBusinessLanding({ data }: Props) {
     default:
       return <ClassicBusinessLanding data={getClassicLandingData(data)} />;
   }
+}
+
+export function PublicBusinessLanding({ data }: Props) {
+  return (
+    <>
+      {getLandingByMode(data)}
+      <BusinessReviewsSection data={data} />
+    </>
+  );
 }

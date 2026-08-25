@@ -12,6 +12,7 @@ import type {
   PublicLandingItem,
   PublicLandingLocation,
   PublicLandingPhoto,
+  PublicLandingReview,
 } from "@/lib/landing/styles/types";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -103,6 +104,15 @@ type BusinessQueryRow = {
         tags: {
           name: string;
         } | null;
+      }[]
+    | null;
+  reviews:
+    | {
+        id: string;
+        rating: number | null;
+        comment: string | null;
+        status: string;
+        created_at: string;
       }[]
     | null;
 };
@@ -216,6 +226,19 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
     .map((businessTag) => businessTag.tags?.name)
     .filter((tag): tag is string => Boolean(tag));
 
+  const reviews: PublicLandingReview[] = (row.reviews ?? [])
+    .filter((review) => review.status === "published")
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )
+    .map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.created_at,
+    }));
+
   return {
     id: row.id,
     name: row.name,
@@ -231,6 +254,7 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
     locations,
     items,
     tags,
+    reviews,
   };
 }
 
@@ -342,6 +366,13 @@ export default async function PublicBusinessPage({ params }: PageProps) {
         tags (
           name
         )
+      ),
+      reviews (
+        id,
+        rating,
+        comment,
+        status,
+        created_at
       )
     `,
     )

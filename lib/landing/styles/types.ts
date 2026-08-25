@@ -53,6 +53,13 @@ export type PublicLandingLocation = {
   isPrimary: boolean;
 };
 
+export type PublicLandingReview = {
+  id: string;
+  rating: number | null;
+  comment: string | null;
+  createdAt: string;
+};
+
 export type PublicLandingData = {
   id: string;
   name: string;
@@ -68,6 +75,7 @@ export type PublicLandingData = {
   locations: PublicLandingLocation[];
   items: PublicLandingItem[];
   tags: string[];
+  reviews?: PublicLandingReview[];
 };
 
 export type LandingVisualMode =
