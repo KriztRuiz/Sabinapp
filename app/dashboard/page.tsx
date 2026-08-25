@@ -32,7 +32,7 @@ function getBusinessStatusLabel(status: string) {
     approved: "Aprobado",
     rejected: "Rechazado",
     published: "Publicado",
-    hidden: "Oculto",
+    hidden: "Retirado del público",
     suspended: "Suspendido",
     archived: "Archivado",
     expired: "Expirado",
