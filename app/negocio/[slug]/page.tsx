@@ -45,6 +45,7 @@ type BusinessQueryRow = {
         is_primary: boolean;
         sort_order: number | null;
         is_active: boolean | null;
+        is_approved: boolean | null;
       }[]
     | null;
   business_media:
@@ -144,7 +145,10 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
   const visualMode = getBusinessVisualMode(row.business_settings);
 
   const contacts: PublicLandingContact[] = (row.contact_methods ?? [])
-    .filter((contact) => contact.is_active !== false)
+    .filter(
+      (contact) =>
+        contact.is_active !== false && contact.is_approved !== false,
+    )
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((contact) => ({
       id: contact.id,
@@ -288,7 +292,9 @@ export default async function PublicBusinessPage({ params }: PageProps) {
         value,
         url,
         is_primary,
-        sort_order
+        sort_order,
+        is_active,
+        is_approved
       ),
       business_media (
         id,

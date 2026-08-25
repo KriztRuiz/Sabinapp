@@ -42,7 +42,7 @@ export default async function LocalNewsPage() {
     .from("local_news")
     .select("id, title, summary, source_name, source_url, published_at")
     .eq("is_active", true)
-    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
     .order("published_at", { ascending: false })
     .limit(20);
 
