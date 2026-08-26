@@ -26,6 +26,83 @@ async function requireAdminReviewPermission() {
   return { supabase, user };
 }
 
+
+async function requireAdminReportsPermission() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const { data: canManageReports } = await supabase.rpc("has_permission", {
+    permission_key: "admin.manage_reports",
+  });
+
+  if (!canManageReports) {
+    redirect("/dashboard");
+  }
+
+  return { supabase, user };
+}
+
+function getReportId(formData: FormData) {
+  const reportId = String(formData.get("reportId") ?? "").trim();
+
+  if (!reportId) {
+    throw new Error("No se recibió el reporte.");
+  }
+
+  return reportId;
+}
+
+function getReviewId(formData: FormData) {
+  const reviewId = String(formData.get("reviewId") ?? "").trim();
+
+  if (!reviewId) {
+    throw new Error("No se recibió la reseña.");
+  }
+
+  return reviewId;
+}
+
+function getBusinessSlugFromForm(formData: FormData) {
+  const slug = String(formData.get("businessSlug") ?? "").trim();
+
+  return slug.length > 0 ? slug : null;
+}
+
+function getAdminNotes(formData: FormData) {
+  return String(formData.get("adminNotes") ?? "").trim();
+}
+
+function getHiddenReason(formData: FormData) {
+  return String(formData.get("hiddenReason") ?? "").trim();
+}
+
+function redirectAdminReportsMessage(message: string) {
+  redirect(
+    `/dashboard/admin/negocios?message=${encodeURIComponent(message)}#reportes-resenas`,
+  );
+}
+
+function redirectAdminReportsError(message: string) {
+  redirect(
+    `/dashboard/admin/negocios?error=${encodeURIComponent(message)}#reportes-resenas`,
+  );
+}
+
+function revalidateReviewReportPaths(slug: string | null) {
+  revalidatePath("/dashboard/admin/negocios");
+
+  if (slug) {
+    revalidatePath(`/negocio/${slug}`);
+  }
+}
+
 function getBusinessId(formData: FormData) {
   const businessId = String(formData.get("businessId") ?? "").trim();
 
@@ -586,4 +663,171 @@ export async function markAllBusinessChangeEventsSeen() {
   redirect(
     "/dashboard/admin/negocios?message=Todos%20los%20cambios%20pendientes%20fueron%20marcados%20como%20vistos",
   );
+}
+
+
+export async function markReviewReportInReview(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "in_review",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "review");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo marcar el reporte en revisión.");
+  }
+
+  revalidateReviewReportPaths(null);
+  redirectAdminReportsMessage("Reporte marcado en revisión.");
+}
+
+export async function resolveReviewReport(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const adminNotes = getAdminNotes(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "resolved",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: adminNotes || null,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "review");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo resolver el reporte.");
+  }
+
+  revalidateReviewReportPaths(null);
+  redirectAdminReportsMessage("Reporte resuelto.");
+}
+
+export async function rejectReviewReport(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const adminNotes = getAdminNotes(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "rejected",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: adminNotes || null,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "review");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo rechazar el reporte.");
+  }
+
+  revalidateReviewReportPaths(null);
+  redirectAdminReportsMessage("Reporte rechazado.");
+}
+
+export async function closeReviewReport(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const adminNotes = getAdminNotes(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "closed",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: adminNotes || null,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "review");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo cerrar el reporte.");
+  }
+
+  revalidateReviewReportPaths(null);
+  redirectAdminReportsMessage("Reporte cerrado.");
+}
+
+export async function hideReportedReview(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const reviewId = getReviewId(formData);
+  const businessSlug = getBusinessSlugFromForm(formData);
+  const hiddenReason = getHiddenReason(formData);
+
+  if (hiddenReason.length < 10) {
+    redirectAdminReportsError(
+      "El motivo para ocultar la reseña debe tener al menos 10 caracteres.",
+    );
+  }
+
+  const { data: report } = await supabase
+    .from("reports")
+    .select("id, review_id, target_type")
+    .eq("id", reportId)
+    .eq("review_id", reviewId)
+    .eq("target_type", "review")
+    .maybeSingle();
+
+  if (!report) {
+    redirectAdminReportsError("No encontramos el reporte de reseña.");
+  }
+
+  const now = new Date().toISOString();
+
+  const { error: reviewError } = await supabase
+    .from("reviews")
+    .update({
+      status: "hidden",
+      hidden_reason: hiddenReason,
+      moderated_by: user.id,
+      moderated_at: now,
+      updated_at: now,
+    })
+    .eq("id", reviewId);
+
+  if (reviewError) {
+    redirectAdminReportsError("No se pudo ocultar la reseña.");
+  }
+
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({
+      status: "resolved",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: hiddenReason,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "review");
+
+  if (reportError) {
+    redirectAdminReportsError(
+      "La reseña se ocultó, pero no se pudo cerrar el reporte.",
+    );
+  }
+
+  revalidateReviewReportPaths(businessSlug);
+  redirectAdminReportsMessage("Reseña ocultada y reporte resuelto.");
 }
