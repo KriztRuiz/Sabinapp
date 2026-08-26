@@ -21,6 +21,10 @@ type PageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams?: Promise<{
+    reviewMessage?: string;
+    reviewError?: string;
+  }>;
 };
 
 type BusinessQueryRow = {
@@ -29,6 +33,7 @@ type BusinessQueryRow = {
   slug: string;
   short_description: string;
   long_description: string | null;
+  show_reviews_publicly: boolean;
   business_types: {
     name: string;
   } | null;
@@ -113,6 +118,8 @@ type BusinessQueryRow = {
         comment: string | null;
         status: string;
         created_at: string;
+        updated_at: string;
+        user_id: string;
       }[]
     | null;
 };
@@ -151,7 +158,14 @@ function normalizeContactHref(contact: {
   return value;
 }
 
-function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
+function mapBusinessToLandingData(
+  row: BusinessQueryRow,
+  options?: {
+    isAuthenticated?: boolean;
+    userId?: string | null;
+    reviewNotice?: PublicLandingData["reviewNotice"];
+  },
+): PublicLandingData {
   const visualMode = getBusinessVisualMode(row.business_settings);
 
   const contacts: PublicLandingContact[] = (row.contact_methods ?? [])
@@ -237,6 +251,8 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
       rating: review.rating,
       comment: review.comment,
       createdAt: review.created_at,
+      updatedAt: review.updated_at,
+      userId: review.user_id,
     }));
 
   return {
@@ -255,6 +271,12 @@ function mapBusinessToLandingData(row: BusinessQueryRow): PublicLandingData {
     items,
     tags,
     reviews,
+    reviewForm: {
+      isAuthenticated: options?.isAuthenticated ?? false,
+      isEnabled: row.show_reviews_publicly,
+      userId: options?.userId ?? null,
+    },
+    reviewNotice: options?.reviewNotice,
   };
 }
 
@@ -286,10 +308,27 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default async function PublicBusinessPage({ params }: PageProps) {
+export default async function PublicBusinessPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const searchParamsValue = searchParams ? await searchParams : {};
   const supabase = await createClient();
   const now = new Date().toISOString();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const reviewNotice = searchParamsValue.reviewError
+    ? {
+        type: "error" as const,
+        message: searchParamsValue.reviewError,
+      }
+    : searchParamsValue.reviewMessage
+      ? {
+          type: "success" as const,
+          message: searchParamsValue.reviewMessage,
+        }
+      : undefined;
 
   const { data, error } = await supabase
     .from("businesses")
@@ -300,6 +339,7 @@ export default async function PublicBusinessPage({ params }: PageProps) {
       slug,
       short_description,
       long_description,
+      show_reviews_publicly,
       business_types (
         name
       ),
@@ -372,7 +412,9 @@ export default async function PublicBusinessPage({ params }: PageProps) {
         rating,
         comment,
         status,
-        created_at
+        created_at,
+        updated_at,
+        user_id
       )
     `,
     )
@@ -390,6 +432,11 @@ export default async function PublicBusinessPage({ params }: PageProps) {
 
   const landingData = mapBusinessToLandingData(
     data as unknown as BusinessQueryRow,
+    {
+      isAuthenticated: Boolean(user),
+      userId: user?.id ?? null,
+      reviewNotice,
+    },
   );
 
   return <PublicBusinessLanding data={landingData} />;

@@ -58,6 +58,19 @@ export type PublicLandingReview = {
   rating: number | null;
   comment: string | null;
   createdAt: string;
+  updatedAt: string;
+  userId: string;
+};
+
+export type PublicLandingReviewForm = {
+  isAuthenticated: boolean;
+  isEnabled: boolean;
+  userId: string | null;
+};
+
+export type PublicLandingReviewNotice = {
+  type: "success" | "error";
+  message: string;
 };
 
 export type PublicLandingData = {
@@ -76,6 +89,8 @@ export type PublicLandingData = {
   items: PublicLandingItem[];
   tags: string[];
   reviews?: PublicLandingReview[];
+  reviewForm?: PublicLandingReviewForm;
+  reviewNotice?: PublicLandingReviewNotice;
 };
 
 export type LandingVisualMode =
