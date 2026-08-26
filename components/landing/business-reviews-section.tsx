@@ -1,4 +1,5 @@
 import { BusinessReviewForm } from "./business-review-form";
+import { BusinessReviewReportForm } from "./business-review-report-form";
 import type { PublicLandingData } from "@/lib/landing/styles/types";
 
 type Props = {
@@ -179,6 +180,8 @@ export function BusinessReviewsSection({ data }: Props) {
                       {review.comment}
                     </p>
                   ) : null}
+
+                  <BusinessReviewReportForm data={data} review={review} />
                 </article>
               ))
             ) : reviews.length > 0 ? (
