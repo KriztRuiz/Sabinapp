@@ -52,10 +52,6 @@ export function BusinessReviewsSection({ data }: Props) {
   const reviews = data.reviews ?? [];
   const currentUserId = data.reviewForm?.userId ?? null;
   const averageRating = getAverageRating(reviews);
-  const reviewsWithComment = reviews.filter((review) => review.comment?.trim());
-  const ownReviews = currentUserId
-    ? reviews.filter((review) => review.userId === currentUserId)
-    : [];
 
   return (
     <section id="opiniones" className="bg-white px-5 py-16 text-gray-950">
@@ -83,37 +79,6 @@ export function BusinessReviewsSection({ data }: Props) {
             ) : null}
 
             <BusinessReviewForm data={data} />
-
-            {ownReviews.length > 0 ? (
-              <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <p className="text-sm font-bold text-gray-900">
-                  Tus reseñas anteriores
-                </p>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  Puedes modificar una reseña tuya desde aquí. Esta opción está
-                  guardada para no saturar la pantalla principal.
-                </p>
-
-                <div className="mt-4 space-y-3">
-                  {ownReviews.map((review) => (
-                    <details
-                      key={review.id}
-                      className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
-                    >
-                      <summary className="cursor-pointer text-sm font-bold text-gray-900">
-                        Modificar reseña del {formatDate(review.createdAt)}
-                      </summary>
-
-                      <BusinessReviewForm
-                        data={data}
-                        mode="edit"
-                        review={review}
-                      />
-                    </details>
-                  ))}
-                </div>
-              </div>
-            ) : null}
 
             {reviews.length > 0 ? (
               <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -150,45 +115,63 @@ export function BusinessReviewsSection({ data }: Props) {
           </div>
 
           <div className="space-y-4">
-            {reviewsWithComment.length > 0 ? (
-              reviewsWithComment.map((review) => (
-                <article
-                  key={review.id}
-                  className="rounded-[1.5rem] border border-gray-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-bold">Usuario de Sabinapp</p>
-                      <p className="text-sm text-gray-500">
-                        {formatDate(review.createdAt)}
+            {reviews.length > 0 ? (
+              reviews.map((review) => {
+                const isOwnReview =
+                  Boolean(currentUserId) && review.userId === currentUserId;
+
+                return (
+                  <article
+                    key={review.id}
+                    className="rounded-[1.5rem] border border-gray-200 bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-bold">Usuario de Sabinapp</p>
+                        <p className="text-sm text-gray-500">
+                          {formatDate(review.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-bold text-orange-800">
+                        {formatRating(review.rating)}
+                      </div>
+                    </div>
+
+                    {review.rating ? (
+                      <p className="mt-4 text-lg tracking-wide text-orange-500">
+                        {getStars(review.rating)}
                       </p>
-                    </div>
+                    ) : null}
 
-                    <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-bold text-orange-800">
-                      {formatRating(review.rating)}
-                    </div>
-                  </div>
+                    {review.comment ? (
+                      <p className="mt-4 leading-7 text-gray-700">
+                        {review.comment}
+                      </p>
+                    ) : (
+                      <p className="mt-4 text-sm leading-6 text-gray-500">
+                        Este usuario sólo dejó calificación.
+                      </p>
+                    )}
 
-                  {review.rating ? (
-                    <p className="mt-4 text-lg tracking-wide text-orange-500">
-                      {getStars(review.rating)}
-                    </p>
-                  ) : null}
+                    {isOwnReview ? (
+                      <details className="mt-5 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                        <summary className="cursor-pointer text-sm font-bold text-gray-700">
+                          Modificar esta reseña
+                        </summary>
 
-                  {review.comment ? (
-                    <p className="mt-4 leading-7 text-gray-700">
-                      {review.comment}
-                    </p>
-                  ) : null}
-
-                  <BusinessReviewReportForm data={data} review={review} />
-                </article>
-              ))
-            ) : reviews.length > 0 ? (
-              <div className="rounded-[1.5rem] border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">
-                Ya hay calificaciones para este negocio, pero todavía no hay
-                comentarios escritos.
-              </div>
+                        <BusinessReviewForm
+                          data={data}
+                          mode="edit"
+                          review={review}
+                        />
+                      </details>
+                    ) : (
+                      <BusinessReviewReportForm data={data} review={review} />
+                    )}
+                  </article>
+                );
+              })
             ) : null}
           </div>
         </div>
