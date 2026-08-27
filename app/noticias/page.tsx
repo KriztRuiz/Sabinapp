@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-
+import { NewsCommentForm } from "@/components/news/news-comment-form";
+import { NewsCommentReportForm } from "@/components/news/news-comment-report-form";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Noticias locales | Sabinapp",
@@ -9,12 +10,25 @@ export const metadata: Metadata = {
     "Consulta noticias y resúmenes locales relacionados con Sabinas Hidalgo, con enlace a su fuente original.",
   openGraph: {
     title: "Noticias locales | Sabinapp",
-    description:
-      "Resumen local de noticias relevantes para Sabinas Hidalgo.",
+    description: "Resumen local de noticias relevantes para Sabinas Hidalgo.",
     type: "website",
   },
 };
 
+type PageProps = {
+  searchParams?: Promise<{
+    commentMessage?: string;
+    commentError?: string;
+  }>;
+};
+
+type NewsCommentRow = {
+  id: string;
+  comment: string;
+  status: string;
+  created_at: string;
+  user_id: string;
+};
 
 type LocalNewsRow = {
   id: string;
@@ -23,6 +37,7 @@ type LocalNewsRow = {
   source_name: string;
   source_url: string;
   published_at: string;
+  news_comments: NewsCommentRow[] | null;
 };
 
 function formatDate(value: string) {
@@ -33,20 +48,60 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-export default async function LocalNewsPage() {
-  const supabase = await createClient();
+function getCommentNotice(
+  searchParamsValue: Awaited<NonNullable<PageProps["searchParams"]>>,
+) {
+  if (searchParamsValue.commentError) {
+    return {
+      type: "error" as const,
+      message: searchParamsValue.commentError,
+    };
+  }
 
+  if (searchParamsValue.commentMessage) {
+    return {
+      type: "success" as const,
+      message: searchParamsValue.commentMessage,
+    };
+  }
+
+  return null;
+}
+
+export default async function LocalNewsPage({ searchParams }: PageProps) {
+  const searchParamsValue = searchParams ? await searchParams : {};
+  const supabase = await createClient();
   const now = new Date().toISOString();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
     .from("local_news")
-    .select("id, title, summary, source_name, source_url, published_at")
+    .select(
+      `
+      id,
+      title,
+      summary,
+      source_name,
+      source_url,
+      published_at,
+      news_comments (
+        id,
+        comment,
+        status,
+        created_at,
+        user_id
+      )
+    `,
+    )
     .eq("is_active", true)
     .or(`expires_at.is.null,expires_at.gte.${now}`)
     .order("published_at", { ascending: false })
     .limit(20);
 
-  const news = (data ?? []) as LocalNewsRow[];
+  const news = (data ?? []) as unknown as LocalNewsRow[];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -101,41 +156,138 @@ export default async function LocalNewsPage() {
 
         {news.length > 0 ? (
           <section className="mt-8 grid gap-5">
-            {news.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
-                      {item.source_name}
-                    </p>
+            {news.map((item) => {
+              const comments = (item.news_comments ?? [])
+                .filter((comment) => comment.status === "published")
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at).getTime() -
+                    new Date(a.created_at).getTime(),
+                );
 
-                    <h2 className="mt-3 text-2xl font-black">
-                      {item.title}
-                    </h2>
+              const commentNotice = getCommentNotice(searchParamsValue);
 
-                    <p className="mt-2 text-sm font-semibold text-gray-500">
-                      {formatDate(item.published_at)}
-                    </p>
+              return (
+                <article
+                  id={`noticia-${item.id}`}
+                  key={item.id}
+                  className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
+                        {item.source_name}
+                      </p>
+
+                      <h2 className="mt-3 text-2xl font-black">
+                        {item.title}
+                      </h2>
+
+                      <p className="mt-2 text-sm font-semibold text-gray-500">
+                        {formatDate(item.published_at)}
+                      </p>
+                    </div>
+
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
+                    >
+                      Ver fuente
+                    </a>
                   </div>
 
-                  <a
-                    href={item.source_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
-                  >
-                    Ver fuente
-                  </a>
-                </div>
+                  <p className="mt-5 max-w-3xl leading-7 text-gray-600">
+                    {item.summary}
+                  </p>
 
-                <p className="mt-5 max-w-3xl leading-7 text-gray-600">
-                  {item.summary}
-                </p>
-              </article>
-            ))}
+                  <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50">
+                    <details>
+                      <summary className="cursor-pointer list-none p-5">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-black uppercase tracking-[0.16em] text-gray-500">
+                              Comentarios
+                            </p>
+
+                            <h3 className="mt-1 text-xl font-black text-gray-950">
+                              Comunidad Sabinapp
+                            </h3>
+                          </div>
+
+                          <span className="w-fit rounded-full bg-white px-4 py-2 text-sm font-black text-gray-700">
+                            Ver comentarios ({comments.length})
+                          </span>
+                        </div>
+                      </summary>
+
+                      <div className="border-t border-gray-200 p-5">
+                        {commentNotice ? (
+                          <div
+                            className={`rounded-2xl border p-4 text-sm font-semibold ${
+                              commentNotice.type === "success"
+                                ? "border-green-200 bg-green-50 text-green-800"
+                                : "border-red-200 bg-red-50 text-red-800"
+                            }`}
+                          >
+                            {commentNotice.message}
+                          </div>
+                        ) : null}
+
+                        <details className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 p-4">
+                          <summary className="cursor-pointer text-sm font-black text-gray-900">
+                            Agregar comentario
+                          </summary>
+
+                          <NewsCommentForm
+                            newsId={item.id}
+                            isAuthenticated={Boolean(user)}
+                          />
+                        </details>
+
+                        {comments.length > 0 ? (
+                          <div className="mt-5 space-y-3">
+                            {comments.map((comment) => (
+                              <div
+                                key={comment.id}
+                                className="rounded-2xl border border-gray-100 bg-white p-4"
+                              >
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                  <p className="font-bold text-gray-950">
+                                    Usuario de Sabinapp
+                                  </p>
+
+                                  <p className="text-sm text-gray-500">
+                                    {formatDate(comment.created_at)}
+                                  </p>
+                                </div>
+
+                                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+                                  {comment.comment}
+                                </p>
+
+                                <NewsCommentReportForm
+                                  newsId={item.id}
+                                  commentId={comment.id}
+                                  commentUserId={comment.user_id}
+                                  currentUserId={user?.id ?? null}
+                                  isAuthenticated={Boolean(user)}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-5 text-sm leading-6 text-gray-600">
+                            Todavía no hay comentarios en esta noticia.
+                          </p>
+                        )}
+                      </div>
+                    </details>
+                  </div>
+                </article>
+              );
+            })}
           </section>
         ) : null}
       </div>

@@ -179,3 +179,150 @@ export async function reportBusinessReview(
     ),
   );
 }
+
+function buildNewsReportRedirect(
+  newsId: string,
+  type: "commentMessage" | "commentError",
+  message: string,
+) {
+  return `/noticias?${type}=${encodeURIComponent(message)}#noticia-${newsId}`;
+}
+
+export async function reportNewsComment(
+  newsId: string,
+  commentId: string,
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(
+      `/auth/login?message=${encodeURIComponent(
+        "Inicia sesión para reportar un comentario.",
+      )}`,
+    );
+  }
+
+  const reason = normalizeReason(formData.get("reason"));
+  const description = normalizeDescription(formData.get("description"));
+
+  if (!reason) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "Selecciona un motivo válido para el reporte.",
+      ),
+    );
+  }
+
+  if (description.length < 10 || description.length > 1000) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "Describe el problema con al menos 10 caracteres y máximo 1000.",
+      ),
+    );
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, status")
+    .eq("id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!profile) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "Tu cuenta no puede reportar comentarios en este momento.",
+      ),
+    );
+  }
+
+  const { data: comment } = await supabase
+    .from("news_comments")
+    .select("id, news_id, user_id, status")
+    .eq("id", commentId)
+    .eq("news_id", newsId)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (!comment) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "No encontramos el comentario que quieres reportar.",
+      ),
+    );
+  }
+
+  if (comment.user_id === user.id) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "No puedes reportar tu propio comentario.",
+      ),
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const { data: news } = await supabase
+    .from("local_news")
+    .select("id")
+    .eq("id", newsId)
+    .eq("is_active", true)
+    .or(`expires_at.is.null,expires_at.gte.${now}`)
+    .maybeSingle();
+
+  if (!news) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "Esta noticia no está disponible en este momento.",
+      ),
+    );
+  }
+
+  const { error } = await supabase.from("reports").insert({
+    reporter_id: user.id,
+    target_type: "news_comment",
+    news_comment_id: commentId,
+    reported_user_id: comment.user_id,
+    reason,
+    title: "Reporte de comentario en noticia",
+    description,
+    status: "new",
+  });
+
+  if (error) {
+    redirect(
+      buildNewsReportRedirect(
+        newsId,
+        "commentError",
+        "No pudimos registrar el reporte. Intenta de nuevo.",
+      ),
+    );
+  }
+
+  revalidatePath("/noticias");
+
+  redirect(
+    buildNewsReportRedirect(
+      newsId,
+      "commentMessage",
+      "Reporte enviado. Un administrador lo revisará.",
+    ),
+  );
+}
