@@ -18,8 +18,8 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Crear cuenta</h1>
 
         <p className="mt-3 text-sm text-gray-600">
-          Crea una cuenta para registrar negocios, administrar información y
-          usar funciones futuras de Sabinapp.
+          Crea una cuenta para participar en Sabinapp, comentar noticias,
+          publicar reseñas y registrar negocios.
         </p>
 
         {params.message ? (
@@ -34,16 +34,63 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
               htmlFor="full_name"
               className="block text-sm font-medium text-gray-800"
             >
-              Nombre
+              Nombre completo
             </label>
             <input
               id="full_name"
               name="full_name"
               type="text"
+              required
+              minLength={3}
+              maxLength={120}
               autoComplete="name"
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-              placeholder="Tu nombre"
+              placeholder="Nombre y apellido"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="birthdate"
+              className="block text-sm font-medium text-gray-800"
+            >
+              Fecha de nacimiento
+            </label>
+            <input
+              id="birthdate"
+              name="birthdate"
+              type="date"
+              required
+              autoComplete="bday"
+              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Este dato ayuda a reducir cuentas falsas y a aplicar reglas de
+              edad cuando sea necesario.
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="sex"
+              className="block text-sm font-medium text-gray-800"
+            >
+              Sexo
+            </label>
+            <select
+              id="sex"
+              name="sex"
+              required
+              defaultValue=""
+              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            >
+              <option value="" disabled>
+                Selecciona una opción
+              </option>
+              <option value="female">Femenino</option>
+              <option value="male">Masculino</option>
+              <option value="prefer_not_to_say">Prefiero no decir</option>
+            </select>
           </div>
 
           <div>
@@ -82,6 +129,20 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
               placeholder="Mínimo 8 caracteres"
             />
           </div>
+
+          <label className="flex gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+            <input
+              name="privacy_accepted"
+              type="checkbox"
+              required
+              className="mt-1 size-4 shrink-0"
+            />
+            <span>
+              Confirmo que los datos proporcionados son reales y acepto que
+              Sabinapp los use para proteger la comunidad y moderar cuentas
+              falsas o abusivas.
+            </span>
+          </label>
 
           <button
             type="submit"

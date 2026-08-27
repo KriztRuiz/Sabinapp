@@ -9,6 +9,33 @@ function getFormValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+const ALLOWED_SEX_VALUES = ["male", "female", "prefer_not_to_say"] as const;
+
+function isAllowedSex(value: string) {
+  return ALLOWED_SEX_VALUES.includes(value as (typeof ALLOWED_SEX_VALUES)[number]);
+}
+
+function getAgeFromBirthdate(birthdate: string) {
+  const birthDateValue = new Date(`${birthdate}T00:00:00`);
+  const today = new Date();
+
+  if (Number.isNaN(birthDateValue.getTime())) {
+    return null;
+  }
+
+  let age = today.getFullYear() - birthDateValue.getFullYear();
+  const monthDifference = today.getMonth() - birthDateValue.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDateValue.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age;
+}
+
 export async function login(formData: FormData) {
   const email = getFormValue(formData, "email");
   const password = getFormValue(formData, "password");
@@ -40,6 +67,35 @@ export async function signUp(formData: FormData) {
   const email = getFormValue(formData, "email");
   const password = getFormValue(formData, "password");
   const fullName = getFormValue(formData, "full_name");
+  const birthdate = getFormValue(formData, "birthdate");
+  const sex = getFormValue(formData, "sex");
+  const privacyAccepted = formData.get("privacy_accepted") === "on";
+
+  if (!fullName || fullName.length < 3) {
+    redirect("/auth/sign-up?message=Ingresa tu nombre completo.");
+  }
+
+  if (!birthdate) {
+    redirect("/auth/sign-up?message=Ingresa tu fecha de nacimiento.");
+  }
+
+  const age = getAgeFromBirthdate(birthdate);
+
+  if (age === null || age < 13 || age > 120) {
+    redirect(
+      "/auth/sign-up?message=Ingresa una fecha de nacimiento válida.",
+    );
+  }
+
+  if (!isAllowedSex(sex)) {
+    redirect("/auth/sign-up?message=Selecciona una opción válida de sexo.");
+  }
+
+  if (!privacyAccepted) {
+    redirect(
+      "/auth/sign-up?message=Debes aceptar el uso de tus datos para crear la cuenta.",
+    );
+  }
 
   if (!email || !password) {
     redirect("/auth/sign-up?message=Ingresa correo y contraseña.");
@@ -50,6 +106,8 @@ export async function signUp(formData: FormData) {
       "/auth/sign-up?message=La contraseña debe tener al menos 8 caracteres.",
     );
   }
+
+  const now = new Date().toISOString();
 
   const headersList = await headers();
   const origin = headersList.get("origin") ?? "http://localhost:3000";
@@ -62,7 +120,11 @@ export async function signUp(formData: FormData) {
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
-        full_name: fullName || null,
+        full_name: fullName,
+        birthdate,
+        sex,
+        privacy_accepted_at: now,
+        profile_completed_at: now,
       },
     },
   });
