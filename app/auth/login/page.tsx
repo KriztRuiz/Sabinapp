@@ -12,6 +12,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+      <Link
+        href="/"
+        className="mb-6 inline-flex text-sm font-semibold text-orange-700 transition hover:text-orange-800"
+      >
+        ← Volver a Sabinapp
+      </Link>
+
       <section className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <p className="text-sm font-medium text-orange-600">Sabinapp</p>
 
