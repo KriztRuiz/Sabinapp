@@ -69,6 +69,16 @@ function getReviewId(formData: FormData) {
   return reviewId;
 }
 
+function getNewsCommentId(formData: FormData) {
+  const commentId = String(formData.get("newsCommentId") ?? "").trim();
+
+  if (!commentId) {
+    throw new Error("No se recibió el comentario.");
+  }
+
+  return commentId;
+}
+
 function getBusinessSlugFromForm(formData: FormData) {
   const slug = String(formData.get("businessSlug") ?? "").trim();
 
@@ -101,6 +111,12 @@ function revalidateReviewReportPaths(slug: string | null) {
   if (slug) {
     revalidatePath(`/negocio/${slug}`);
   }
+}
+
+
+function revalidateNewsCommentReportPaths() {
+  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/noticias");
 }
 
 function getBusinessId(formData: FormData) {
@@ -830,4 +846,170 @@ export async function hideReportedReview(formData: FormData) {
 
   revalidateReviewReportPaths(businessSlug);
   redirectAdminReportsMessage("Reseña ocultada y reporte resuelto.");
+}
+
+
+export async function markNewsCommentReportInReview(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "in_review",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "news_comment");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo marcar el reporte en revisión.");
+  }
+
+  revalidateNewsCommentReportPaths();
+  redirectAdminReportsMessage("Reporte de comentario marcado en revisión.");
+}
+
+export async function resolveNewsCommentReport(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const adminNotes = getAdminNotes(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "resolved",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: adminNotes || null,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "news_comment");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo resolver el reporte.");
+  }
+
+  revalidateNewsCommentReportPaths();
+  redirectAdminReportsMessage("Reporte de comentario resuelto.");
+}
+
+export async function rejectNewsCommentReport(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const adminNotes = getAdminNotes(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "rejected",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: adminNotes || null,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "news_comment");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo rechazar el reporte.");
+  }
+
+  revalidateNewsCommentReportPaths();
+  redirectAdminReportsMessage("Reporte de comentario rechazado.");
+}
+
+export async function closeNewsCommentReport(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const adminNotes = getAdminNotes(formData);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: "closed",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: adminNotes || null,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "news_comment");
+
+  if (error) {
+    redirectAdminReportsError("No se pudo cerrar el reporte.");
+  }
+
+  revalidateNewsCommentReportPaths();
+  redirectAdminReportsMessage("Reporte de comentario cerrado.");
+}
+
+export async function hideReportedNewsComment(formData: FormData) {
+  const { supabase, user } = await requireAdminReportsPermission();
+  const reportId = getReportId(formData);
+  const newsCommentId = getNewsCommentId(formData);
+  const hiddenReason = getHiddenReason(formData);
+
+  if (hiddenReason.length < 10) {
+    redirectAdminReportsError(
+      "El motivo para ocultar el comentario debe tener al menos 10 caracteres.",
+    );
+  }
+
+  const { data: report } = await supabase
+    .from("reports")
+    .select("id, news_comment_id, target_type")
+    .eq("id", reportId)
+    .eq("news_comment_id", newsCommentId)
+    .eq("target_type", "news_comment")
+    .maybeSingle();
+
+  if (!report) {
+    redirectAdminReportsError("No encontramos el reporte de comentario.");
+  }
+
+  const now = new Date().toISOString();
+
+  const { error: commentError } = await supabase
+    .from("news_comments")
+    .update({
+      status: "hidden",
+      hidden_reason: hiddenReason,
+      moderated_by: user.id,
+      moderated_at: now,
+      updated_at: now,
+    })
+    .eq("id", newsCommentId);
+
+  if (commentError) {
+    redirectAdminReportsError("No se pudo ocultar el comentario.");
+  }
+
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({
+      status: "resolved",
+      reviewed_by: user.id,
+      reviewed_at: now,
+      admin_notes: hiddenReason,
+      updated_at: now,
+    })
+    .eq("id", reportId)
+    .eq("target_type", "news_comment");
+
+  if (reportError) {
+    redirectAdminReportsError(
+      "El comentario se ocultó, pero no se pudo cerrar el reporte.",
+    );
+  }
+
+  revalidateNewsCommentReportPaths();
+  redirectAdminReportsMessage("Comentario ocultado y reporte resuelto.");
 }
