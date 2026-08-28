@@ -54,9 +54,17 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email, full_name, status, is_adult_verified")
+    .select("email, full_name, birthdate, sex, privacy_accepted_at, profile_completed_at, status")
     .eq("id", user.id)
     .single();
+
+  const isProfileComplete = Boolean(
+    profile?.full_name?.trim() &&
+      profile.birthdate &&
+      profile.sex &&
+      profile.privacy_accepted_at &&
+      profile.profile_completed_at,
+  );
 
   const { data: roleRowsRaw } = await supabase
     .from("user_roles")
@@ -139,6 +147,27 @@ export default async function DashboardPage() {
         </form>
       </header>
 
+      {!isProfileComplete ? (
+        <section className="mt-8 rounded-2xl border border-yellow-200 bg-yellow-50 p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-yellow-950">
+            Completa tu perfil para participar
+          </h2>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-yellow-900">
+            Necesitamos tu nombre completo, fecha de nacimiento, sexo y
+            aceptación del aviso para reducir cuentas falsas y proteger la
+            comunidad de Sabinapp.
+          </p>
+
+          <Link
+            href="/dashboard/perfil"
+            className="mt-5 inline-flex rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-yellow-700"
+          >
+            Completar perfil
+          </Link>
+        </section>
+      ) : null}
+
       <section className="mt-8 grid gap-6 md:grid-cols-2">
         <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-950">Tu cuenta</h2>
@@ -159,17 +188,14 @@ export default async function DashboardPage() {
             <div>
               <dt className="font-medium text-gray-500">Estado de cuenta</dt>
               <dd className="text-gray-950">{profile?.status ?? "active"}</dd>
-            </div>
+            </div></dl>
 
-            <div>
-              <dt className="font-medium text-gray-500">
-                Mayor de edad verificado
-              </dt>
-              <dd className="text-gray-950">
-                {profile?.is_adult_verified ? "Sí" : "No"}
-              </dd>
-            </div>
-          </dl>
+          <Link
+            href="/dashboard/perfil"
+            className="mt-5 inline-flex rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+          >
+            Ver o editar perfil
+          </Link>
         </article>
 
         <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
