@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireCompleteProfile } from "@/lib/profiles/require-complete-profile";
 
 function getFormText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -48,6 +49,12 @@ export async function createBusinessFromDashboard(formData: FormData) {
   if (!user) {
     redirect("/auth/login?message=Inicia sesión para crear un negocio.");
   }
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para registrar negocios.",
+  );
 
   const { data: canCreateBusiness } = await supabase.rpc("has_permission", {
     permission_key: "business.create",

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireCompleteProfile } from "@/lib/profiles/require-complete-profile";
 
 const REVIEW_WAIT_HOURS = 8;
 const REVIEW_WAIT_MS = REVIEW_WAIT_HOURS * 60 * 60 * 1000;
@@ -101,6 +102,12 @@ export async function submitBusinessReview(
       )}`,
     );
   }
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para publicar reseñas.",
+  );
 
   const reviewId = normalizeId(formData.get("reviewId"));
   const rating = normalizeRating(formData.get("rating"));

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireCompleteProfile } from "@/lib/profiles/require-complete-profile";
 
 function buildNewsCommentRedirect(
   newsId: string,
@@ -30,6 +31,12 @@ export async function submitNewsComment(newsId: string, formData: FormData) {
       )}`,
     );
   }
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para comentar noticias.",
+  );
 
   const comment = normalizeComment(formData.get("comment"));
 

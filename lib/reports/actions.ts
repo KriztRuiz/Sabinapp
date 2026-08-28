@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireCompleteProfile } from "@/lib/profiles/require-complete-profile";
 
 const REPORT_REASONS = [
   "incorrect_information",
@@ -55,6 +56,12 @@ export async function reportBusinessReview(
       )}`,
     );
   }
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para reportar reseñas.",
+  );
 
   const reason = normalizeReason(formData.get("reason"));
   const description = normalizeDescription(formData.get("description"));
@@ -206,6 +213,12 @@ export async function reportNewsComment(
       )}`,
     );
   }
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para reportar comentarios.",
+  );
 
   const reason = normalizeReason(formData.get("reason"));
   const description = normalizeDescription(formData.get("description"));
