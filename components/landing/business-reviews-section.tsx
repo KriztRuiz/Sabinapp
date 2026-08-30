@@ -127,7 +127,7 @@ export function BusinessReviewsSection({ data }: Props) {
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="font-bold">Usuario de Sabinapp</p>
+                        <p className="font-bold">{review.authorName}</p>
                         <p className="text-sm text-gray-500">
                           {formatDate(review.createdAt)}
                         </p>

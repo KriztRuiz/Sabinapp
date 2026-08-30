@@ -60,6 +60,7 @@ export type PublicLandingReview = {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  authorName: string;
 };
 
 export type PublicLandingReviewForm = {

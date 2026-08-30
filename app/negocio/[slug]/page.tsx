@@ -27,6 +27,11 @@ type PageProps = {
   }>;
 };
 
+type PublicProfileLabel = {
+  id: string;
+  display_name: string;
+};
+
 type BusinessQueryRow = {
   id: string;
   name: string;
@@ -124,6 +129,10 @@ type BusinessQueryRow = {
     | null;
 };
 
+function buildProfileNameMap(labels: PublicProfileLabel[]) {
+  return new Map(labels.map((label) => [label.id, label.display_name]));
+}
+
 function normalizeContactHref(contact: {
   type: string;
   value: string;
@@ -163,6 +172,7 @@ function mapBusinessToLandingData(
   options?: {
     isAuthenticated?: boolean;
     userId?: string | null;
+    profileNames?: Map<string, string>;
     reviewNotice?: PublicLandingData["reviewNotice"];
   },
 ): PublicLandingData {
@@ -253,6 +263,7 @@ function mapBusinessToLandingData(
       createdAt: review.created_at,
       updatedAt: review.updated_at,
       userId: review.user_id,
+      authorName: options?.profileNames?.get(review.user_id) ?? "Usuario local",
     }));
 
   return {
@@ -430,14 +441,30 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
     notFound();
   }
 
-  const landingData = mapBusinessToLandingData(
-    data as unknown as BusinessQueryRow,
-    {
-      isAuthenticated: Boolean(user),
-      userId: user?.id ?? null,
-      reviewNotice,
-    },
+  const businessRow = data as unknown as BusinessQueryRow;
+  const reviewUserIds = Array.from(
+    new Set((businessRow.reviews ?? []).map((review) => review.user_id)),
   );
+
+  let profileLabels: PublicProfileLabel[] = [];
+
+  if (reviewUserIds.length > 0) {
+    const { data: profileLabelsData } = await supabase.rpc(
+      "get_public_profile_labels",
+      {
+        profile_ids: reviewUserIds,
+      },
+    );
+
+    profileLabels = (profileLabelsData ?? []) as PublicProfileLabel[];
+  }
+
+  const landingData = mapBusinessToLandingData(businessRow, {
+    isAuthenticated: Boolean(user),
+    userId: user?.id ?? null,
+    profileNames: buildProfileNameMap(profileLabels),
+    reviewNotice,
+  });
 
   return <PublicBusinessLanding data={landingData} />;
 }

@@ -22,6 +22,11 @@ type PageProps = {
   }>;
 };
 
+type PublicProfileLabel = {
+  id: string;
+  display_name: string;
+};
+
 type NewsCommentRow = {
   id: string;
   comment: string;
@@ -39,6 +44,10 @@ type LocalNewsRow = {
   published_at: string;
   news_comments: NewsCommentRow[] | null;
 };
+
+function buildProfileNameMap(labels: PublicProfileLabel[]) {
+  return new Map(labels.map((label) => [label.id, label.display_name]));
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-MX", {
@@ -102,6 +111,28 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
     .limit(20);
 
   const news = (data ?? []) as unknown as LocalNewsRow[];
+  const commentUserIds = Array.from(
+    new Set(
+      news.flatMap((item) =>
+        (item.news_comments ?? []).map((comment) => comment.user_id),
+      ),
+    ),
+  );
+
+  let profileLabels: PublicProfileLabel[] = [];
+
+  if (commentUserIds.length > 0) {
+    const { data: profileLabelsData } = await supabase.rpc(
+      "get_public_profile_labels",
+      {
+        profile_ids: commentUserIds,
+      },
+    );
+
+    profileLabels = (profileLabelsData ?? []) as PublicProfileLabel[];
+  }
+
+  const profileNameMap = buildProfileNameMap(profileLabels);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -255,7 +286,8 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                               >
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                   <p className="font-bold text-gray-950">
-                                    Usuario de Sabinapp
+                                    {profileNameMap.get(comment.user_id) ??
+                                      "Usuario local"}
                                   </p>
 
                                   <p className="text-sm text-gray-500">
