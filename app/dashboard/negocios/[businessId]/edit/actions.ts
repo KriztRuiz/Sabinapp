@@ -8,6 +8,7 @@ import {
 } from "./business-edit-types";
 import { isLandingVisualMode } from "@/lib/landing/styles";
 import { createClient } from "@/lib/supabase/server";
+import { requireCompleteProfile } from "@/lib/profiles/require-complete-profile";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -57,6 +58,13 @@ export async function updateBusinessLanding(
   if (!user) {
     redirect("/auth/login?message=Inicia sesión para guardar cambios.");
   }
+
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para administrar tus negocios.",
+  );
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
@@ -519,6 +527,13 @@ async function getOwnedBusinessContextOrRedirect(
   if (!user) {
     redirect(`/auth/login?message=${encodeURIComponent(loginMessage)}`);
   }
+
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para administrar tus negocios.",
+  );
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
@@ -2078,6 +2093,13 @@ export async function publishApprovedOwnedBusiness(businessId: string) {
     redirect("/auth/login?message=Inicia sesión para publicar el negocio.");
   }
 
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para administrar tus negocios.",
+  );
+
   const { data: business, error: businessError } = await supabase
     .from("businesses")
     .select("id, slug, owner_id, status, expires_at")
@@ -2165,6 +2187,13 @@ export async function pausePublishedOwnedBusiness(businessId: string) {
   if (!user) {
     redirect("/auth/login?message=Inicia sesión para administrar negocios.");
   }
+
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para administrar tus negocios.",
+  );
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
@@ -2266,6 +2295,13 @@ export async function updateBusinessClassification(
   if (!user) {
     redirect("/auth/login?message=Inicia sesión para editar negocios.");
   }
+
+
+  await requireCompleteProfile(
+    supabase,
+    user.id,
+    "Completa tu perfil para administrar tus negocios.",
+  );
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
