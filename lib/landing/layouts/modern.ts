@@ -20,7 +20,7 @@ export const modernLayout: LandingModeLayout = {
       order: 10,
       presentation: "featured",
       reason:
-        "Una landing moderna debe mostrar pronto lo más vendible del negocio.",
+        "Un perfil moderno debe mostrar pronto lo más vendible del negocio.",
     },
     gallery: {
       key: "gallery",
@@ -62,7 +62,7 @@ export const modernLayout: LandingModeLayout = {
       order: 80,
       presentation: "featured",
       reason:
-        "El contacto rápido es el principal valor de una landing moderna local.",
+        "El contacto rápido es el principal valor de un perfil moderno local.",
     },
   },
 };
