@@ -371,7 +371,7 @@ export default async function Home() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-[0.25em] text-sky-700">
-                    Ahora en Sabinas
+                    Clima en Sabinas ahora
                   </p>
 
                   <h2 className="mt-3 text-4xl font-black">
@@ -432,47 +432,44 @@ export default async function Home() {
 
       <section className="mx-auto max-w-7xl px-6 pt-10">
         <div className="grid gap-4 md:grid-cols-3">
-          <article className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
-              Sabinapp en números
-            </p>
-
-            <p className="mt-4 text-4xl font-black">
+          <Link
+            href="/negocios"
+            className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+          >
+            <p className="text-4xl font-black">
               {portalStats.businessesCount}
             </p>
 
             <p className="mt-2 text-sm font-semibold text-gray-600">
               Negocios publicados
             </p>
-          </article>
+          </Link>
 
-          <article className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
-              Vitrina activa
-            </p>
-
-            <p className="mt-4 text-4xl font-black">
+          <Link
+            href="/productos"
+            className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+          >
+            <p className="text-4xl font-black">
               {portalStats.productsCount}
             </p>
 
             <p className="mt-2 text-sm font-semibold text-gray-600">
               Productos, servicios y destacados
             </p>
-          </article>
+          </Link>
 
-          <article className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
-              Resumen local
-            </p>
-
-            <p className="mt-4 text-4xl font-black">
+          <Link
+            href="/noticias"
+            className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+          >
+            <p className="text-4xl font-black">
               {portalStats.newsCount}
             </p>
 
             <p className="mt-2 text-sm font-semibold text-gray-600">
               Noticias activas disponibles
             </p>
-          </article>
+          </Link>
         </div>
       </section>
 
@@ -708,7 +705,7 @@ export default async function Home() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.25em] text-orange-700">
-              Directorio vivo
+              Directorio
             </p>
             <h2 className="mt-3 text-4xl font-black">
               Negocios para descubrir
@@ -727,7 +724,7 @@ export default async function Home() {
               href="/auth/sign-up"
               className="rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
             >
-              Quiero formar parte
+              Crear negocio
             </Link>
           </div>
         </div>
