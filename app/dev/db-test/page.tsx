@@ -1,58 +1,41 @@
-import { createClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 export default async function DbTestPage() {
+  noStore();
+
   if (process.env.NODE_ENV === "production") {
     notFound();
   }
 
   const supabase = await createClient();
 
-  /**
-   * Probamos una tabla pública y segura:
-   * business_types tiene RLS permitiendo lectura pública de tipos activos.
-   */
-  const { data: businessTypes, error } = await supabase
-    .from("business_types")
-    .select("id, key, name, description, display_order")
-    .order("display_order", { ascending: true });
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("id, name, slug, status")
+    .limit(5);
 
   return (
-    <main className="mx-auto max-w-3xl p-8">
-      <h1 className="text-3xl font-bold">Prueba de conexión de datos</h1>
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <h1 className="text-3xl font-black text-gray-950">
+        Prueba de conexión a base de datos
+      </h1>
 
-      <p className="mt-3 text-gray-600">
-        Esta pantalla verifica que la app pueda leer datos de prueba.
+      <p className="mt-3 text-gray-700">
+        Esta pantalla sólo debe estar disponible en desarrollo local.
       </p>
 
       {error ? (
-        <div className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
-          <h2 className="font-semibold">Error de conexión de datos</h2>
-          <pre className="mt-2 whitespace-pre-wrap text-sm">
-            {JSON.stringify(error, null, 2)}
-          </pre>
-        </div>
+        <pre className="mt-6 overflow-auto rounded-2xl bg-red-50 p-4 text-sm text-red-800">
+          {JSON.stringify(error, null, 2)}
+        </pre>
       ) : (
-        <section className="mt-6 space-y-3">
-          <h2 className="text-xl font-semibold">
-            Tipos de negocio encontrados: {businessTypes?.length ?? 0}
-          </h2>
-
-          <div className="grid gap-3">
-            {businessTypes?.map((type) => (
-              <article
-                key={type.id}
-                className="rounded-xl border border-gray-200 p-4 shadow-sm"
-              >
-                <h3 className="font-semibold">{type.name}</h3>
-                <p className="text-sm text-gray-500">{type.key}</p>
-                <p className="mt-2 text-sm text-gray-700">
-                  {type.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
+        <pre className="mt-6 overflow-auto rounded-2xl bg-gray-950 p-4 text-sm text-white">
+          {JSON.stringify(data, null, 2)}
+        </pre>
       )}
     </main>
   );
