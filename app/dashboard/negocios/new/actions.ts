@@ -93,12 +93,12 @@ export async function createBusinessFromDashboard(formData: FormData) {
   const slug = normalizeSlug(slugInput || name);
 
   if (!slug || slug.length < 3) {
-    redirectWithError("El slug debe tener al menos 3 caracteres válidos.");
+    redirectWithError("El enlace público debe tener al menos 3 caracteres válidos.");
   }
 
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
     redirectWithError(
-      "El slug solo puede usar minúsculas, números y guiones intermedios.",
+      "El enlace público sólo puede usar minúsculas, números y guiones intermedios.",
     );
   }
 
@@ -170,7 +170,7 @@ export async function createBusinessFromDashboard(formData: FormData) {
   if (error || !createdBusiness) {
     if (error?.code === "23505") {
       redirectWithError(
-        "Ese slug ya está ocupado. Usa otro identificador para el negocio.",
+        "Ese enlace público ya está ocupado. Usa otro identificador para el negocio.",
       );
     }
 
