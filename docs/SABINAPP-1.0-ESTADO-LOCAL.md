@@ -117,7 +117,7 @@ Resultado:
 
 - Compilación exitosa.
 - TypeScript sin errores.
-- 20 rutas generadas.
+- 19 rutas estáticas generadas; /dev/db-test quedó como ruta dinámica bloqueada en modo producción local.
 - Proxy activo.
 - Estado Git limpio.
 
@@ -131,5 +131,61 @@ Antes de preparar despliegue, confirmar explícitamente:
 - Configuración final de Supabase Auth URLs.
 - Revisión de datos demo que se quieran conservar o eliminar.
 - Prueba final en navegador después del build productivo.
+
+No preparar despliegue sin confirmación explícita.
+
+## Actualización final de endurecimiento local
+
+Fecha de actualización: 2026-08-31
+
+Después de la revisión inicial del estado local, se aplicaron ajustes finales antes de considerar Sabinapp 1.0 congelado localmente.
+
+### Dependencias y entorno
+
+- Next.js actualizado a 16.3.3.
+- eslint-config-next actualizado a 16.3.3.
+- npm audit quedó en 0 vulnerabilidades.
+- package.json declara engines:
+  - node >=20.9.0
+  - npm >=10
+
+### Seguridad local y rutas de desarrollo
+
+- /dev/db-test quedó forzada como ruta dinámica.
+- /dev/db-test responde 404 en modo producción local usando npm run start.
+- Las rutas públicas principales siguen respondiendo 200.
+- Las rutas protegidas redirigen a login cuando no hay sesión.
+
+### Datos públicos
+
+Auditoría final de datos públicos:
+
+- Negocios públicos visibles: 6
+- No publicados con banderas públicas: 0
+- Adultos visibles por error: 0
+- Expirados visibles por error: 0
+- Items activos de negocios no públicos: 0
+- Items públicamente elegibles: 32
+- Reseñas públicas de negocios no públicos: 0
+- Comentarios públicos de noticias no activas: 0
+- Noticias públicas activas: 3
+- Reportes pendientes: 0
+
+### Limpieza documentada
+
+Se documentó la limpieza final en:
+
+- docs/sql/sabinapp-limpieza-datos-publicos-final.sql
+
+### Estado técnico
+
+Últimas validaciones correctas:
+
+- npm run lint
+- npm run build
+- npm run start en modo producción local
+- Smoke test de rutas públicas/protegidas en modo producción local
+
+Sabinapp 1.0 queda estable localmente antes de cualquier preparación de despliegue.
 
 No preparar despliegue sin confirmación explícita.
