@@ -420,7 +420,7 @@ export default async function Home() {
               </div>
 
               <Link
-                href="/tiempo"
+                href="/clima"
                 className="mt-5 inline-flex rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
               >
                 Ver clima completo
@@ -527,7 +527,7 @@ export default async function Home() {
             </Link>
 
             <Link
-              href="/tiempo"
+              href="/clima"
               className="rounded-3xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
             >
               <span className="text-3xl">🌤️</span>
