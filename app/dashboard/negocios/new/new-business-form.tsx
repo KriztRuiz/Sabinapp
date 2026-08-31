@@ -83,7 +83,7 @@ export function NewBusinessForm({
 
         <div>
           <label htmlFor="slug" className="text-sm font-bold text-gray-800">
-            Slug público opcional
+            Enlace público opcional
           </label>
 
           <input
@@ -100,8 +100,8 @@ export function NewBusinessForm({
           </p>
 
           <FieldGuide
-            title="Guía para el slug público"
-            description="El slug es la parte final del enlace público del negocio. Si no estás seguro, déjalo vacío y Sabinapp lo generará automáticamente."
+            title="Guía para el enlace público"
+            description="El enlace público es la parte final de la dirección del negocio. Si no estás seguro, déjalo vacío y Sabinapp lo generará automáticamente."
             goodExample="tacos-don-pepe"
             avoid="Evita espacios, mayúsculas, acentos, signos raros o frases demasiado largas."
           />
