@@ -283,3 +283,56 @@ before insert or update of birthdate
 on public.profiles
 for each row
 execute function public.sync_profile_is_adult_verified();
+
+-- =========================================================
+-- 8) Roles/permisos sólo para perfiles activos
+-- =========================================================
+
+create or replace function public.has_permission(permission_key text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.user_roles ur
+    join public.profiles pr on pr.id = ur.user_id
+    join public.roles r on r.id = ur.role_id
+    join public.role_permissions rp on rp.role_id = r.id
+    join public.permissions perm on perm.id = rp.permission_id
+    where ur.user_id = auth.uid()
+      and ur.is_active = true
+      and pr.status = 'active'::public.profile_status
+      and perm.key = $1
+  );
+$$;
+
+create or replace function public.has_role(role_key text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.user_roles ur
+    join public.profiles pr on pr.id = ur.user_id
+    join public.roles r on r.id = ur.role_id
+    where ur.user_id = auth.uid()
+      and ur.is_active = true
+      and pr.status = 'active'::public.profile_status
+      and r.key = $1
+  );
+$$;
+
+revoke all on function public.has_permission(text) from public;
+revoke all on function public.has_role(text) from public;
+
+grant execute on function public.has_permission(text) to anon;
+grant execute on function public.has_permission(text) to authenticated;
+
+grant execute on function public.has_role(text) to anon;
+grant execute on function public.has_role(text) to authenticated;
