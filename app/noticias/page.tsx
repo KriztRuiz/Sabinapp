@@ -134,6 +134,18 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
 
   const profileNameMap = buildProfileNameMap(profileLabels);
 
+  const publishedCommentsCount = news.reduce(
+    (total, item) =>
+      total +
+      (item.news_comments ?? []).filter(
+        (comment) => comment.status === "published",
+      ).length,
+    0,
+  );
+
+  const sourceCount = new Set(news.map((item) => item.source_name)).size;
+  const latestPublishedAt = news[0]?.published_at ?? null;
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
       <div className="mx-auto max-w-5xl">
@@ -150,14 +162,57 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
           </p>
 
           <h1 className="mt-3 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl">
-            Resumen de noticias relacionadas con Sabinas Hidalgo
+            Noticias que importan a Sabinas Hidalgo
           </h1>
 
           <p className="mt-4 max-w-2xl leading-7 text-gray-600">
-            Consulta avisos, notas y noticias relevantes para la comunidad.
-            Cada publicación conserva enlace a su fuente original.
+            Encuentra avisos, notas y noticias relevantes para la comunidad. Cada tarjeta conserva su fuente principal para que puedas revisar el origen.
           </p>
         </header>
+
+        {!error ? (
+          <section className="mt-6 grid gap-4 md:grid-cols-3">
+            <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-sm">
+              <p className="text-sm font-black uppercase tracking-[0.16em] text-orange-700">
+                Noticias activas
+              </p>
+
+              <p className="mt-3 text-4xl font-black">{news.length}</p>
+
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Publicaciones disponibles para la comunidad.
+              </p>
+            </article>
+
+            <article className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm">
+              <p className="text-sm font-black uppercase tracking-[0.16em] text-sky-700">
+                Última actualización
+              </p>
+
+              <p className="mt-3 text-lg font-black">
+                {latestPublishedAt ? formatDate(latestPublishedAt) : "Sin dato"}
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Según las noticias activas guardadas en Sabinapp.
+              </p>
+            </article>
+
+            <article className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+              <p className="text-sm font-black uppercase tracking-[0.16em] text-gray-600">
+                Participación
+              </p>
+
+              <p className="mt-3 text-4xl font-black">
+                {publishedCommentsCount}
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Comentarios visibles en {sourceCount} fuente(s).
+              </p>
+            </article>
+          </section>
+        ) : null}
 
         {error ? (
           <section className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800">
@@ -202,7 +257,7 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                 <article
                   id={`noticia-${item.id}`}
                   key={item.id}
-                  className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                  className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
@@ -225,11 +280,11 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                       rel="noreferrer"
                       className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
                     >
-                      Ver fuente
+                      Leer fuente principal
                     </a>
                   </div>
 
-                  <p className="mt-5 max-w-3xl leading-7 text-gray-600">
+                  <p className="mt-5 rounded-2xl bg-orange-50/60 p-5 leading-7 text-gray-700">
                     {item.summary}
                   </p>
 
