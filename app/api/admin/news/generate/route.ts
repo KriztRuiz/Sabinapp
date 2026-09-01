@@ -13,6 +13,7 @@ type GenerateNewsRequestBody = {
   maxCandidates?: unknown;
   queryLimit?: unknown;
   model?: unknown;
+  dryRun?: unknown;
 };
 
 function readPositiveInteger(value: unknown, fallback: number, max: number) {
@@ -29,6 +30,10 @@ function readOptionalString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : undefined;
+}
+
+function readBooleanFlag(value: unknown) {
+  return value === true || value === "true";
 }
 
 async function readRequestBody(request: Request): Promise<GenerateNewsRequestBody> {
@@ -122,6 +127,7 @@ export async function POST(request: Request) {
   const maxCandidates = readPositiveInteger(body.maxCandidates, 5, 10);
   const queryLimit = readPositiveInteger(body.queryLimit, 10, 10);
   const model = readOptionalString(body.model);
+  const dryRun = readBooleanFlag(body.dryRun);
 
   try {
     const searchQueries = await getActiveNewsSearchQueries(supabase, queryLimit);
@@ -137,6 +143,19 @@ export async function POST(request: Request) {
     }
 
     const existingTitles = await getExistingLocalNewsTitles(supabase, 50);
+
+    if (dryRun) {
+      return NextResponse.json({
+        ok: true,
+        dryRun: true,
+        message:
+          "Prueba seca correcta. No se llamó a OpenAI y no se guardaron candidatos.",
+        searchQueriesUsed: searchQueries.length,
+        existingTitlesFound: existingTitles.length,
+        maxCandidates,
+        queryLimit,
+      });
+    }
 
     const result = await generateSabinappNewsCandidates({
       searchQueries,
