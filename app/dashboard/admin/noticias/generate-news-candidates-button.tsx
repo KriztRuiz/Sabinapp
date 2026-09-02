@@ -38,10 +38,10 @@ export function GenerateNewsCandidatesButton() {
   async function generateCandidates() {
     const confirmed = window.confirm(
       [
-        "¿Buscar nuevos candidatos de noticias?",
+        "¿Buscar noticias recientes?",
         "",
-        "Esto llamará a OpenAI, puede consumir crédito de API y guardará candidatos para revisión.",
-        "No se publicará nada automáticamente.",
+        "Esto llamará a OpenAI, puede consumir crédito de API y guardará noticias candidatas para revisión.",
+        "No se publicará nada automáticamente. Sólo deben guardarse noticias recientes. Sólo deben guardarse noticias recientes. Sólo deben guardarse noticias recientes. Sólo deben guardarse noticias recientes.",
       ].join("\n"),
     );
 
@@ -77,7 +77,7 @@ export function GenerateNewsCandidatesButton() {
       }
 
       const message = [
-        data.message || "Candidatos generados correctamente.",
+        data.message || "Noticias candidatas generadas correctamente.",
         `Encontrados: ${data.candidatesFound ?? 0}.`,
         `Guardados: ${data.candidatesStored ?? 0}.`,
         `Duplicados omitidos: ${data.duplicatesSkipped ?? 0}.`,
@@ -104,7 +104,7 @@ export function GenerateNewsCandidatesButton() {
       disabled={isGenerating}
       className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {isGenerating ? "Buscando..." : "Buscar candidatos"}
+      {isGenerating ? "Buscando noticias..." : "Buscar noticias"}
     </button>
   );
 }

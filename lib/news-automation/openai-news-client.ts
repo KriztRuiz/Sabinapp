@@ -181,6 +181,9 @@ const DIFFERENT_SABINAS_TERMS = [
   "coahuila",
 ];
 
+const MAX_NEWS_AGE_MS = 24 * 60 * 60 * 1000;
+const FUTURE_NEWS_TOLERANCE_MS = 2 * 60 * 60 * 1000;
+
 function normalizeForLocalMatch(value: string) {
   return value
     .normalize("NFD")
@@ -226,6 +229,32 @@ function isLikelyDifferentSabinas(candidate: NewsCandidate) {
   }
 
   return DIFFERENT_SABINAS_TERMS.some((term) => evidenceText.includes(term));
+}
+
+function parseSourcePublishedAt(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+}
+
+function isRecentPublishedCandidate(candidate: NewsCandidate) {
+  const sourcePublishedAt = parseSourcePublishedAt(candidate.sourcePublishedAt);
+
+  if (!sourcePublishedAt) {
+    return false;
+  }
+
+  const ageMs = Date.now() - sourcePublishedAt.getTime();
+
+  return ageMs >= -FUTURE_NEWS_TOLERANCE_MS && ageMs <= MAX_NEWS_AGE_MS;
 }
 
 function normalizeCandidates(parsed: unknown): NewsCandidate[] {
@@ -276,6 +305,7 @@ function normalizeCandidates(parsed: unknown): NewsCandidate[] {
         candidate.summary.length >= 20 &&
         candidate.sourceUrl.startsWith("http") &&
         candidate.dedupeKey.length >= 8 &&
+        isRecentPublishedCandidate(candidate) &&
         hasLocalRelevanceSignal(candidate) &&
         !isLikelyDifferentSabinas(candidate),
     );
@@ -294,6 +324,11 @@ Reglas:
 - Si la noticia habla de Sabinas, Coahuila, San Juan de Sabinas, Nueva Rosita, Múzquiz, Región Carbonífera o Monclova, no la incluyas salvo que mencione explícitamente Sabinas Hidalgo, Nuevo León.
 - Si no puedes confirmar que la noticia corresponde a Sabinas Hidalgo o que afecta claramente a Sabinas Hidalgo, no la incluyas.
 - Copia las URLs exactas de las fuentes. No traduzcas, corrijas ni inventes slugs de URL.
+- Usa como referencia de fecha actual: ${new Date().toISOString()}.
+- Sólo incluye noticias publicadas en las últimas 24 horas.
+- El campo sourcePublishedAt es obligatorio. Debe ser la fecha de publicación de la fuente en formato ISO 8601.
+- Si no encuentras una fecha clara de publicación en la fuente, no incluyas esa noticia.
+- El resumen no debe repetir la fecha de publicación ni el nombre de la fuente; esos datos se muestran fuera del resumen.
 - Cada noticia debe tener fuente principal verificable.
 - Prioriza seguridad, clima, servicios, movilidad, economía local, avisos oficiales, comunidad, eventos y negocios locales.
 - Máximo de candidatos: ${input.maxCandidates}.
