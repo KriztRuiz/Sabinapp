@@ -162,6 +162,72 @@ function normalizeSources(value: unknown): NewsCandidateSource[] {
     .filter((source) => source.sourceUrl.startsWith("http"));
 }
 
+const LOCAL_MATCH_TERMS = [
+  "sabinas hidalgo",
+  "sabinas hgo",
+  "cerro del copeton",
+  "cerro el copeton",
+];
+
+const DIFFERENT_SABINAS_TERMS = [
+  "sabinas coahuila",
+  "san juan de sabinas",
+  "nueva rosita",
+  "region carbonifera",
+  "carbonifera",
+  "monclova",
+  "muzquiz",
+  "melchor muzquiz",
+  "coahuila",
+];
+
+function normalizeForLocalMatch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildLocalEvidenceText(candidate: NewsCandidate) {
+  return normalizeForLocalMatch(
+    [
+      candidate.title,
+      candidate.summary,
+      candidate.sourceName,
+      candidate.sourceUrl,
+      candidate.localRelevance,
+      candidate.aiNotes,
+      ...candidate.sources.flatMap((source) => [
+        source.sourceName,
+        source.sourceUrl,
+        source.sourceTitle,
+        source.excerpt,
+      ]),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+function hasLocalRelevanceSignal(candidate: NewsCandidate) {
+  const evidenceText = buildLocalEvidenceText(candidate);
+
+  return LOCAL_MATCH_TERMS.some((term) => evidenceText.includes(term));
+}
+
+function isLikelyDifferentSabinas(candidate: NewsCandidate) {
+  const evidenceText = buildLocalEvidenceText(candidate);
+
+  if (evidenceText.includes("sabinas hidalgo")) {
+    return false;
+  }
+
+  return DIFFERENT_SABINAS_TERMS.some((term) => evidenceText.includes(term));
+}
+
 function normalizeCandidates(parsed: unknown): NewsCandidate[] {
   if (!isRecord(parsed) || !Array.isArray(parsed.candidates)) {
     return [];
@@ -209,7 +275,9 @@ function normalizeCandidates(parsed: unknown): NewsCandidate[] {
         candidate.title.length >= 5 &&
         candidate.summary.length >= 20 &&
         candidate.sourceUrl.startsWith("http") &&
-        candidate.dedupeKey.length >= 8,
+        candidate.dedupeKey.length >= 8 &&
+        hasLocalRelevanceSignal(candidate) &&
+        !isLikelyDifferentSabinas(candidate),
     );
 }
 
@@ -223,6 +291,9 @@ Reglas:
 - No inventes noticias.
 - No uses rumores sin fuente.
 - No publiques temas generales sin impacto local.
+- Si la noticia habla de Sabinas, Coahuila, San Juan de Sabinas, Nueva Rosita, Múzquiz, Región Carbonífera o Monclova, no la incluyas salvo que mencione explícitamente Sabinas Hidalgo, Nuevo León.
+- Si no puedes confirmar que la noticia corresponde a Sabinas Hidalgo o que afecta claramente a Sabinas Hidalgo, no la incluyas.
+- Copia las URLs exactas de las fuentes. No traduzcas, corrijas ni inventes slugs de URL.
 - Cada noticia debe tener fuente principal verificable.
 - Prioriza seguridad, clima, servicios, movilidad, economía local, avisos oficiales, comunidad, eventos y negocios locales.
 - Máximo de candidatos: ${input.maxCandidates}.
