@@ -19,6 +19,7 @@ type PageProps = {
   searchParams?: Promise<{
     commentMessage?: string;
     commentError?: string;
+    archivo?: string;
   }>;
 };
 
@@ -85,6 +86,25 @@ function getNewsFreshness(value: string) {
     className: "bg-gray-100 text-gray-700",
   };
 }
+
+function normalizeArchiveIndex(value: string | undefined, total: number) {
+  if (total <= 0) {
+    return 0;
+  }
+
+  const parsedValue = Number.parseInt(value ?? "0", 10);
+
+  if (Number.isNaN(parsedValue)) {
+    return 0;
+  }
+
+  return Math.min(Math.max(parsedValue, 0), total - 1);
+}
+
+function buildArchiveHref(index: number) {
+  return `/noticias?archivo=${index}`;
+}
+
 
 
 function getCommentNotice(
@@ -175,6 +195,23 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
 
   const sourceCount = new Set(news.map((item) => item.source_name)).size;
   const latestPublishedAt = news[0]?.published_at ?? null;
+  const recentNews = news.filter((item) =>
+    isRecentNewsPublishedAt(item.published_at),
+  );
+
+  const archiveNews = news.filter(
+    (item) => !isRecentNewsPublishedAt(item.published_at),
+  );
+
+  const archiveIndex = normalizeArchiveIndex(
+    searchParamsValue.archivo,
+    archiveNews.length,
+  );
+
+  const selectedArchiveNews = archiveNews[archiveIndex] ?? null;
+const previousArchiveIndex = archiveIndex > 0 ? archiveIndex - 1 : null;
+  const nextArchiveIndex =
+    archiveIndex + 1 < archiveNews.length ? archiveIndex + 1 : null;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -210,7 +247,7 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
               <p className="mt-3 text-4xl font-black">{news.length}</p>
 
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Ordenadas de la más reciente a la más antigua.
+                Recientes completas y archivo consultable una noticia a la vez.
               </p>
             </article>
 
@@ -271,8 +308,25 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
         ) : null}
 
         {news.length > 0 ? (
-          <section className="mt-8 grid gap-5">
-            {news.map((item) => {
+          <section className="mt-8 space-y-8">
+            {recentNews.length > 0 ? (
+              <section className="space-y-5">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">
+                    Noticias recientes
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-black text-gray-950">
+                    Lo más nuevo para la comunidad
+                  </h2>
+
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+                    Publicaciones de las últimas 24 horas.
+                  </p>
+                </div>
+
+                <div className="grid gap-5">
+{recentNews.map((item) => {
               const comments = (item.news_comments ?? [])
                 .filter((comment) => comment.status === "published")
                 .sort(
@@ -413,7 +467,203 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                   </div>
                 </article>
               );
-            })}
+              })}
+                </div>
+              </section>
+            ) : null}
+
+            {selectedArchiveNews ? (
+              <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-[0.2em] text-gray-500">
+                      Archivo
+                    </p>
+
+                    <h2 className="mt-2 text-2xl font-black text-gray-950">
+                      Noticias anteriores
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-gray-600">
+                      Mostrando {archiveIndex + 1} de {archiveNews.length}.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    {previousArchiveIndex !== null ? (
+                      <Link
+                        href={buildArchiveHref(previousArchiveIndex)}
+                        className="rounded-full border border-gray-300 px-4 py-2 text-center text-sm font-bold text-gray-800 transition hover:bg-gray-50"
+                      >
+                        ← Más reciente
+                      </Link>
+                    ) : (
+                      <span className="rounded-full border border-gray-200 px-4 py-2 text-center text-sm font-bold text-gray-400">
+                        ← Más reciente
+                      </span>
+                    )}
+
+                    {nextArchiveIndex !== null ? (
+                      <Link
+                        href={buildArchiveHref(nextArchiveIndex)}
+                        className="rounded-full bg-gray-950 px-4 py-2 text-center text-sm font-bold text-white transition hover:bg-gray-800"
+                      >
+                        Más antigua →
+                      </Link>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-4 py-2 text-center text-sm font-bold text-gray-400">
+                        Más antigua →
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-5">
+{[selectedArchiveNews].map((item) => {
+              const comments = (item.news_comments ?? [])
+                .filter((comment) => comment.status === "published")
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at).getTime() -
+                    new Date(a.created_at).getTime(),
+                );
+
+              const commentNotice = getCommentNotice(searchParamsValue);
+              const freshness = getNewsFreshness(item.published_at);
+
+              return (
+                <article
+                  id={`noticia-${item.id}`}
+                  key={item.id}
+                  className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
+                          {item.source_name}
+                        </p>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-black ${freshness.className}`}
+                        >
+                          {freshness.label}
+                        </span>
+                      </div>
+
+                      <h2 className="mt-3 text-2xl font-black">
+                        {item.title}
+                      </h2>
+
+                      <p className="mt-2 text-sm font-semibold text-gray-500">
+                        {formatDate(item.published_at)}
+                      </p>
+                    </div>
+
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
+                    >
+                      Leer fuente principal
+                    </a>
+                  </div>
+
+                  <p className="mt-5 rounded-2xl bg-orange-50/60 p-5 leading-7 text-gray-700">
+                    {item.summary}
+                  </p>
+
+                  <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50">
+                    <details>
+                      <summary className="cursor-pointer list-none p-5">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-black uppercase tracking-[0.16em] text-gray-500">
+                              Comentarios
+                            </p>
+
+                            <h3 className="mt-1 text-xl font-black text-gray-950">
+                              Comunidad Sabinapp
+                            </h3>
+                          </div>
+
+                          <span className="w-fit rounded-full bg-white px-4 py-2 text-sm font-black text-gray-700">
+                            Ver comentarios ({comments.length})
+                          </span>
+                        </div>
+                      </summary>
+
+                      <div className="border-t border-gray-200 p-5">
+                        {commentNotice ? (
+                          <div
+                            className={`rounded-2xl border p-4 text-sm font-semibold ${
+                              commentNotice.type === "success"
+                                ? "border-green-200 bg-green-50 text-green-800"
+                                : "border-red-200 bg-red-50 text-red-800"
+                            }`}
+                          >
+                            {commentNotice.message}
+                          </div>
+                        ) : null}
+
+                        <details className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 p-4">
+                          <summary className="cursor-pointer text-sm font-black text-gray-900">
+                            Agregar comentario
+                          </summary>
+
+                          <NewsCommentForm
+                            newsId={item.id}
+                            isAuthenticated={Boolean(user)}
+                          />
+                        </details>
+
+                        {comments.length > 0 ? (
+                          <div className="mt-5 space-y-3">
+                            {comments.map((comment) => (
+                              <div
+                                key={comment.id}
+                                className="rounded-2xl border border-gray-100 bg-white p-4"
+                              >
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                  <p className="font-bold text-gray-950">
+                                    {profileNameMap.get(comment.user_id) ??
+                                      "Usuario local"}
+                                  </p>
+
+                                  <p className="text-sm text-gray-500">
+                                    {formatDate(comment.created_at)}
+                                  </p>
+                                </div>
+
+                                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+                                  {comment.comment}
+                                </p>
+
+                                <NewsCommentReportForm
+                                  newsId={item.id}
+                                  commentId={comment.id}
+                                  commentUserId={comment.user_id}
+                                  currentUserId={user?.id ?? null}
+                                  isAuthenticated={Boolean(user)}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-5 text-sm leading-6 text-gray-600">
+                            Todavía no hay comentarios en esta noticia.
+                          </p>
+                        )}
+                      </div>
+                    </details>
+                  </div>
+                </article>
+              );
+              })}
+                </div>
+              </section>
+            ) : null}
           </section>
         ) : null}
       </div>
