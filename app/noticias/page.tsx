@@ -57,6 +57,36 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+const RECENT_NEWS_AGE_MS = 24 * 60 * 60 * 1000;
+const FUTURE_NEWS_TOLERANCE_MS = 2 * 60 * 60 * 1000;
+
+function isRecentNewsPublishedAt(value: string) {
+  const publishedAt = new Date(value);
+
+  if (Number.isNaN(publishedAt.getTime())) {
+    return false;
+  }
+
+  const ageMs = Date.now() - publishedAt.getTime();
+
+  return ageMs >= -FUTURE_NEWS_TOLERANCE_MS && ageMs <= RECENT_NEWS_AGE_MS;
+}
+
+function getNewsFreshness(value: string) {
+  if (isRecentNewsPublishedAt(value)) {
+    return {
+      label: "Reciente",
+      className: "bg-green-50 text-green-800",
+    };
+  }
+
+  return {
+    label: "Archivo",
+    className: "bg-gray-100 text-gray-700",
+  };
+}
+
+
 function getCommentNotice(
   searchParamsValue: Awaited<NonNullable<PageProps["searchParams"]>>,
 ) {
@@ -166,7 +196,7 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
           </h1>
 
           <p className="mt-4 max-w-2xl leading-7 text-gray-600">
-            Encuentra avisos, notas y noticias relevantes para la comunidad. Cada tarjeta conserva su fuente principal para que puedas revisar el origen.
+            Encuentra avisos, notas y noticias relevantes para la comunidad. Las noticias se conservan como archivo público y se muestran de la más reciente a la más antigua.
           </p>
         </header>
 
@@ -180,7 +210,7 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
               <p className="mt-3 text-4xl font-black">{news.length}</p>
 
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Publicaciones disponibles para la comunidad.
+                Ordenadas de la más reciente a la más antigua.
               </p>
             </article>
 
@@ -252,6 +282,7 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                 );
 
               const commentNotice = getCommentNotice(searchParamsValue);
+              const freshness = getNewsFreshness(item.published_at);
 
               return (
                 <article
@@ -261,9 +292,17 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
-                        {item.source_name}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
+                          {item.source_name}
+                        </p>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-black ${freshness.className}`}
+                        >
+                          {freshness.label}
+                        </span>
+                      </div>
 
                       <h2 className="mt-3 text-2xl font-black">
                         {item.title}
