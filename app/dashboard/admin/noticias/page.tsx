@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { GenerateNewsCandidatesButton } from "./generate-news-candidates-button";
 import { NewsCandidateActions } from "./news-candidate-actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -281,11 +282,15 @@ export default async function AdminNewsPage({ searchParams }: PageProps) {
           Noticias candidatas
         </h1>
 
-        <p className="mt-3 max-w-3xl text-gray-600">
-          Revisa noticias encontradas automáticamente antes de publicarlas en
-          Sabinapp. La IA sólo propone candidatos; la publicación final queda en
-          manos del administrador.
-        </p>
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <p className="max-w-3xl text-gray-600">
+            Revisa noticias encontradas automáticamente antes de publicarlas en
+            Sabinapp. La IA sólo propone candidatos; la publicación final queda
+            en manos del administrador.
+          </p>
+
+          <GenerateNewsCandidatesButton />
+        </div>
       </header>
 
       {query.message ? (
