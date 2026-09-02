@@ -127,6 +127,155 @@ function getCommentNotice(
   return null;
 }
 
+type PublicNewsCardProps = {
+  item: LocalNewsRow;
+  profileNameMap: Map<string, string>;
+  commentNotice: ReturnType<typeof getCommentNotice>;
+  currentUserId: string | null;
+  isAuthenticated: boolean;
+};
+
+function PublicNewsCard({
+  item,
+  profileNameMap,
+  commentNotice,
+  currentUserId,
+  isAuthenticated,
+}: PublicNewsCardProps) {
+  const comments = (item.news_comments ?? [])
+    .filter((comment) => comment.status === "published")
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+
+  const freshness = getNewsFreshness(item.published_at);
+
+  return (
+    <article
+      id={`noticia-${item.id}`}
+      className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
+              {item.source_name}
+            </p>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-black ${freshness.className}`}
+            >
+              {freshness.label}
+            </span>
+          </div>
+
+          <h2 className="mt-3 text-2xl font-black">{item.title}</h2>
+
+          <p className="mt-2 text-sm font-semibold text-gray-500">
+            {formatDate(item.published_at)}
+          </p>
+        </div>
+
+        <a
+          href={item.source_url}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
+        >
+          Leer fuente principal
+        </a>
+      </div>
+
+      <p className="mt-5 rounded-2xl bg-orange-50/60 p-5 leading-7 text-gray-700">
+        {item.summary}
+      </p>
+
+      <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50">
+        <details>
+          <summary className="cursor-pointer list-none p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.16em] text-gray-500">
+                  Comentarios
+                </p>
+
+                <h3 className="mt-1 text-xl font-black text-gray-950">
+                  Comunidad Sabinapp
+                </h3>
+              </div>
+
+              <span className="w-fit rounded-full bg-white px-4 py-2 text-sm font-black text-gray-700">
+                Ver comentarios ({comments.length})
+              </span>
+            </div>
+          </summary>
+
+          <div className="border-t border-gray-200 p-5">
+            {commentNotice ? (
+              <div
+                className={`rounded-2xl border p-4 text-sm font-semibold ${
+                  commentNotice.type === "success"
+                    ? "border-green-200 bg-green-50 text-green-800"
+                    : "border-red-200 bg-red-50 text-red-800"
+                }`}
+              >
+                {commentNotice.message}
+              </div>
+            ) : null}
+
+            <details className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 p-4">
+              <summary className="cursor-pointer text-sm font-black text-gray-900">
+                Agregar comentario
+              </summary>
+
+              <NewsCommentForm newsId={item.id} isAuthenticated={isAuthenticated} />
+            </details>
+
+            {comments.length > 0 ? (
+              <div className="mt-5 space-y-3">
+                {comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="rounded-2xl border border-gray-100 bg-white p-4"
+                  >
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="font-bold text-gray-950">
+                        {profileNameMap.get(comment.user_id) ?? "Usuario local"}
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        {formatDate(comment.created_at)}
+                      </p>
+                    </div>
+
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+                      {comment.comment}
+                    </p>
+
+                    <NewsCommentReportForm
+                      newsId={item.id}
+                      commentId={comment.id}
+                      commentUserId={comment.user_id}
+                      currentUserId={currentUserId}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-5 text-sm leading-6 text-gray-600">
+                Todavía no hay comentarios en esta noticia.
+              </p>
+            )}
+          </div>
+        </details>
+      </div>
+    </article>
+  );
+}
+
+
 export default async function LocalNewsPage({ searchParams }: PageProps) {
   const searchParamsValue = searchParams ? await searchParams : {};
   const supabase = await createClient();
@@ -209,9 +358,13 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
   );
 
   const selectedArchiveNews = archiveNews[archiveIndex] ?? null;
-const previousArchiveIndex = archiveIndex > 0 ? archiveIndex - 1 : null;
+  const previousArchiveIndex = archiveIndex > 0 ? archiveIndex - 1 : null;
   const nextArchiveIndex =
     archiveIndex + 1 < archiveNews.length ? archiveIndex + 1 : null;
+
+  const commentNotice = getCommentNotice(searchParamsValue);
+  const currentUserId = user?.id ?? null;
+  const isAuthenticated = Boolean(user);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
@@ -326,148 +479,16 @@ const previousArchiveIndex = archiveIndex > 0 ? archiveIndex - 1 : null;
                 </div>
 
                 <div className="grid gap-5">
-{recentNews.map((item) => {
-              const comments = (item.news_comments ?? [])
-                .filter((comment) => comment.status === "published")
-                .sort(
-                  (a, b) =>
-                    new Date(b.created_at).getTime() -
-                    new Date(a.created_at).getTime(),
-                );
-
-              const commentNotice = getCommentNotice(searchParamsValue);
-              const freshness = getNewsFreshness(item.published_at);
-
-              return (
-                <article
-                  id={`noticia-${item.id}`}
-                  key={item.id}
-                  className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
-                          {item.source_name}
-                        </p>
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-black ${freshness.className}`}
-                        >
-                          {freshness.label}
-                        </span>
-                      </div>
-
-                      <h2 className="mt-3 text-2xl font-black">
-                        {item.title}
-                      </h2>
-
-                      <p className="mt-2 text-sm font-semibold text-gray-500">
-                        {formatDate(item.published_at)}
-                      </p>
-                    </div>
-
-                    <a
-                      href={item.source_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
-                    >
-                      Leer fuente principal
-                    </a>
-                  </div>
-
-                  <p className="mt-5 rounded-2xl bg-orange-50/60 p-5 leading-7 text-gray-700">
-                    {item.summary}
-                  </p>
-
-                  <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50">
-                    <details>
-                      <summary className="cursor-pointer list-none p-5">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm font-black uppercase tracking-[0.16em] text-gray-500">
-                              Comentarios
-                            </p>
-
-                            <h3 className="mt-1 text-xl font-black text-gray-950">
-                              Comunidad Sabinapp
-                            </h3>
-                          </div>
-
-                          <span className="w-fit rounded-full bg-white px-4 py-2 text-sm font-black text-gray-700">
-                            Ver comentarios ({comments.length})
-                          </span>
-                        </div>
-                      </summary>
-
-                      <div className="border-t border-gray-200 p-5">
-                        {commentNotice ? (
-                          <div
-                            className={`rounded-2xl border p-4 text-sm font-semibold ${
-                              commentNotice.type === "success"
-                                ? "border-green-200 bg-green-50 text-green-800"
-                                : "border-red-200 bg-red-50 text-red-800"
-                            }`}
-                          >
-                            {commentNotice.message}
-                          </div>
-                        ) : null}
-
-                        <details className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 p-4">
-                          <summary className="cursor-pointer text-sm font-black text-gray-900">
-                            Agregar comentario
-                          </summary>
-
-                          <NewsCommentForm
-                            newsId={item.id}
-                            isAuthenticated={Boolean(user)}
-                          />
-                        </details>
-
-                        {comments.length > 0 ? (
-                          <div className="mt-5 space-y-3">
-                            {comments.map((comment) => (
-                              <div
-                                key={comment.id}
-                                className="rounded-2xl border border-gray-100 bg-white p-4"
-                              >
-                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                  <p className="font-bold text-gray-950">
-                                    {profileNameMap.get(comment.user_id) ??
-                                      "Usuario local"}
-                                  </p>
-
-                                  <p className="text-sm text-gray-500">
-                                    {formatDate(comment.created_at)}
-                                  </p>
-                                </div>
-
-                                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700">
-                                  {comment.comment}
-                                </p>
-
-                                <NewsCommentReportForm
-                                  newsId={item.id}
-                                  commentId={comment.id}
-                                  commentUserId={comment.user_id}
-                                  currentUserId={user?.id ?? null}
-                                  isAuthenticated={Boolean(user)}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="mt-5 text-sm leading-6 text-gray-600">
-                            Todavía no hay comentarios en esta noticia.
-                          </p>
-                        )}
-                      </div>
-                    </details>
-                  </div>
-                </article>
-              );
-              })}
+{recentNews.map((item) => (
+                  <PublicNewsCard
+                    key={item.id}
+                    item={item}
+                    profileNameMap={profileNameMap}
+                    commentNotice={commentNotice}
+                    currentUserId={currentUserId}
+                    isAuthenticated={isAuthenticated}
+                  />
+                ))}
                 </div>
               </section>
             ) : null}
@@ -519,148 +540,13 @@ const previousArchiveIndex = archiveIndex > 0 ? archiveIndex - 1 : null;
                 </div>
 
                 <div className="mt-5 grid gap-5">
-{[selectedArchiveNews].map((item) => {
-              const comments = (item.news_comments ?? [])
-                .filter((comment) => comment.status === "published")
-                .sort(
-                  (a, b) =>
-                    new Date(b.created_at).getTime() -
-                    new Date(a.created_at).getTime(),
-                );
-
-              const commentNotice = getCommentNotice(searchParamsValue);
-              const freshness = getNewsFreshness(item.published_at);
-
-              return (
-                <article
-                  id={`noticia-${item.id}`}
-                  key={item.id}
-                  className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">
-                          {item.source_name}
-                        </p>
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-black ${freshness.className}`}
-                        >
-                          {freshness.label}
-                        </span>
-                      </div>
-
-                      <h2 className="mt-3 text-2xl font-black">
-                        {item.title}
-                      </h2>
-
-                      <p className="mt-2 text-sm font-semibold text-gray-500">
-                        {formatDate(item.published_at)}
-                      </p>
-                    </div>
-
-                    <a
-                      href={item.source_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 rounded-full bg-gray-950 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800"
-                    >
-                      Leer fuente principal
-                    </a>
-                  </div>
-
-                  <p className="mt-5 rounded-2xl bg-orange-50/60 p-5 leading-7 text-gray-700">
-                    {item.summary}
-                  </p>
-
-                  <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50">
-                    <details>
-                      <summary className="cursor-pointer list-none p-5">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm font-black uppercase tracking-[0.16em] text-gray-500">
-                              Comentarios
-                            </p>
-
-                            <h3 className="mt-1 text-xl font-black text-gray-950">
-                              Comunidad Sabinapp
-                            </h3>
-                          </div>
-
-                          <span className="w-fit rounded-full bg-white px-4 py-2 text-sm font-black text-gray-700">
-                            Ver comentarios ({comments.length})
-                          </span>
-                        </div>
-                      </summary>
-
-                      <div className="border-t border-gray-200 p-5">
-                        {commentNotice ? (
-                          <div
-                            className={`rounded-2xl border p-4 text-sm font-semibold ${
-                              commentNotice.type === "success"
-                                ? "border-green-200 bg-green-50 text-green-800"
-                                : "border-red-200 bg-red-50 text-red-800"
-                            }`}
-                          >
-                            {commentNotice.message}
-                          </div>
-                        ) : null}
-
-                        <details className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 p-4">
-                          <summary className="cursor-pointer text-sm font-black text-gray-900">
-                            Agregar comentario
-                          </summary>
-
-                          <NewsCommentForm
-                            newsId={item.id}
-                            isAuthenticated={Boolean(user)}
-                          />
-                        </details>
-
-                        {comments.length > 0 ? (
-                          <div className="mt-5 space-y-3">
-                            {comments.map((comment) => (
-                              <div
-                                key={comment.id}
-                                className="rounded-2xl border border-gray-100 bg-white p-4"
-                              >
-                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                  <p className="font-bold text-gray-950">
-                                    {profileNameMap.get(comment.user_id) ??
-                                      "Usuario local"}
-                                  </p>
-
-                                  <p className="text-sm text-gray-500">
-                                    {formatDate(comment.created_at)}
-                                  </p>
-                                </div>
-
-                                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700">
-                                  {comment.comment}
-                                </p>
-
-                                <NewsCommentReportForm
-                                  newsId={item.id}
-                                  commentId={comment.id}
-                                  commentUserId={comment.user_id}
-                                  currentUserId={user?.id ?? null}
-                                  isAuthenticated={Boolean(user)}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="mt-5 text-sm leading-6 text-gray-600">
-                            Todavía no hay comentarios en esta noticia.
-                          </p>
-                        )}
-                      </div>
-                    </details>
-                  </div>
-                </article>
-              );
-              })}
+<PublicNewsCard
+                  item={selectedArchiveNews}
+                  profileNameMap={profileNameMap}
+                  commentNotice={commentNotice}
+                  currentUserId={currentUserId}
+                  isAuthenticated={isAuthenticated}
+                />
                 </div>
               </section>
             ) : null}
