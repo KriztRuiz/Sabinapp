@@ -296,12 +296,21 @@ export default async function DashboardPage() {
             </div>
           </div>
 
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/dashboard/admin/negocios"
-            className="mt-5 inline-flex rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+            className="inline-flex rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
           >
             Ir a revisión de negocios
           </Link>
+
+            <Link
+              href="/dashboard/admin/noticias"
+              className="inline-flex rounded-lg border border-orange-300 bg-white px-4 py-2 text-sm font-semibold text-orange-800 transition hover:bg-orange-50"
+            >
+              Revisar noticias
+            </Link>
+          </div>
         </section>
       ) : null}
 
