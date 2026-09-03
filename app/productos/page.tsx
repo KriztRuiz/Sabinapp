@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { textMatchesSearch } from "@/lib/search/local-search";
 import Link from "next/link";
 
 
@@ -72,13 +73,6 @@ function getUniqueOptions(options: FilterOption[]) {
   );
 }
 
-function normalizeSearchText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
-}
-
 function getItemTypeLabel(type: string) {
   const labels: Record<string, string> = {
     menu_item: "Menú",
@@ -102,16 +96,14 @@ function itemMatchesSearch(item: ProductRow, query: string) {
 
   const business = firstRelation(item.businesses);
 
-  const searchableText = normalizeSearchText(
-    [
-      item.name,
-      item.description ?? "",
-      getItemTypeLabel(item.type),
-      business?.name ?? "",
-    ].join(" "),
-  );
+  const searchableText = [
+    item.name,
+    item.description ?? "",
+    getItemTypeLabel(item.type),
+    business?.name ?? "",
+  ].join(" ");
 
-  return searchableText.includes(normalizeSearchText(query));
+  return textMatchesSearch(searchableText, query);
 }
 
 function itemMatchesType(item: ProductRow, selectedType: string) {

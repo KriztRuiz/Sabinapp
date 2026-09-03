@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { textMatchesSearch } from "@/lib/search/local-search";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ type BusinessRow = {
   name: string;
   slug: string;
   short_description: string | null;
+  long_description: string | null;
   categories: CategoryRelation | CategoryRelation[] | null;
   business_types: BusinessTypeRelation | BusinessTypeRelation[] | null;
   business_items: BusinessItemRelation[] | null;
@@ -68,13 +70,6 @@ function firstRelation<T>(relation: T | T[] | null | undefined) {
   }
 
   return relation ?? null;
-}
-
-function normalizeSearchText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
 }
 
 function getUniqueOptions(options: FilterOption[]) {
@@ -150,18 +145,17 @@ function businessMatchesSearch(business: BusinessRow, query: string) {
     .map((businessTag) => firstRelation(businessTag.tags)?.name ?? "")
     .filter(Boolean);
 
-  const searchableText = normalizeSearchText(
-    [
-      business.name,
-      business.short_description ?? "",
-      category?.name ?? "",
-      businessType?.name ?? "",
-      ...itemTexts,
-      ...tagTexts,
-    ].join(" "),
-  );
+  const searchableText = [
+    business.name,
+    business.short_description ?? "",
+    business.long_description ?? "",
+    category?.name ?? "",
+    businessType?.name ?? "",
+    ...itemTexts,
+    ...tagTexts,
+  ].join(" ");
 
-  return searchableText.includes(normalizeSearchText(query));
+  return textMatchesSearch(searchableText, query);
 }
 
 function businessMatchesType(business: BusinessRow, selectedType: string) {
@@ -204,6 +198,7 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
       name,
       slug,
       short_description,
+      long_description,
       categories (
         name,
         slug
