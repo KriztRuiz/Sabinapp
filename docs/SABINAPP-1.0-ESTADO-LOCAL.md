@@ -435,3 +435,63 @@ No se implementa todavía:
 Esas mejoras quedan como candidatas para Sabinapp 2.0 o para una fase posterior al lanzamiento.
 
 No preparar despliegue sin confirmación explícita.
+
+## Actualización de clima local
+
+Fecha de actualización: 2026-09-03
+
+Se mejoró la página pública de clima para hacerla más útil para usuarios, negocios y comunidad local.
+
+### Archivos modificados
+
+- lib/weather/sabinas-weather.ts
+- app/clima/page.tsx
+
+### Estado funcional
+
+Validado:
+
+- /clima muestra el clima actual de Sabinas Hidalgo.
+- /clima conserva temperatura, sensación térmica, viento, humedad y lluvia.
+- /clima conserva la recomendación rápida.
+- /clima agrega una lectura práctica para usuarios.
+- /clima agrega una recomendación para negocios.
+- /clima agrega riesgo por calor.
+- /tiempo sigue redirigiendo permanentemente a /clima.
+- Home puede seguir usando la lógica compartida de clima.
+
+### Funciones reutilizables agregadas
+
+- getWeatherHeatRisk()
+- getWeatherOutdoorPlan()
+- getWeatherBusinessPlan()
+
+### Prueba real validada
+
+En modo producción local:
+
+- GET /clima respondió 200.
+- GET /tiempo respondió 308 y redirigió a /clima.
+- /clima mostró:
+  - Clima en Sabinas Hidalgo.
+  - Lectura práctica del clima.
+  - Para usuarios.
+  - Para negocios.
+  - Riesgo por calor.
+
+### Decisión técnica
+
+Para Sabinapp 1.0 se mantiene una página de clima sencilla, útil y estable.
+
+No se implementa todavía:
+
+- Pronóstico por horas.
+- Pronóstico por varios días.
+- Alertas automáticas.
+- Historial climático.
+- Personalización por zona.
+- Notificaciones.
+
+Esas mejoras quedan como candidatas para Sabinapp 2.0 o para una fase posterior al lanzamiento.
+
+No preparar despliegue sin confirmación explícita.
