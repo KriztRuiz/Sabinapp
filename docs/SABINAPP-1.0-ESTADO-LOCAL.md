@@ -281,3 +281,98 @@ Build actual:
 El módulo de noticias queda funcional en entorno local para Sabinapp 1.0.
 
 No preparar despliegue sin confirmación explícita.
+
+## Auditoría global post-noticias
+
+Fecha de auditoría: 2026-09-03
+
+Después de completar el módulo de noticias automáticas, se ejecutó una auditoría global rápida en modo producción local.
+
+### Validación técnica
+
+Comandos ejecutados correctamente:
+
+- git status --short
+- npm run lint
+- npm run build
+- npm run start
+
+Resultado:
+
+- Git limpio antes de la validación.
+- ESLint sin errores.
+- TypeScript sin errores.
+- Build productivo exitoso.
+- 21 rutas generadas por App Router.
+- Servidor local productivo levantado correctamente con npm run start.
+
+### Smoke test de rutas públicas
+
+Validado con HTTP 200:
+
+- /
+- /negocios
+- /productos
+- /noticias
+- /clima
+- /negocio/taqueria-el-primo
+
+Validado con redirección permanente:
+
+- /tiempo -> /clima
+
+### Smoke test de rutas no públicas
+
+Validado con HTTP 404:
+
+- /negocio/prueba-flujo-58a
+- /negocio/venta-garage-solidaria
+- /negocio/quinta-las-palmas
+- /negocio/famenor
+- /dev/db-test
+
+### Smoke test de rutas protegidas
+
+Sin sesión, redirigen correctamente a login:
+
+- /dashboard
+- /dashboard/negocios
+- /dashboard/admin/negocios
+- /dashboard/admin/noticias
+- /dashboard/perfil
+
+### Smoke test de endpoints admin
+
+Sin sesión, responden correctamente 401:
+
+- POST /api/admin/news/generate
+- POST /api/admin/news/candidates/publish
+- POST /api/admin/news/candidates/reject
+
+### Conteo actual de datos públicos
+
+Resultado validado en Supabase:
+
+- Negocios públicos visibles: 6
+- Noticias públicas activas: 11
+- Candidatos de noticias pendientes: 0
+- Candidatos de noticias publicados: 8
+- Candidatos de noticias descartados: 2
+- Reportes pendientes: 0
+
+### Conclusión
+
+Sabinapp 1.0 sigue estable después de integrar noticias automáticas asistidas por IA.
+
+El módulo de noticias no rompió:
+
+- Página principal.
+- Búsqueda/listado de negocios.
+- Productos.
+- Página pública de negocios.
+- Dashboard.
+- Rutas protegidas.
+- Seguridad básica de endpoints admin.
+- Bloqueo de rutas de desarrollo en producción local.
+
+No preparar despliegue sin confirmación explícita.
