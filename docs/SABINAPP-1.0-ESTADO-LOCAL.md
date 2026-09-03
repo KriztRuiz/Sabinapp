@@ -1,6 +1,6 @@
 # Sabinapp 1.0 - Estado local antes de despliegue
 
-Última revisión local: 2026-08-30
+Última revisión local: 2026-09-03
 
 ## Estado general
 
@@ -12,7 +12,7 @@ Todavía no se ha preparado despliegue.
 
 ## Stack actual
 
-- Next.js 16.2 App Router
+- Next.js 16.3.3 App Router
 - TypeScript
 - Tailwind CSS
 - Supabase
@@ -29,6 +29,7 @@ Respondieron correctamente con HTTP 200:
 - /negocios
 - /productos
 - /noticias
+- /clima
 - /tiempo
 - /negocio/taqueria-el-primo
 
@@ -40,6 +41,7 @@ Sin sesión, redirigen a login:
 - /dashboard/negocios
 - /dashboard/negocios/new
 - /dashboard/admin/negocios
+- /dashboard/admin/noticias
 - /dashboard/perfil
 
 ## Negocios públicos visibles
@@ -117,7 +119,7 @@ Resultado:
 
 - Compilación exitosa.
 - TypeScript sin errores.
-- 19 rutas estáticas generadas; /dev/db-test quedó como ruta dinámica bloqueada en modo producción local.
+- Build completo con 21 rutas de App Router; /dev/db-test quedó como ruta dinámica bloqueada en modo producción local.
 - Proxy activo.
 - Estado Git limpio.
 
@@ -187,5 +189,95 @@ Se documentó la limpieza final en:
 - Smoke test de rutas públicas/protegidas en modo producción local
 
 Sabinapp 1.0 queda estable localmente antes de cualquier preparación de despliegue.
+
+No preparar despliegue sin confirmación explícita.
+
+## Actualización del módulo de noticias automáticas
+
+Fecha de actualización: 2026-09-03
+
+Se completó el módulo local de noticias automáticas asistidas por IA para Sabinapp 1.0.
+
+### Estado funcional
+
+Validado:
+
+- /noticias funciona como página pública de noticias locales.
+- /dashboard/admin/noticias funciona como panel administrativo de noticias.
+- El administrador puede buscar noticias desde el panel.
+- La búsqueda llama a OpenAI y guarda candidatos.
+- La IA no publica automáticamente.
+- El administrador publica manualmente.
+- El administrador rechaza manualmente.
+- Las noticias publicadas aparecen en /noticias.
+- Las noticias recientes aparecen arriba.
+- Las noticias antiguas se conservan como archivo.
+- El archivo muestra una noticia antigua a la vez.
+- Los comentarios en noticias siguen funcionando.
+- Los reportes de comentarios en noticias siguen funcionando.
+
+### Rutas nuevas o fortalecidas
+
+Rutas públicas:
+
+- /noticias
+- /clima
+- /tiempo redirige a /clima
+
+Rutas admin:
+
+- /dashboard/admin/noticias
+
+Endpoints admin:
+
+- /api/admin/news/generate
+- /api/admin/news/candidates/publish
+- /api/admin/news/candidates/reject
+
+### Tablas usadas por noticias automáticas
+
+- local_news
+- news_candidates
+- news_candidate_sources
+- news_fetch_runs
+- news_search_queries
+- news_sources
+
+### Reglas editoriales actuales
+
+- La IA sólo propone candidatos.
+- La publicación final requiere revisión humana.
+- La búsqueda automática prioriza noticias publicadas en las últimas 24 horas.
+- Las noticias viejas no se eliminan ni se ocultan sólo por antigüedad.
+- Las noticias viejas se clasifican visualmente como Archivo.
+- Se evita confundir Sabinas Hidalgo, Nuevo León, con Sabinas, Coahuila.
+- Los resúmenes no deben repetir fecha ni fuente, porque esos datos ya aparecen en la tarjeta.
+
+### Documentación relacionada
+
+Se agregó documentación específica en:
+
+- docs/SABINAPP-NOTICIAS-AUTOMATICAS-1.0.md
+- docs/sql/sabinapp-noticias-automaticas-base.sql
+- docs/sql/sabinapp-local-news-admin-policy.sql
+
+### Estado técnico
+
+Últimas validaciones correctas:
+
+- npm run lint
+- npm run build
+
+Build actual:
+
+- /noticias dinámica.
+- /dashboard/admin/noticias dinámica.
+- /api/admin/news/generate dinámica.
+- /api/admin/news/candidates/publish dinámica.
+- /api/admin/news/candidates/reject dinámica.
+- /clima estática con revalidación de 10 minutos.
+- /tiempo estática y redirige permanentemente a /clima.
+
+El módulo de noticias queda funcional en entorno local para Sabinapp 1.0.
 
 No preparar despliegue sin confirmación explícita.
