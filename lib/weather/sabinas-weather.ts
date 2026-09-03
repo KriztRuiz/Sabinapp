@@ -87,6 +87,117 @@ export function getWeatherAdvice(weather: SabinasWeather | null) {
   return "Buen momento para explorar negocios y actividades locales.";
 }
 
+function getWeatherTemperature(weather: SabinasWeather | null) {
+  if (!weather) {
+    return null;
+  }
+
+  return weather.apparentTemperature ?? weather.temperature ?? null;
+}
+
+export function getWeatherHeatRisk(weather: SabinasWeather | null) {
+  const temperature = getWeatherTemperature(weather);
+  const humidity = weather?.humidity ?? null;
+
+  if (typeof temperature !== "number") {
+    return {
+      label: "Sin dato suficiente",
+      description:
+        "No hay lectura suficiente para estimar el riesgo por calor en este momento.",
+    };
+  }
+
+  const humidHeat =
+    typeof humidity === "number" && humidity >= 55 && temperature >= 32;
+
+  if (temperature >= 40) {
+    return {
+      label: "Muy alto",
+      description:
+        "Evita sol directo, toma agua y procura hacer vueltas temprano o al atardecer.",
+    };
+  }
+
+  if (temperature >= 36 || humidHeat) {
+    return {
+      label: "Alto",
+      description:
+        "El ambiente puede sentirse pesado. Conviene reducir caminatas largas y buscar sombra.",
+    };
+  }
+
+  if (temperature >= 32) {
+    return {
+      label: "Moderado",
+      description:
+        "Buen momento para salir con agua a la mano y pausas si estarás en exterior.",
+    };
+  }
+
+  if (temperature <= 12) {
+    return {
+      label: "Fresco",
+      description:
+        "Considera llevar chamarra ligera, sobre todo si sales temprano o tarde.",
+    };
+  }
+
+  return {
+    label: "Bajo",
+    description:
+      "El clima se ve manejable para mandados, compras o visitas a negocios locales.",
+  };
+}
+
+export function getWeatherOutdoorPlan(weather: SabinasWeather | null) {
+  if (!weather) {
+    return "Por ahora no pudimos cargar datos suficientes. Intenta de nuevo más tarde.";
+  }
+
+  const temperature = getWeatherTemperature(weather);
+  const precipitation = weather.precipitation ?? 0;
+  const windSpeed = weather.windSpeed ?? 0;
+
+  if (precipitation > 0) {
+    return "Sal con tiempo, maneja con cuidado y considera llevar paraguas o impermeable.";
+  }
+
+  if (typeof temperature === "number" && temperature >= 36) {
+    return "Mejor hacer vueltas temprano o al atardecer. Evita caminar mucho bajo el sol.";
+  }
+
+  if (windSpeed >= 35) {
+    return "Buen día para salir, pero con precaución por viento fuerte.";
+  }
+
+  return "Buen momento para visitar negocios locales, hacer mandados o salir a caminar.";
+}
+
+export function getWeatherBusinessPlan(weather: SabinasWeather | null) {
+  if (!weather) {
+    return "Sin datos suficientes para anticipar movimiento. Mantén tus horarios normales y revisa más tarde.";
+  }
+
+  const temperature = getWeatherTemperature(weather);
+  const precipitation = weather.precipitation ?? 0;
+  const windSpeed = weather.windSpeed ?? 0;
+
+  if (precipitation > 0) {
+    return "Puede bajar el flujo peatonal. Conviene publicar horarios, servicio a domicilio o pedidos por mensaje.";
+  }
+
+  if (typeof temperature === "number" && temperature >= 36) {
+    return "El movimiento puede concentrarse temprano, al atardecer o por pedidos rápidos. Destaca opciones frescas o entrega.";
+  }
+
+  if (windSpeed >= 35) {
+    return "Puede afectar mesas exteriores, anuncios ligeros o traslados. Revisa lo que tengas afuera del negocio.";
+  }
+
+  return "Buen clima para recibir visitas, promocionar productos del día y mantener visibles tus canales de contacto.";
+}
+
+
 export async function getSabinasWeather(): Promise<SabinasWeather | null> {
   const params = new URLSearchParams({
     latitude: SABINAS_LATITUDE,

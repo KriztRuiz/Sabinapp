@@ -3,7 +3,10 @@ import Link from "next/link";
 import {
   getSabinasWeather,
   getWeatherAdvice,
+  getWeatherBusinessPlan,
   getWeatherCodeLabel,
+  getWeatherHeatRisk,
+  getWeatherOutdoorPlan,
 } from "@/lib/weather/sabinas-weather";
 
 export const metadata: Metadata = {
@@ -17,8 +20,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-
-type WeatherData = Awaited<ReturnType<typeof getSabinasWeather>>;
 
 function formatWeatherTime(value: string | null | undefined) {
   if (!value) {
@@ -126,30 +127,6 @@ function getRainStatus(value: number | null | undefined) {
   return "No hay lluvia registrada en la lectura actual.";
 }
 
-function getOutdoorPlan(weather: WeatherData) {
-  if (!weather) {
-    return "Por ahora no pudimos cargar datos suficientes. Intenta de nuevo más tarde.";
-  }
-
-  const temperature = weather.temperature ?? weather.apparentTemperature;
-  const precipitation = weather.precipitation ?? 0;
-  const windSpeed = weather.windSpeed ?? 0;
-
-  if (precipitation > 0) {
-    return "Sal con tiempo, maneja con cuidado y considera llevar paraguas o impermeable.";
-  }
-
-  if (typeof temperature === "number" && temperature >= 36) {
-    return "Mejor hacer vueltas temprano o al atardecer. Evita caminar mucho bajo el sol.";
-  }
-
-  if (windSpeed >= 35) {
-    return "Buen día para salir, pero con precaución por viento fuerte.";
-  }
-
-  return "Buen momento para visitar negocios locales, hacer mandados o salir a caminar.";
-}
-
 export default async function WeatherPage() {
   const weather = await getSabinasWeather();
 
@@ -178,6 +155,10 @@ export default async function WeatherPage() {
       description: getRainStatus(weather?.precipitation),
     },
   ];
+
+  const heatRisk = getWeatherHeatRisk(weather);
+  const outdoorPlan = getWeatherOutdoorPlan(weather);
+  const businessPlan = getWeatherBusinessPlan(weather);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-orange-50 px-6 py-10 text-gray-950">
@@ -238,7 +219,7 @@ export default async function WeatherPage() {
               </h2>
 
               <p className="mt-4 text-lg font-bold leading-8 text-gray-800">
-                {getOutdoorPlan(weather)}
+                {outdoorPlan}
               </p>
             </article>
           </div>
@@ -263,27 +244,35 @@ export default async function WeatherPage() {
           </div>
 
           <div className="border-t border-gray-100 bg-gray-50 p-6">
-            <h2 className="text-xl font-black">Uso recomendado</h2>
+            <h2 className="text-xl font-black">Lectura práctica del clima</h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+              Una lectura rápida para decidir si conviene salir, comprar, vender
+              o ajustar la atención del día.
+            </p>
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl bg-white p-4">
                 <p className="font-black">Para usuarios</p>
                 <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Úsalo antes de salir a comprar, comer o hacer vueltas.
+                  {outdoorPlan}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-white p-4">
                 <p className="font-black">Para negocios</p>
                 <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Sirve para anticipar horarios con más movimiento o menos flujo.
+                  {businessPlan}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-white p-4">
-                <p className="font-black">Para la comunidad</p>
+                <p className="font-black">Riesgo por calor</p>
+                <p className="mt-2 text-lg font-black text-orange-700">
+                  {heatRisk.label}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Ayuda a consultar información local sin salir de Sabinapp.
+                  {heatRisk.description}
                 </p>
               </div>
             </div>
