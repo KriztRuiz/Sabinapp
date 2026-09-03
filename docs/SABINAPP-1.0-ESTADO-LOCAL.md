@@ -376,3 +376,62 @@ El módulo de noticias no rompió:
 - Bloqueo de rutas de desarrollo en producción local.
 
 No preparar despliegue sin confirmación explícita.
+
+## Actualización del buscador local
+
+Fecha de actualización: 2026-09-03
+
+Se mejoró la búsqueda pública local de Sabinapp 1.0 sin agregar complejidad de base de datos ni búsqueda full-text.
+
+### Archivos modificados
+
+- lib/search/local-search.ts
+- app/negocios/page.tsx
+- app/productos/page.tsx
+
+### Estado funcional
+
+Validado:
+
+- /negocios usa búsqueda local compartida.
+- /productos usa búsqueda local compartida.
+- La búsqueda ignora mayúsculas y minúsculas.
+- La búsqueda ignora acentos.
+- La búsqueda limpia signos y espacios extra.
+- La búsqueda soporta plurales simples.
+- La búsqueda acepta varias palabras.
+- La búsqueda de negocios también considera la descripción larga.
+
+### Pruebas reales validadas
+
+En modo producción local:
+
+- /negocios?q=clima encontró Climas del Norte.
+- /negocios?q=climas encontró Climas del Norte.
+- /negocios?q=contador encontró Contador Ruiz.
+- /negocios?q=contadores encontró Contador Ruiz.
+- /negocios?q=taco encontró Taquería El Primo.
+- /negocios?q=tacos encontró Taquería El Primo.
+- /negocios?q=mecanico respondió 200 sin romper.
+- /negocios?q=mecánico respondió 200 sin romper.
+- /productos?q=taco respondió 200.
+- /productos?q=tacos respondió 200.
+- /productos?q=clima respondió 200.
+- /productos?q=climas respondió 200.
+
+### Decisión técnica
+
+Para Sabinapp 1.0 se mantiene una búsqueda local simple y estable.
+
+No se implementa todavía:
+
+- PostgreSQL full-text search.
+- Ranking avanzado.
+- Sinónimos administrables.
+- Corrección automática de errores de escritura.
+- Historial de búsquedas.
+- Métricas de búsqueda.
+
+Esas mejoras quedan como candidatas para Sabinapp 2.0 o para una fase posterior al lanzamiento.
+
+No preparar despliegue sin confirmación explícita.
