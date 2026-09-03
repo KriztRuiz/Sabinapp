@@ -40,8 +40,9 @@ export function GenerateNewsCandidatesButton() {
       [
         "¿Buscar noticias recientes?",
         "",
-        "Esto llamará a OpenAI, puede consumir crédito de API y guardará noticias candidatas para revisión.",
-        "No se publicará nada automáticamente. Sólo deben guardarse noticias recientes. Sólo deben guardarse noticias recientes. Sólo deben guardarse noticias recientes. Sólo deben guardarse noticias recientes.",
+        "Esto llamará a OpenAI y puede consumir crédito de API.",
+        "Se guardarán noticias candidatas para revisión.",
+        "No se publicará nada automáticamente.",
       ].join("\n"),
     );
 
