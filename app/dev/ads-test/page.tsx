@@ -1,3 +1,4 @@
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import {
   getPublicAds,
   type PublicAdPlacement,
@@ -63,6 +64,9 @@ export default async function AdsTestPage() {
     0,
   );
 
+  const homeAdsForPreview =
+    placementResults.find((result) => result.placement === "home")?.ads ?? [];
+
   return (
     <main className="mx-auto max-w-5xl space-y-8 p-8">
       <section>
@@ -78,6 +82,14 @@ export default async function AdsTestPage() {
           Esta ruta verifica que la app pueda leer anuncios activos mediante
           get_public_ads(). No muestra anuncios en las paginas publicas.
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-gray-950">
+          Vista previa visual de Campana A
+        </h2>
+
+        <FixedAdBanner ads={homeAdsForPreview} heading="Anuncio fijo local" />
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
