@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import Link from "next/link";
 import { NewsCommentForm } from "@/components/news/news-comment-form";
 import { NewsCommentReportForm } from "@/components/news/news-comment-report-form";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicAds } from "@/lib/ads/public-ads";
 
 export const metadata: Metadata = {
   title: "Noticias locales | Sabinapp",
@@ -281,6 +283,11 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  const adsResult = await getPublicAds({
+    placement: "noticias",
+    includeInterstitial: false,
+  });
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -492,6 +499,10 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
                 </div>
               </section>
             ) : null}
+
+            <section>
+              <FixedAdBanner ads={adsResult.ads} heading="Promoción local" />
+            </section>
 
             {selectedArchiveNews ? (
               <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
