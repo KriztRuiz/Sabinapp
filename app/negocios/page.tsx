@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicAds } from "@/lib/ads/public-ads";
 import { textMatchesSearch } from "@/lib/search/local-search";
 import Link from "next/link";
 
@@ -189,6 +191,11 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
 
   const supabase = await createClient();
   const now = new Date().toISOString();
+
+  const adsResult = await getPublicAds({
+    placement: "negocios",
+    includeInterstitial: false,
+  });
 
   const { data, error } = await supabase
     .from("businesses")
@@ -399,6 +406,10 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
               Filtros activos. Puedes combinarlos por texto, tipo y categoría.
             </p>
           ) : null}
+        </section>
+
+        <section className="mt-8">
+          <FixedAdBanner ads={adsResult.ads} heading="Promoción local" />
         </section>
 
         {error ? (
