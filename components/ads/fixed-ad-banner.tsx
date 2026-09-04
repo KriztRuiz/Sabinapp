@@ -60,12 +60,12 @@ export function FixedAdBanner({
 
   return (
     <aside className="overflow-hidden rounded-[2rem] border border-orange-200 bg-white shadow-xl shadow-orange-900/10">
-      <div className="grid gap-0 md:grid-cols-[1.15fr_0.85fr]">
-        <div className="relative min-h-64 overflow-hidden bg-orange-100 md:min-h-80">
+      <div className="grid gap-0 md:h-[22rem] md:grid-cols-[1.15fr_0.85fr]">
+        <div className="relative h-72 overflow-hidden bg-orange-100 sm:h-80 md:h-full">
           <img
             src={activeAsset.url}
             alt={activeAsset.altText}
-            className="h-full min-h-64 w-full object-cover md:min-h-80"
+            className="absolute inset-0 h-full w-full object-cover"
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -81,7 +81,7 @@ export function FixedAdBanner({
           </div>
         </div>
 
-        <div className="flex flex-col justify-between gap-6 p-6 md:p-8">
+        <div className="flex min-h-[18rem] flex-col justify-between gap-6 p-6 md:h-full md:min-h-0 md:p-8">
           <div>
             <p className="text-sm font-black uppercase tracking-wide text-orange-700">
               {heading}

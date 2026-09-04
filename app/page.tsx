@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicAds } from "@/lib/ads/public-ads";
 import {
   getSabinasWeather,
   getWeatherAdvice,
@@ -240,14 +242,24 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [weather, latestNews, featuredProducts, randomBusinesses, portalStats] =
-    await Promise.all([
-      getSabinasWeather(),
-      getLatestNews(supabase),
-      getFeaturedProducts(supabase),
-      getRandomBusinesses(supabase),
-      getPortalStats(supabase),
-    ]);
+    const [
+    weather,
+    latestNews,
+    featuredProducts,
+    randomBusinesses,
+    portalStats,
+    homeAdsResult,
+  ] = await Promise.all([
+    getSabinasWeather(),
+    getLatestNews(supabase),
+    getFeaturedProducts(supabase),
+    getRandomBusinesses(supabase),
+    getPortalStats(supabase),
+    getPublicAds({
+      placement: "home",
+      includeInterstitial: false,
+    }),
+  ]);
 
   const weatherLabel = getWeatherCodeLabel(weather?.weatherCode ?? null);
   const weatherAdvice = getWeatherAdvice(weather);
@@ -471,6 +483,10 @@ export default async function Home() {
             </p>
           </Link>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pt-10">
+        <FixedAdBanner ads={homeAdsResult.ads} heading="Promoción local" />
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-10">
