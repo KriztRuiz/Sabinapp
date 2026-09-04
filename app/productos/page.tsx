@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicAds } from "@/lib/ads/public-ads";
 import { textMatchesSearch } from "@/lib/search/local-search";
 import Link from "next/link";
 
@@ -144,6 +146,11 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  const adsResult = await getPublicAds({
+    placement: "productos",
+    includeInterstitial: false,
+  });
+
   const { data, error } = await supabase
     .from("business_items")
     .select(
@@ -286,6 +293,10 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
               servicio.
             </p>
           ) : null}
+        </section>
+
+        <section className="mt-8">
+          <FixedAdBanner ads={adsResult.ads} heading="Promoción local" />
         </section>
 
         {error ? (
