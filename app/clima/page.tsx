@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import Link from "next/link";
+import { getPublicAds } from "@/lib/ads/public-ads";
 import {
   getSabinasWeather,
   getWeatherAdvice,
@@ -128,7 +130,13 @@ function getRainStatus(value: number | null | undefined) {
 }
 
 export default async function WeatherPage() {
-  const weather = await getSabinasWeather();
+  const [weather, adsResult] = await Promise.all([
+    getSabinasWeather(),
+    getPublicAds({
+      placement: "clima",
+      includeInterstitial: false,
+    }),
+  ]);
 
   const mainTemperature =
     weather?.temperature ?? weather?.apparentTemperature ?? null;
@@ -277,6 +285,10 @@ export default async function WeatherPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="mt-8">
+          <FixedAdBanner ads={adsResult.ads} heading="Promoción local" />
         </section>
       </div>
     </main>
