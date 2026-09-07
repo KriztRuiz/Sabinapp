@@ -14,6 +14,7 @@ import type {
   PublicLandingPhoto,
   PublicLandingReview,
 } from "@/lib/landing/styles/types";
+import { getPublicAds } from "@/lib/ads/public-ads";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -325,6 +326,11 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  const adsResult = await getPublicAds({
+    placement: "business_profile",
+    includeInterstitial: false,
+  });
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -466,5 +472,5 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
     reviewNotice,
   });
 
-  return <PublicBusinessLanding data={landingData} />;
+  return <PublicBusinessLanding data={landingData} fixedAds={adsResult.ads} />;
 }

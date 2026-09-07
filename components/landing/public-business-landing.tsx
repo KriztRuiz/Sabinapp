@@ -7,10 +7,13 @@ import { ElegantBusinessLanding } from "./modes/elegant-business-landing";
 import { ImpactBusinessLanding } from "./modes/impact-business-landing";
 import { ModernBusinessLanding } from "./modes/modern-business-landing";
 import { WarmBusinessLanding } from "./modes/warm-business-landing";
+import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
+import type { PublicAdCampaign } from "@/lib/ads/public-ads";
 import type { PublicLandingData } from "@/lib/landing/styles/types";
 
 type Props = {
   data: PublicLandingData;
+  fixedAds?: PublicAdCampaign[];
 };
 
 function getClassicLandingData(data: PublicLandingData): PublicLandingData {
@@ -43,10 +46,19 @@ function getLandingByMode(data: PublicLandingData) {
   }
 }
 
-export function PublicBusinessLanding({ data }: Props) {
+export function PublicBusinessLanding({ data, fixedAds = [] }: Props) {
   return (
     <>
       {getLandingByMode(data)}
+
+      {fixedAds.length > 0 ? (
+        <section className="bg-gradient-to-b from-white to-orange-50 px-6 py-8">
+          <div className="mx-auto max-w-7xl">
+            <FixedAdBanner ads={fixedAds} heading="Promoción local" />
+          </div>
+        </section>
+      ) : null}
+
       <BusinessReviewsSection data={data} />
     </>
   );
