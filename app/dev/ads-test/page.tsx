@@ -49,6 +49,16 @@ export default async function AdsTestPage() {
     includeInterstitial: false,
   });
 
+  const sameBusinessAssets = sameBusinessResult.ads.reduce(
+    (total, campaign) => total + campaign.assets.length,
+    0,
+  );
+
+  const otherBusinessAssets = otherBusinessResult.ads.reduce(
+    (total, campaign) => total + campaign.assets.length,
+    0,
+  );
+
   const totalAds = placementResults.reduce(
     (total, result) => total + result.ads.length,
     0,
@@ -80,7 +90,7 @@ export default async function AdsTestPage() {
 
         <p className="mt-3 max-w-3xl text-gray-600">
           Esta ruta verifica que la app pueda leer anuncios activos mediante
-          get_public_ads(). No muestra anuncios en las paginas publicas.
+          get_public_ads(). También confirma la regla actual de páginas de negocio.
         </p>
       </section>
 
@@ -167,29 +177,37 @@ export default async function AdsTestPage() {
 
       <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <h2 className="text-xl font-bold text-gray-950">
-          Regla de pagina del negocio
+          Página pública del negocio
         </h2>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <article className="rounded-xl bg-gray-50 p-4">
             <p className="font-semibold text-gray-950">
-              Mismo negocio anunciante
+              Mismo negocio anunciante permitido
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Resultado esperado: 0 campanas.
+              Resultado esperado: 1 campaña / 3 assets con la campaña demo activa.
             </p>
             <p className="mt-3 text-2xl font-black text-gray-950">
-              {sameBusinessResult.ads.length}
+              {sameBusinessResult.ads.length} campaña(s)
+            </p>
+
+            <p className="mt-1 text-sm font-semibold text-gray-500">
+              {sameBusinessAssets} asset(s)
             </p>
           </article>
 
           <article className="rounded-xl bg-gray-50 p-4">
             <p className="font-semibold text-gray-950">Otro negocio</p>
             <p className="mt-2 text-sm text-gray-600">
-              Resultado esperado: 1 campana.
+              Resultado esperado: 1 campaña / 3 assets con la campaña demo activa.
             </p>
             <p className="mt-3 text-2xl font-black text-gray-950">
-              {otherBusinessResult.ads.length}
+              {otherBusinessResult.ads.length} campaña(s)
+            </p>
+
+            <p className="mt-1 text-sm font-semibold text-gray-500">
+              {otherBusinessAssets} asset(s)
             </p>
           </article>
         </div>
