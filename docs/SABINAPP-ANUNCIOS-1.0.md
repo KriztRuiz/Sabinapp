@@ -391,3 +391,9 @@ Campaña B debe tratarse como función de alto riesgo UX y debe tener:
 - Posibilidad de apagarse sin modificar código.
 
 No preparar despliegue sin confirmación explícita.
+
+## Actualizacion 2026-09-07
+
+Para Sabinapp 1.0, los anuncios activos pueden mostrarse tambien dentro de la pagina publica del negocio anunciante. Esto simplifica la primera version, permite que el dueño vea su propia promocion activa y conserva la presion comercial dentro de `/negocio/[slug]`.
+
+El parametro `current_business_id` se mantiene en `get_public_ads` para metricas y posibles reglas comerciales futuras, pero ya no excluye automaticamente al negocio anunciante.

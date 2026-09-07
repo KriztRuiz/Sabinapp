@@ -484,11 +484,6 @@ as $$
       or c.ends_at >= now()
     )
     and (
-      current_business_id is null
-      or c.advertiser_business_id is null
-      or c.advertiser_business_id <> current_business_id
-    )
-    and (
       (
         c.campaign_type = 'fixed_banner'
         and s.fixed_banner_enabled = true
