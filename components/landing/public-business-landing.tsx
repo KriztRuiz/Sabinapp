@@ -54,7 +54,7 @@ export function PublicBusinessLanding({ data, fixedAds = [] }: Props) {
       {fixedAds.length > 0 ? (
         <section className="bg-gradient-to-b from-white to-orange-50 px-6 py-8">
           <div className="mx-auto max-w-7xl">
-            <FixedAdBanner ads={fixedAds} heading="Promoción local" />
+            <FixedAdBanner ads={fixedAds} heading="Promoción local" businessId={data.id} />
           </div>
         </section>
       ) : null}

@@ -2,20 +2,101 @@
 "use client";
 
 import type { PublicAdCampaign } from "@/lib/ads/public-ads";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type FixedAdBannerProps = {
   ads: PublicAdCampaign[];
   heading?: string;
+  businessId?: string | null;
+  trackMetrics?: boolean;
+};
+
+type AdMetricEventType = "impression" | "click";
+
+type SendAdEventParams = {
+  eventType: AdMetricEventType;
+  campaignId: string;
+  assetId: string;
+  pagePath: string;
+  businessId?: string | null;
 };
 
 function isExternalUrl(url: string) {
   return url.startsWith("http://") || url.startsWith("https://");
 }
 
+function getAdSessionKey() {
+  const storageKey = "sabinapp_ad_session_key";
+
+  try {
+    const existingKey = window.sessionStorage.getItem(storageKey);
+
+    if (existingKey) {
+      return existingKey;
+    }
+
+    const newKey =
+      typeof window.crypto?.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    window.sessionStorage.setItem(storageKey, newKey);
+
+    return newKey;
+  } catch {
+    return null;
+  }
+}
+
+function sendAdEvent({
+  eventType,
+  campaignId,
+  assetId,
+  pagePath,
+  businessId = null,
+}: SendAdEventParams) {
+  const payload = {
+    eventType,
+    campaignId,
+    assetId,
+    pagePath,
+    businessId,
+    sessionKey: getAdSessionKey(),
+  };
+
+  try {
+    const body = JSON.stringify(payload);
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], {
+        type: "application/json",
+      });
+
+      const didQueue = navigator.sendBeacon("/api/ads/events", blob);
+
+      if (didQueue) {
+        return;
+      }
+    }
+
+    void fetch("/api/ads/events", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body,
+      keepalive: true,
+    });
+  } catch (error) {
+    console.error("Error sending ad event:", error);
+  }
+}
+
 export function FixedAdBanner({
   ads,
   heading = "Promocion local",
+  businessId = null,
+  trackMetrics = true,
 }: FixedAdBannerProps) {
   const campaign = useMemo(
     () =>
@@ -33,6 +114,7 @@ export function FixedAdBanner({
   );
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const registeredImpressionsRef = useRef(new Set<string>());
 
   useEffect(() => {
     if (assets.length <= 1) {
@@ -48,15 +130,55 @@ export function FixedAdBanner({
     };
   }, [assets.length]);
 
-  if (!campaign || assets.length === 0) {
+  const normalizedActiveIndex =
+    assets.length > 0 ? activeIndex % assets.length : 0;
+  const activeAsset = assets[normalizedActiveIndex] ?? null;
+
+  useEffect(() => {
+    if (!trackMetrics || !campaign || !activeAsset) {
+      return;
+    }
+
+    const pagePath = window.location.pathname;
+    const impressionKey = `${campaign.id}:${activeAsset.id}:${pagePath}`;
+
+    if (registeredImpressionsRef.current.has(impressionKey)) {
+      return;
+    }
+
+    registeredImpressionsRef.current.add(impressionKey);
+
+    sendAdEvent({
+      eventType: "impression",
+      campaignId: campaign.id,
+      assetId: activeAsset.id,
+      pagePath,
+      businessId,
+    });
+  }, [activeAsset, businessId, campaign, trackMetrics]);
+
+  if (!campaign || !activeAsset) {
     return null;
   }
 
-  const normalizedActiveIndex = activeIndex % assets.length;
-  const activeAsset = assets[normalizedActiveIndex];
-  const targetUrl = campaign.targetUrl;
-  const targetLabel = campaign.targetLabel || "Ver promocion";
+  const activeCampaign = campaign;
+  const targetUrl = activeCampaign.targetUrl;
+  const targetLabel = activeCampaign.targetLabel || "Ver promocion";
   const shouldOpenInNewTab = targetUrl ? isExternalUrl(targetUrl) : false;
+
+  function handleAdClick() {
+    if (!trackMetrics) {
+      return;
+    }
+
+    sendAdEvent({
+      eventType: "click",
+      campaignId: activeCampaign.id,
+      assetId: activeAsset.id,
+      pagePath: window.location.pathname,
+      businessId,
+    });
+  }
 
   return (
     <aside className="overflow-hidden rounded-[2rem] border border-orange-200 bg-white shadow-xl shadow-orange-900/10">
@@ -76,7 +198,7 @@ export function FixedAdBanner({
             </span>
 
             <h3 className="mt-3 max-w-xl text-2xl font-black text-white md:text-3xl">
-              {campaign.title}
+              {activeCampaign.title}
             </h3>
           </div>
         </div>
@@ -87,9 +209,9 @@ export function FixedAdBanner({
               {heading}
             </p>
 
-            {campaign.description ? (
+            {activeCampaign.description ? (
               <p className="mt-4 text-base leading-7 text-gray-700">
-                {campaign.description}
+                {activeCampaign.description}
               </p>
             ) : (
               <p className="mt-4 text-base leading-7 text-gray-700">
@@ -122,6 +244,7 @@ export function FixedAdBanner({
                 href={targetUrl}
                 target={shouldOpenInNewTab ? "_blank" : undefined}
                 rel={shouldOpenInNewTab ? "noreferrer" : undefined}
+                onClick={handleAdClick}
                 className="inline-flex w-full items-center justify-center rounded-2xl bg-orange-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-orange-900/20 transition hover:-translate-y-0.5 hover:bg-orange-700 md:w-auto"
               >
                 {targetLabel}

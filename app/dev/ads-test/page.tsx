@@ -99,7 +99,7 @@ export default async function AdsTestPage() {
           Vista previa visual de Campana A
         </h2>
 
-        <FixedAdBanner ads={homeAdsForPreview} heading="Anuncio fijo local" />
+        <FixedAdBanner ads={homeAdsForPreview} heading="Anuncio fijo local" trackMetrics={false} />
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
