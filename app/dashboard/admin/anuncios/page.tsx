@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ConfirmAdminActionButton } from "@/app/dashboard/admin/negocios/confirm-admin-action-button";
+import { activateAdCampaign, pauseAdCampaign } from "./actions";
+
+type PageProps = {
+  searchParams: Promise<{
+    message?: string;
+    error?: string;
+  }>;
+};
 
 type AdAssetRow = {
   id: string;
@@ -142,7 +151,10 @@ function getAssetsByCampaign(assets: AdAssetRow[]) {
   return map;
 }
 
-export default async function AdminAdsPage() {
+export default async function AdminAdsPage({
+  searchParams,
+}: PageProps) {
+  const query = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -265,6 +277,18 @@ export default async function AdminAdsPage() {
           clics y rendimiento básico.
         </p>
       </header>
+
+      {query.message ? (
+        <section className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
+          {query.message}
+        </section>
+      ) : null}
+
+      {query.error ? (
+        <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+          {query.error}
+        </section>
+      ) : null}
 
       <section className="mt-8 grid gap-4 md:grid-cols-4">
         <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -470,6 +494,40 @@ export default async function AdminAdsPage() {
                         </dd>
                       </div>
                     </dl>
+
+                    {campaign.status === "active" ? (
+                      <form action={pauseAdCampaign} className="mt-5">
+                        <input
+                          type="hidden"
+                          name="campaignId"
+                          value={campaign.id}
+                        />
+
+                        <ConfirmAdminActionButton
+                          confirmMessage="¿Pausar esta campaña? Dejará de mostrarse inmediatamente en Sabinapp."
+                          className="rounded-xl border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-bold text-orange-800 transition hover:bg-orange-100"
+                        >
+                          Pausar campaña
+                        </ConfirmAdminActionButton>
+                      </form>
+                    ) : null}
+
+                    {campaign.status === "paused" ? (
+                      <form action={activateAdCampaign} className="mt-5">
+                        <input
+                          type="hidden"
+                          name="campaignId"
+                          value={campaign.id}
+                        />
+
+                        <ConfirmAdminActionButton
+                          confirmMessage="¿Reactivar esta campaña? Volverá a mostrarse en las ubicaciones configuradas."
+                          className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
+                        >
+                          Reactivar campaña
+                        </ConfirmAdminActionButton>
+                      </form>
+                    ) : null}
 
                     {campaignAssets.length > 0 ? (
                       <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50 p-4">
