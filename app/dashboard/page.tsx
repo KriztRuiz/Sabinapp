@@ -25,21 +25,13 @@ type PendingChangeEventRow = {
   business_slug_snapshot: string | null;
 };
 
-function getBusinessStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    draft: "Borrador",
-    pending_review: "Pendiente de revisión",
-    approved: "Aprobado",
-    rejected: "Rechazado",
-    published: "Publicado",
-    hidden: "Retirado del público",
-    suspended: "Suspendido",
-    archived: "Archivado",
-    expired: "Expirado",
-  };
+type NewsCandidateSummaryRow = {
+  status: string;
+};
 
-  return labels[status] ?? status;
-}
+type AdCampaignSummaryRow = {
+  status: string;
+};
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -95,6 +87,14 @@ export default async function DashboardPage() {
   let pendingChangeEventsCount = 0;
   let pendingChangeBusinessesCount = 0;
 
+  let pendingNewsCount = 0;
+  let publishedNewsCount = 0;
+  let discardedNewsCount = 0;
+
+  let totalAdCampaigns = 0;
+  let activeAdCampaigns = 0;
+  let pausedAdCampaigns = 0;
+
   if (canReviewBusinesses) {
     const { count: pendingCount } = await supabase
       .from("businesses")
@@ -123,7 +123,57 @@ export default async function DashboardPage() {
     approvedWithoutPublishCount = approvedCount ?? 0;
     pendingChangeEventsCount = pendingChangeEvents.length;
     pendingChangeBusinessesCount = new Set(pendingChangeBusinessKeys).size;
+
+    const { data: newsCandidatesRaw } = await supabase
+      .from("news_candidates")
+      .select("status");
+
+    const newsCandidates =
+      (newsCandidatesRaw ?? []) as NewsCandidateSummaryRow[];
+
+    pendingNewsCount = newsCandidates.filter((candidate) =>
+      ["candidate", "needs_review", "approved"].includes(candidate.status),
+    ).length;
+
+    publishedNewsCount = newsCandidates.filter(
+      (candidate) => candidate.status === "published",
+    ).length;
+
+    discardedNewsCount = newsCandidates.filter((candidate) =>
+      ["rejected", "duplicate"].includes(candidate.status),
+    ).length;
   }
+
+  if (canManageAds) {
+    const { data: adCampaignsRaw } = await supabase
+      .from("ad_campaigns")
+      .select("status");
+
+    const adCampaigns =
+      (adCampaignsRaw ?? []) as AdCampaignSummaryRow[];
+
+    totalAdCampaigns = adCampaigns.length;
+
+    activeAdCampaigns = adCampaigns.filter(
+      (campaign) => campaign.status === "active",
+    ).length;
+
+    pausedAdCampaigns = adCampaigns.filter(
+      (campaign) => campaign.status === "paused",
+    ).length;
+  }
+
+  const totalBusinesses = businesses.length;
+
+  const publishedBusinesses = businesses.filter(
+    (business) => business.is_published,
+  ).length;
+
+  const unpublishedBusinesses = totalBusinesses - publishedBusinesses;
+
+  const draftBusinesses = businesses.filter(
+    (business) => business.status === "draft",
+  ).length;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -229,168 +279,269 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-950">
-          Administración de negocios
-        </h2>
+      {canReviewBusinesses || canManageAds ? (
+        <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-5">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-orange-700">
+              Administración
+            </p>
 
-        <p className="mt-2 text-sm text-gray-600">
-          Edita contenido, imágenes, menú, destacados, contactos, horarios y
-          estilo visual de tus negocios públicos.
-        </p>
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              Centro administrativo
+            </h2>
 
-        <Link
-          href="/dashboard/negocios"
-          className="mt-5 inline-flex rounded-lg bg-gray-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
-        >
-          Ir a mis negocios
-        </Link>
-      </section>
-
-      {canReviewBusinesses ? (
-        <section className="mt-8 rounded-2xl border border-orange-200 bg-orange-50 p-6 shadow-sm">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-orange-700">
-            Administración
-          </p>
-
-          <h2 className="mt-2 text-xl font-semibold text-gray-950">
-            Revisión de negocios
-          </h2>
-
-          <p className="mt-2 max-w-2xl text-sm text-gray-700">
-            Revisa negocios enviados por dueños, aprueba contenido, publica
-            negocios aprobados, oculta negocios visibles o rechaza registros que
-            no cumplan los requisitos.
-          </p>
-
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            <div className="rounded-2xl border border-orange-200 bg-white p-4">
-              <p className="text-sm font-bold text-gray-600">
-                Pendientes de revisión
-              </p>
-
-              <p className="mt-2 text-3xl font-black text-gray-950">
-                {pendingReviewCount}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-orange-200 bg-white p-4">
-              <p className="text-sm font-bold text-gray-600">
-                Aprobados sin publicar
-              </p>
-
-              <p className="mt-2 text-3xl font-black text-gray-950">
-                {approvedWithoutPublishCount}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-orange-200 bg-white p-4">
-              <p className="text-sm font-bold text-gray-600">
-                Cambios pendientes
-              </p>
-
-              <p className="mt-2 text-3xl font-black text-gray-950">
-                {pendingChangeEventsCount}
-              </p>
-
-              <p className="mt-1 text-xs font-semibold text-gray-500">
-                En {pendingChangeBusinessesCount} negocio
-                {pendingChangeBusinessesCount === 1 ? "" : "s"}
-              </p>
-            </div>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
+              Consulta el estado de las áreas administrativas y entra sólo a
+              la sección que necesites atender.
+            </p>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/dashboard/admin/negocios"
-            className="inline-flex rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
-          >
-            Ir a revisión de negocios
-          </Link>
+          <div className="mt-6 grid gap-5 lg:grid-cols-3">
+            {canReviewBusinesses ? (
+              <article className="flex flex-col rounded-2xl border border-orange-200 bg-orange-50 p-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-700">
+                    Moderación
+                  </p>
 
-            <Link
-              href="/dashboard/admin/noticias"
-              className="inline-flex rounded-lg border border-orange-300 bg-white px-4 py-2 text-sm font-semibold text-orange-800 transition hover:bg-orange-50"
-            >
-              Revisar noticias
-            </Link>
-          </div>
-        </section>
-      ) : null}
+                  <h3 className="mt-2 text-xl font-black text-gray-950">
+                    Revisión de negocios
+                  </h3>
 
-      {canManageAds ? (
-        <section className="mt-8 rounded-2xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-sky-700">
-            Administración
-          </p>
+                  <p className="mt-2 text-sm leading-6 text-gray-700">
+                    Revisa negocios enviados, publicaciones aprobadas y cambios
+                    realizados por sus dueños.
+                  </p>
+                </div>
 
-          <h2 className="mt-2 text-xl font-semibold text-gray-950">
-            Anuncios de Sabinapp
-          </h2>
-
-          <p className="mt-2 max-w-2xl text-sm text-gray-700">
-            Revisa campañas publicitarias, impresiones, clics, rendimiento y
-            archivos visuales de anuncios activos o pausados.
-          </p>
-
-          <Link
-            href="/dashboard/admin/anuncios"
-            className="mt-5 inline-flex rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-800"
-          >
-            Ir a anuncios
-          </Link>
-        </section>
-      ) : null}
-
-      <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-950">Tus negocios</h2>
-
-        <p className="mt-2 text-sm text-gray-600">
-          Estos son los negocios asociados a tu cuenta.
-        </p>
-
-        <div className="mt-5 grid gap-3">
-          {businesses.length > 0 ? (
-            businesses.map((business) => (
-              <article
-                key={business.id}
-                className="rounded-xl border border-gray-200 p-4"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-950">
-                      {business.name}
-                    </h3>
-
-                    <p className="text-sm text-gray-500">
-                      /negocio/{business.slug}
+                <div className="mt-5 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-gray-500">
+                      Pendientes
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-gray-950">
+                      {pendingReviewCount}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                      Estado: {getBusinessStatusLabel(business.status)}
-                    </span>
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-gray-500">
+                      Sin publicar
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-gray-950">
+                      {approvedWithoutPublishCount}
+                    </p>
+                  </div>
 
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                      {business.is_published ? "Publicado" : "No publicado"}
-                    </span>
-
-                    <Link
-                      href={`/dashboard/negocios/${business.id}/edit`}
-                      className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800 transition hover:bg-orange-200"
-                    >
-                      Editar
-                    </Link>
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-gray-500">
+                      Cambios
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-gray-950">
+                      {pendingChangeEventsCount}
+                    </p>
                   </div>
                 </div>
+
+                <p className="mt-3 text-xs font-semibold text-gray-600">
+                  Cambios agrupados en {pendingChangeBusinessesCount} negocio
+                  {pendingChangeBusinessesCount === 1 ? "" : "s"}.
+                </p>
+
+                <div className="mt-auto pt-5">
+                  <Link
+                    href="/dashboard/admin/negocios"
+                    className="inline-flex rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+                  >
+                    Revisar negocios
+                  </Link>
+                </div>
               </article>
-            ))
-          ) : (
-            <p className="text-sm text-gray-600">
-              Todavía no tienes negocios registrados.
+            ) : null}
+
+            {canReviewBusinesses ? (
+              <article className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                    Contenido local
+                  </p>
+
+                  <h3 className="mt-2 text-xl font-black text-gray-950">
+                    Revisión de noticias
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-700">
+                    Revisa candidatos de noticias, controla qué contenido se
+                    publica y consulta lo que ya fue descartado.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-gray-500">
+                      Pendientes
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-gray-950">
+                      {pendingNewsCount}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-green-700">
+                      Publicadas
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-green-950">
+                      {publishedNewsCount}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-gray-500">
+                      Descartadas
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-gray-950">
+                      {discardedNewsCount}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-5">
+                  <Link
+                    href="/dashboard/admin/noticias"
+                    className="inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+                  >
+                    Revisar noticias
+                  </Link>
+                </div>
+              </article>
+            ) : null}
+
+            {canManageAds ? (
+              <article className="flex flex-col rounded-2xl border border-sky-200 bg-sky-50 p-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">
+                    Publicidad
+                  </p>
+
+                  <h3 className="mt-2 text-xl font-black text-gray-950">
+                    Anuncios
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-700">
+                    Consulta campañas publicitarias y revisa rápidamente cuáles
+                    están activas o pausadas.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-gray-500">
+                      Campañas
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-gray-950">
+                      {totalAdCampaigns}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-green-700">
+                      Activas
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-green-950">
+                      {activeAdCampaigns}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-bold text-orange-700">
+                      Pausadas
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-orange-950">
+                      {pausedAdCampaigns}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-5">
+                  <Link
+                    href="/dashboard/admin/anuncios"
+                    className="inline-flex rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-800"
+                  >
+                    Administrar anuncios
+                  </Link>
+                </div>
+              </article>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-orange-700">
+              Tus negocios
             </p>
-          )}
+
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              Resumen de negocios
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+              Consulta el estado general de los negocios asociados a tu cuenta.
+              Para editar, revisar o administrar uno en particular, entra a la
+              sección completa de negocios.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/negocios"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
+          >
+            Ver todos los negocios
+          </Link>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <article className="rounded-2xl bg-gray-50 p-5">
+            <p className="text-sm font-semibold text-gray-500">
+              Total
+            </p>
+
+            <p className="mt-2 text-3xl font-black text-gray-950">
+              {totalBusinesses}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-green-50 p-5">
+            <p className="text-sm font-semibold text-green-800">
+              Publicados
+            </p>
+
+            <p className="mt-2 text-3xl font-black text-green-950">
+              {publishedBusinesses}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-orange-50 p-5">
+            <p className="text-sm font-semibold text-orange-800">
+              No publicados
+            </p>
+
+            <p className="mt-2 text-3xl font-black text-orange-950">
+              {unpublishedBusinesses}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-gray-100 p-5">
+            <p className="text-sm font-semibold text-gray-600">
+              Borradores
+            </p>
+
+            <p className="mt-2 text-3xl font-black text-gray-950">
+              {draftBusinesses}
+            </p>
+          </article>
         </div>
       </section>
     </main>
