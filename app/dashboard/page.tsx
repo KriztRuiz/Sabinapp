@@ -86,6 +86,10 @@ export default async function DashboardPage() {
     permission_key: "admin.review_businesses",
   });
 
+  const { data: canManageAds } = await supabase.rpc("has_permission", {
+    permission_key: "admin.manage_ads",
+  });
+
   let pendingReviewCount = 0;
   let approvedWithoutPublishCount = 0;
   let pendingChangeEventsCount = 0;
@@ -311,6 +315,30 @@ export default async function DashboardPage() {
               Revisar noticias
             </Link>
           </div>
+        </section>
+      ) : null}
+
+      {canManageAds ? (
+        <section className="mt-8 rounded-2xl border border-sky-200 bg-sky-50 p-6 shadow-sm">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-sky-700">
+            Administración
+          </p>
+
+          <h2 className="mt-2 text-xl font-semibold text-gray-950">
+            Anuncios de Sabinapp
+          </h2>
+
+          <p className="mt-2 max-w-2xl text-sm text-gray-700">
+            Revisa campañas publicitarias, impresiones, clics, rendimiento y
+            archivos visuales de anuncios activos o pausados.
+          </p>
+
+          <Link
+            href="/dashboard/admin/anuncios"
+            className="mt-5 inline-flex rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-800"
+          >
+            Ir a anuncios
+          </Link>
         </section>
       ) : null}
 
