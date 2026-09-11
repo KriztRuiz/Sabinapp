@@ -33,6 +33,14 @@ type AdCampaignSummaryRow = {
   status: string;
 };
 
+type OwnerAdSummaryRow = {
+  id: string;
+  status: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  correction_requested_at: string | null;
+};
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -73,6 +81,21 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false });
 
   const businesses = (businessesRaw ?? []) as BusinessRow[];
+  const businessIds = businesses.map((business) => business.id);
+
+  let ownerAds: OwnerAdSummaryRow[] = [];
+
+  if (businessIds.length > 0) {
+    const { data: ownerAdsRaw } = await supabase
+      .from("ad_campaigns")
+      .select(
+        "id, status, starts_at, ends_at, correction_requested_at",
+      )
+      .in("advertiser_business_id", businessIds)
+      .order("created_at", { ascending: false });
+
+    ownerAds = (ownerAdsRaw ?? []) as OwnerAdSummaryRow[];
+  }
 
   const { data: canReviewBusinesses } = await supabase.rpc("has_permission", {
     permission_key: "admin.review_businesses",
@@ -173,6 +196,20 @@ export default async function DashboardPage() {
 
   const draftBusinesses = businesses.filter(
     (business) => business.status === "draft",
+  ).length;
+
+  const ownerAdsPendingReview = ownerAds.filter(
+    (campaign) => campaign.status === "pending_review",
+  ).length;
+
+  const ownerAdsChangesRequested = ownerAds.filter(
+    (campaign) =>
+      campaign.status === "draft" &&
+      Boolean(campaign.correction_requested_at),
+  ).length;
+
+  const ownerAdsActive = ownerAds.filter(
+    (campaign) => campaign.status === "active",
   ).length;
 
   return (
@@ -475,6 +512,68 @@ export default async function DashboardPage() {
           </div>
         </section>
       ) : null}
+
+      <section className="mt-8 rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-700">
+              Publicidad
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              Promociona tus negocios
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700">
+              Consulta tus anuncios, revisa su estado y da seguimiento a
+              solicitudes, correcciones, pagos y publicaciones.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/anuncios"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-800"
+          >
+            Mis Anuncios
+          </Link>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <article className="rounded-2xl bg-white p-4">
+            <p className="text-xs font-bold text-gray-500">Total</p>
+            <p className="mt-1 text-2xl font-black text-gray-950">
+              {ownerAds.length}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-4">
+            <p className="text-xs font-bold text-yellow-700">En revisión</p>
+            <p className="mt-1 text-2xl font-black text-yellow-950">
+              {ownerAdsPendingReview}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-4">
+            <p className="text-xs font-bold text-orange-700">Por corregir</p>
+            <p className="mt-1 text-2xl font-black text-orange-950">
+              {ownerAdsChangesRequested}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-4">
+            <p className="text-xs font-bold text-green-700">Activos</p>
+            <p className="mt-1 text-2xl font-black text-green-950">
+              {ownerAdsActive}
+            </p>
+          </article>
+        </div>
+
+        {publishedBusinesses === 0 ? (
+          <p className="mt-4 rounded-xl bg-white p-3 text-sm font-semibold text-violet-900">
+            Necesitas al menos un negocio publicado para solicitar publicidad.
+          </p>
+        ) : null}
+      </section>
 
       <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
