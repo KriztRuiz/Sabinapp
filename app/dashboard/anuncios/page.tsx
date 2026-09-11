@@ -2,6 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+type PageProps = {
+  searchParams: Promise<{
+    message?: string;
+    error?: string;
+  }>;
+};
+
 type BusinessRow = {
   id: string;
   name: string;
@@ -153,7 +160,10 @@ function getAdStatus(
   };
 }
 
-export default async function DashboardAdsPage() {
+export default async function DashboardAdsPage({
+  searchParams,
+}: PageProps) {
+  const query = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -266,7 +276,28 @@ export default async function DashboardAdsPage() {
           Consulta las solicitudes publicitarias de tus negocios y sigue su
           proceso de revisión, pago y publicación.
         </p>
+
+        {publishedBusinesses.length > 0 ? (
+          <Link
+            href="/dashboard/anuncios/nuevo"
+            className="mt-5 inline-flex rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white transition hover:bg-violet-800"
+          >
+            Solicitar anuncio
+          </Link>
+        ) : null}
       </header>
+
+      {query.message ? (
+        <section className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
+          {query.message}
+        </section>
+      ) : null}
+
+      {query.error ? (
+        <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+          {query.error}
+        </section>
+      ) : null}
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
