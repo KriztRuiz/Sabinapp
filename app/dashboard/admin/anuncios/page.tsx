@@ -2,7 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ConfirmAdminActionButton } from "@/app/dashboard/admin/negocios/confirm-admin-action-button";
-import { activateAdCampaign, pauseAdCampaign } from "./actions";
+import {
+  activateAdCampaign,
+  approveAdRequestAction,
+  pauseAdCampaign,
+  rejectAdRequestAction,
+  requestAdChangesAction,
+} from "./actions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -28,12 +34,37 @@ type AdCampaignRow = {
   campaign_type: string;
   status: string;
   price_mxn: number | string | null;
+
+  requested_days: number | null;
+  daily_price_mxn: number | string | null;
+
+  start_mode: string;
+  requested_start_at: string | null;
+
   starts_at: string | null;
   ends_at: string | null;
+
+  target_kind: string | null;
   target_label: string | null;
   target_url: string | null;
-  priority: number | null;
+
+  correction_requested_at: string | null;
+  correction_notes: string | null;
+  rejection_reason: string | null;
+
+  submitted_at: string | null;
+  reviewed_at: string | null;
+
   created_at: string;
+};
+
+type AdPaymentRow = {
+  campaign_id: string;
+  payment_reference: string;
+  expected_amount_mxn: number | string;
+  status: string;
+  reported_at: string | null;
+  verified_at: string | null;
 };
 
 type BusinessRow = {
@@ -84,8 +115,8 @@ function formatMoney(amount: number | string | null) {
 
 function getCampaignTypeLabel(type: string) {
   const labels: Record<string, string> = {
-    fixed_banner: "Campaña A - Anuncio fijo",
-    interstitial: "Campaña B - Emergente",
+    fixed_banner: "Anuncio",
+    interstitial: "Anuncio emergente",
   };
 
   return labels[type] ?? type;
@@ -184,11 +215,20 @@ export default async function AdminAdsPage({
       campaign_type,
       status,
       price_mxn,
+      requested_days,
+      daily_price_mxn,
+      start_mode,
+      requested_start_at,
       starts_at,
       ends_at,
+      target_kind,
       target_label,
       target_url,
-      priority,
+      correction_requested_at,
+      correction_notes,
+      rejection_reason,
+      submitted_at,
+      reviewed_at,
       created_at
     `,
     )
@@ -201,6 +241,7 @@ export default async function AdminAdsPage({
   let assets: AdAssetRow[] = [];
   let impressions: MetricRow[] = [];
   let clicks: MetricRow[] = [];
+  let payments: AdPaymentRow[] = [];
 
   if (campaignIds.length > 0) {
     const { data: assetsRaw } = await supabase
@@ -219,9 +260,17 @@ export default async function AdminAdsPage({
       .select("campaign_id")
       .in("campaign_id", campaignIds);
 
+    const { data: paymentsRaw } = await supabase
+      .from("ad_payments")
+      .select(
+        "campaign_id, payment_reference, expected_amount_mxn, status, reported_at, verified_at",
+      )
+      .in("campaign_id", campaignIds);
+
     assets = (assetsRaw ?? []) as AdAssetRow[];
     impressions = (impressionsRaw ?? []) as MetricRow[];
     clicks = (clicksRaw ?? []) as MetricRow[];
+    payments = (paymentsRaw ?? []) as AdPaymentRow[];
   }
 
   const advertiserBusinessIds = Array.from(
@@ -248,6 +297,19 @@ export default async function AdminAdsPage({
   const impressionsByCampaign = countByCampaign(impressions);
   const clicksByCampaign = countByCampaign(clicks);
 
+  const paymentByCampaign = new Map(
+    payments.map((payment) => [
+      payment.campaign_id,
+      payment,
+    ]),
+  );
+
+  const pendingReviewCampaigns = campaigns.filter(
+    (campaign) =>
+      campaign.status === "pending_review" &&
+      campaign.requested_days !== null,
+  ).length;
+
   const totalImpressions = impressions.length;
   const totalClicks = clicks.length;
   const activeCampaigns = campaigns.filter(
@@ -273,7 +335,7 @@ export default async function AdminAdsPage({
         </h1>
 
         <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">
-          Revisa campañas publicitarias, estado, activos visuales, impresiones,
+          Revisa solicitudes de anuncios, pagos, publicación, impresiones,
           clics y rendimiento básico.
         </p>
       </header>
@@ -290,11 +352,20 @@ export default async function AdminAdsPage({
         </section>
       ) : null}
 
-      <section className="mt-8 grid gap-4 md:grid-cols-4">
+      <section className="mt-8 grid gap-4 md:grid-cols-5">
         <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-gray-500">Campañas</p>
+          <p className="text-sm font-semibold text-gray-500">Anuncios</p>
           <p className="mt-2 text-3xl font-black text-gray-950">
             {campaigns.length}
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-yellow-100 bg-yellow-50 p-5 shadow-sm">
+          <p className="text-sm font-semibold text-yellow-800">
+            En revisión
+          </p>
+          <p className="mt-2 text-3xl font-black text-yellow-950">
+            {pendingReviewCampaigns}
           </p>
         </article>
 
@@ -337,12 +408,12 @@ export default async function AdminAdsPage({
         <section className="mt-8 space-y-5">
           <div>
             <h2 className="text-2xl font-black text-gray-950">
-              Campañas registradas
+              Anuncios registrados
             </h2>
 
             <p className="mt-2 text-sm text-gray-600">
-              Por ahora esta vista es de lectura. Crear, pausar o editar
-              campañas lo haremos en una fase posterior.
+              Revisa nuevas solicitudes y administra anuncios que ya están
+              publicados o en proceso de pago.
             </p>
           </div>
 
@@ -358,6 +429,8 @@ export default async function AdminAdsPage({
                 const campaignImpressions =
                   impressionsByCampaign.get(campaign.id) ?? 0;
                 const campaignClicks = clicksByCampaign.get(campaign.id) ?? 0;
+                const payment = paymentByCampaign.get(campaign.id);
+                const isOwnerRequest = campaign.requested_days !== null;
 
                 return (
                   <article
@@ -396,9 +469,17 @@ export default async function AdminAdsPage({
                           {formatMoney(campaign.price_mxn)}
                         </p>
 
-                        <p className="mt-1 text-gray-600">
-                          Prioridad: {campaign.priority ?? 0}
-                        </p>
+                        {campaign.requested_days ? (
+                          <p className="mt-1 text-gray-600">
+                            {campaign.requested_days} día
+                            {campaign.requested_days === 1 ? "" : "s"} ·{" "}
+                            {formatMoney(campaign.daily_price_mxn)} al día
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-gray-600">
+                            Anuncio del modelo anterior
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -495,6 +576,165 @@ export default async function AdminAdsPage({
                       </div>
                     </dl>
 
+                    {isOwnerRequest ? (
+                      <div className="mt-5 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-2xl bg-violet-50 p-4">
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">
+                            Inicio solicitado
+                          </p>
+
+                          <p className="mt-2 text-sm font-bold text-violet-950">
+                            {campaign.start_mode === "scheduled"
+                              ? formatDate(campaign.requested_start_at)
+                              : "Lo antes posible"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-blue-50 p-4">
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                            Pago
+                          </p>
+
+                          <p className="mt-2 text-sm font-bold text-blue-950">
+                            {payment
+                              ? payment.status === "verified"
+                                ? "Verificado"
+                                : payment.status === "reported"
+                                  ? "Reportado"
+                                  : payment.status === "rejected"
+                                    ? "Pago rechazado"
+                                    : payment.status === "refunded"
+                                      ? "Reembolsado"
+                                      : "Pendiente"
+                              : "Todavía no generado"}
+                          </p>
+
+                          {payment ? (
+                            <p className="mt-1 text-xs font-semibold text-blue-800">
+                              {payment.payment_reference}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="rounded-2xl bg-gray-50 p-4">
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-500">
+                            Vigencia real
+                          </p>
+
+                          <p className="mt-2 text-sm font-bold text-gray-950">
+                            {campaign.starts_at
+                              ? `${formatDate(campaign.starts_at)} — ${formatDate(
+                                  campaign.ends_at,
+                                )}`
+                              : "Todavía no iniciada"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {campaign.status === "pending_review" &&
+                    isOwnerRequest ? (
+                      <section className="mt-6 rounded-3xl border border-yellow-200 bg-yellow-50 p-5">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-700">
+                            Revisión administrativa
+                          </p>
+
+                          <h4 className="mt-2 text-lg font-black text-yellow-950">
+                            Decide qué hacer con esta solicitud
+                          </h4>
+                        </div>
+
+                        <form
+                          action={approveAdRequestAction}
+                          className="mt-5"
+                        >
+                          <input
+                            type="hidden"
+                            name="campaignId"
+                            value={campaign.id}
+                          />
+
+                          <ConfirmAdminActionButton
+                            confirmMessage="¿Aprobar este anuncio? Se generará la referencia de pago, pero el anuncio todavía no se publicará."
+                            className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
+                          >
+                            Aprobar anuncio
+                          </ConfirmAdminActionButton>
+                        </form>
+
+                        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                          <form
+                            action={requestAdChangesAction}
+                            className="rounded-2xl border border-orange-200 bg-white p-4"
+                          >
+                            <input
+                              type="hidden"
+                              name="campaignId"
+                              value={campaign.id}
+                            />
+
+                            <label className="block">
+                              <span className="text-sm font-black text-orange-900">
+                                Solicitar cambios
+                              </span>
+
+                              <textarea
+                                name="notes"
+                                required
+                                minLength={3}
+                                maxLength={2000}
+                                rows={4}
+                                placeholder="Explica qué debe corregir el dueño."
+                                className="mt-2 w-full rounded-xl border border-orange-200 px-3 py-2 text-sm text-gray-950"
+                              />
+                            </label>
+
+                            <button
+                              type="submit"
+                              className="mt-3 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-700"
+                            >
+                              Enviar correcciones
+                            </button>
+                          </form>
+
+                          <form
+                            action={rejectAdRequestAction}
+                            className="rounded-2xl border border-red-200 bg-white p-4"
+                          >
+                            <input
+                              type="hidden"
+                              name="campaignId"
+                              value={campaign.id}
+                            />
+
+                            <label className="block">
+                              <span className="text-sm font-black text-red-900">
+                                Rechazar anuncio
+                              </span>
+
+                              <textarea
+                                name="reason"
+                                required
+                                minLength={3}
+                                maxLength={500}
+                                rows={4}
+                                placeholder="Indica el motivo definitivo del rechazo."
+                                className="mt-2 w-full rounded-xl border border-red-200 px-3 py-2 text-sm text-gray-950"
+                              />
+                            </label>
+
+                            <button
+                              type="submit"
+                              className="mt-3 rounded-xl bg-red-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-800"
+                            >
+                              Rechazar anuncio
+                            </button>
+                          </form>
+                        </div>
+                      </section>
+                    ) : null}
+
                     {campaign.status === "active" ? (
                       <form action={pauseAdCampaign} className="mt-5">
                         <input
@@ -546,7 +786,18 @@ export default async function AdminAdsPage({
                                 {asset.is_active ? "Activo" : "Inactivo"}
                               </p>
 
-                              <p className="mt-1 break-all text-gray-600">
+                              {asset.asset_type === "image" ? (
+                                <div className="mt-3">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={asset.url}
+                                    alt={`Imagen de ${campaign.title}`}
+                                    className="max-h-72 w-full rounded-xl border border-gray-200 object-contain"
+                                  />
+                                </div>
+                              ) : null}
+
+                              <p className="mt-2 break-all text-gray-600">
                                 {asset.url}
                               </p>
                             </div>
@@ -561,11 +812,11 @@ export default async function AdminAdsPage({
           ) : (
             <article className="rounded-3xl border border-dashed border-orange-200 bg-white p-8">
               <h3 className="text-2xl font-black text-gray-950">
-                Todavía no hay campañas
+                Todavía no hay anuncios
               </h3>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">
-                Cuando registres campañas en Supabase, aparecerán aquí para
+                Cuando existan solicitudes o anuncios, aparecerán aquí para
                 revisión administrativa.
               </p>
             </article>
