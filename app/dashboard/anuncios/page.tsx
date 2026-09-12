@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { reportOwnerAdPayment } from "./actions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -39,6 +40,10 @@ type AdPaymentRow = {
   payment_reference: string;
   expected_amount_mxn: number | string;
   status: string;
+  reported_reference: string | null;
+  reported_at: string | null;
+  verified_at: string | null;
+  admin_notes: string | null;
 };
 
 function formatMoney(value: number | string) {
@@ -219,7 +224,7 @@ export default async function DashboardAdsPage({
     const { data: paymentsRaw } = await supabase
       .from("ad_payments")
       .select(
-        "campaign_id, payment_reference, expected_amount_mxn, status",
+        "campaign_id, payment_reference, expected_amount_mxn, status, reported_reference, reported_at, verified_at, admin_notes",
       )
       .in("campaign_id", campaignIds);
 
@@ -444,7 +449,11 @@ export default async function DashboardAdsPage({
                             ? "Verificado"
                             : payment.status === "reported"
                               ? "Reportado"
-                              : "Pendiente"
+                              : payment.status === "rejected"
+                                ? "Reporte rechazado"
+                                : payment.status === "refunded"
+                                  ? "Reembolsado"
+                                  : "Pendiente"
                           : campaign.requested_days
                             ? "Todavía no requerido"
                             : "Modelo anterior"}
@@ -453,16 +462,132 @@ export default async function DashboardAdsPage({
                   </dl>
 
                   {payment ? (
-                    <div className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm text-blue-950">
-                      <p className="font-black">
-                        Referencia: {payment.payment_reference}
-                      </p>
+                    <section className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                            Referencia Sabinapp
+                          </p>
 
-                      <p className="mt-1">
-                        Monto esperado:{" "}
-                        {formatMoney(payment.expected_amount_mxn)}
-                      </p>
-                    </div>
+                          <p className="mt-1 text-lg font-black">
+                            {payment.payment_reference}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                            Monto
+                          </p>
+
+                          <p className="mt-1 text-lg font-black">
+                            {formatMoney(payment.expected_amount_mxn)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {payment.status === "pending" ||
+                      payment.status === "rejected" ? (
+                        <div className="mt-5 border-t border-blue-200 pt-5">
+                          <h4 className="font-black text-blue-950">
+                            Reportar transferencia SPEI
+                          </h4>
+
+                          <p className="mt-2 leading-6 text-blue-900">
+                            Usa{" "}
+                            <strong>
+                              {payment.payment_reference}
+                            </strong>{" "}
+                            como concepto o referencia de la transferencia.
+                            Después escribe aquí el folio o referencia que te
+                            muestre tu banco.
+                          </p>
+
+                          {payment.status === "rejected" &&
+                          payment.admin_notes ? (
+                            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
+                              <p className="font-black">
+                                El reporte anterior fue rechazado
+                              </p>
+
+                              <p className="mt-1">
+                                {payment.admin_notes}
+                              </p>
+                            </div>
+                          ) : null}
+
+                          <form
+                            action={reportOwnerAdPayment}
+                            className="mt-4"
+                          >
+                            <input
+                              type="hidden"
+                              name="campaignId"
+                              value={campaign.id}
+                            />
+
+                            <label className="block">
+                              <span className="font-bold text-blue-950">
+                                Folio o referencia de tu banco
+                              </span>
+
+                              <input
+                                name="reportedReference"
+                                type="text"
+                                required
+                                minLength={3}
+                                maxLength={160}
+                                defaultValue={
+                                  payment.status === "rejected"
+                                    ? payment.reported_reference ?? ""
+                                    : ""
+                                }
+                                placeholder="Ej. 1234567890"
+                                className="mt-2 w-full rounded-xl border border-blue-300 bg-white px-4 py-3 text-gray-950 sm:max-w-lg"
+                              />
+                            </label>
+
+                            <button
+                              type="submit"
+                              className="mt-4 rounded-xl bg-blue-700 px-5 py-3 font-black text-white transition hover:bg-blue-800"
+                            >
+                              {payment.status === "rejected"
+                                ? "Reportar pago nuevamente"
+                                : "Reportar pago"}
+                            </button>
+                          </form>
+                        </div>
+                      ) : null}
+
+                      {payment.status === "reported" ? (
+                        <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-yellow-950">
+                          <p className="font-black">
+                            Pago reportado
+                          </p>
+
+                          <p className="mt-1">
+                            Folio bancario:{" "}
+                            {payment.reported_reference ??
+                              "Sin referencia"}
+                          </p>
+
+                          <p className="mt-1 text-sm">
+                            Estamos esperando que un administrador verifique la transferencia.
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {payment.status === "verified" ? (
+                        <div className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-green-950">
+                          <p className="font-black">
+                            Pago verificado
+                          </p>
+
+                          <p className="mt-1">
+                            Tu anuncio ya fue habilitado o quedó programado para su fecha de inicio.
+                          </p>
+                        </div>
+                      ) : null}
+                    </section>
                   ) : null}
 
                   {campaign.correction_notes ? (

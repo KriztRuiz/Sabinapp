@@ -396,3 +396,85 @@ export async function resubmitOwnerAdRequest(
       ),
   );
 }
+
+
+export async function reportOwnerAdPayment(
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const campaignId = String(
+    formData.get("campaignId") ?? "",
+  ).trim();
+
+  const reportedReference = String(
+    formData.get("reportedReference") ?? "",
+  ).trim();
+
+  if (!campaignId) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          "No se recibió el identificador del anuncio.",
+        ),
+    );
+  }
+
+  if (reportedReference.length < 3) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          "Escribe el folio o referencia de tu transferencia.",
+        ),
+    );
+  }
+
+  if (reportedReference.length > 160) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          "La referencia del pago es demasiado larga.",
+        ),
+    );
+  }
+
+  const { error } = await supabase.rpc(
+    "report_ad_payment",
+    {
+      p_campaign_id: campaignId,
+      p_reported_reference:
+        reportedReference,
+    },
+  );
+
+  if (error) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          error.message ||
+            "No se pudo reportar el pago.",
+        ),
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/anuncios");
+  revalidatePath(
+    "/dashboard/admin/anuncios",
+  );
+
+  redirect(
+    "/dashboard/anuncios?message=" +
+      encodeURIComponent(
+        "Pago reportado correctamente. Un administrador verificará la transferencia.",
+      ),
+  );
+}
