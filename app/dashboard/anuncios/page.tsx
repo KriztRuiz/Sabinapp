@@ -477,6 +477,18 @@ export default async function DashboardAdsPage({
                     </div>
                   ) : null}
 
+                  {campaign.status === "draft" &&
+                  campaign.correction_requested_at ? (
+                    <div className="mt-5">
+                      <Link
+                        href={`/dashboard/anuncios/${campaign.id}/editar`}
+                        className="inline-flex rounded-xl bg-orange-600 px-5 py-3 text-sm font-black text-white transition hover:bg-orange-700"
+                      >
+                        Corregir anuncio
+                      </Link>
+                    </div>
+                  ) : null}
+
                   {campaign.rejection_reason ? (
                     <div className="mt-5 rounded-2xl bg-red-50 p-4 text-sm text-red-950">
                       <p className="font-black">Motivo de rechazo</p>
