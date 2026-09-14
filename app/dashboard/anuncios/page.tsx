@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { reportOwnerAdPayment } from "./actions";
 
 type PageProps = {
@@ -408,14 +409,10 @@ export default async function DashboardAdsPage({
                   <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                       <dt className="font-semibold text-gray-500">
-                        Duración
+                        Finaliza
                       </dt>
                       <dd className="mt-1 font-bold text-gray-950">
-                        {campaign.requested_days
-                          ? `${campaign.requested_days} día${
-                              campaign.requested_days === 1 ? "" : "s"
-                            }`
-                          : "Modelo anterior"}
+                        {formatDate(campaign.ends_at)}
                       </dd>
                     </div>
 
@@ -432,7 +429,7 @@ export default async function DashboardAdsPage({
 
                     <div>
                       <dt className="font-semibold text-gray-500">
-                        Inicio real
+                        Inicio
                       </dt>
                       <dd className="mt-1 font-bold text-gray-950">
                         {formatDate(campaign.starts_at)}
@@ -515,9 +512,12 @@ export default async function DashboardAdsPage({
                             </div>
                           ) : null}
 
-                          <form
+                          <ConfirmActionForm
                             action={reportOwnerAdPayment}
                             className="mt-4"
+                            confirmMessage="¿Confirmas que deseas reportar este pago? Verifica que el folio de tu banco sea correcto antes de enviarlo a revisión."
+                            confirmFieldName="reportedReference"
+                            confirmFieldLabel="Folio bancario"
                           >
                             <input
                               type="hidden"
@@ -554,7 +554,7 @@ export default async function DashboardAdsPage({
                                 ? "Reportar pago nuevamente"
                                 : "Reportar pago"}
                             </button>
-                          </form>
+                          </ConfirmActionForm>
                         </div>
                       ) : null}
 

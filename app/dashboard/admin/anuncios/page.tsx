@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { ConfirmAdminActionButton } from "@/app/dashboard/admin/negocios/confirm-admin-action-button";
 import {
   activateAdCampaign,
   approveAdRequestAction,
   pauseAdCampaign,
+  rejectAdPaymentAction,
   rejectAdRequestAction,
   requestAdChangesAction,
+  verifyAdPaymentAction,
 } from "./actions";
 
 type PageProps = {
@@ -63,8 +66,13 @@ type AdPaymentRow = {
   payment_reference: string;
   expected_amount_mxn: number | string;
   status: string;
+
+  reported_reference: string | null;
   reported_at: string | null;
+
   verified_at: string | null;
+
+  admin_notes: string | null;
 };
 
 type BusinessRow = {
@@ -263,7 +271,7 @@ export default async function AdminAdsPage({
     const { data: paymentsRaw } = await supabase
       .from("ad_payments")
       .select(
-        "campaign_id, payment_reference, expected_amount_mxn, status, reported_at, verified_at",
+        "campaign_id, payment_reference, expected_amount_mxn, status, reported_reference, reported_at, verified_at, admin_notes",
       )
       .in("campaign_id", campaignIds);
 
@@ -731,6 +739,154 @@ export default async function AdminAdsPage({
                               Rechazar anuncio
                             </button>
                           </form>
+                        </div>
+                      </section>
+                    ) : null}
+
+                    {isOwnerRequest &&
+                    campaign.status === "approved" &&
+                    payment?.status === "reported" ? (
+                      <section className="mt-6 rounded-3xl border border-blue-200 bg-blue-50 p-5">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">
+                          Verificación de pago
+                        </p>
+
+                        <h4 className="mt-2 text-lg font-black text-blue-950">
+                          El dueño reportó una transferencia
+                        </h4>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                          <div className="rounded-2xl bg-white p-4">
+                            <p className="text-xs font-bold text-gray-500">
+                              Referencia Sabinapp
+                            </p>
+
+                            <p className="mt-1 font-black text-gray-950">
+                              {payment.payment_reference}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl bg-white p-4">
+                            <p className="text-xs font-bold text-gray-500">
+                              Monto esperado
+                            </p>
+
+                            <p className="mt-1 font-black text-gray-950">
+                              {formatMoney(
+                                payment.expected_amount_mxn,
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl bg-white p-4">
+                            <p className="text-xs font-bold text-gray-500">
+                              Folio bancario
+                            </p>
+
+                            <p className="mt-1 break-all font-black text-gray-950">
+                              {payment.reported_reference ??
+                                "Sin folio"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="mt-4 text-sm text-blue-900">
+                          Reportado:{" "}
+                          {formatDate(
+                            payment.reported_at,
+                          )}
+                        </p>
+
+                        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                          <form
+                            action={verifyAdPaymentAction}
+                            className="rounded-2xl border border-green-200 bg-white p-4"
+                          >
+                            <input
+                              type="hidden"
+                              name="campaignId"
+                              value={campaign.id}
+                            />
+
+                            <h5 className="font-black text-green-950">
+                              Verificar transferencia
+                            </h5>
+
+                            <p className="mt-2 text-sm leading-6 text-gray-600">
+                              Confirma en tu banco que recibiste el monto correcto.
+                              Al verificar, Sabinapp iniciará o programará la
+                              vigencia del anuncio.
+                            </p>
+
+                            <label className="mt-4 block">
+                              <span className="text-sm font-bold text-gray-700">
+                                Observaciones opcionales
+                              </span>
+
+                              <textarea
+                                name="adminNotes"
+                                maxLength={2000}
+                                rows={3}
+                                placeholder="Opcional"
+                                className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950"
+                              />
+                            </label>
+
+                            <div className="mt-4">
+                              <ConfirmAdminActionButton
+                                confirmMessage="¿Confirmas que verificaste esta transferencia? El anuncio quedará habilitado y comenzará su vigencia según la fecha contratada."
+                                className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
+                              >
+                                Verificar pago
+                              </ConfirmAdminActionButton>
+                            </div>
+                          </form>
+
+                          <ConfirmActionForm
+                            action={rejectAdPaymentAction}
+                            className="rounded-2xl border border-red-200 bg-white p-4"
+                            confirmMessage="¿Rechazar este reporte de pago? La campaña permanecerá sin activarse y el dueño tendrá que volver a reportar un pago válido."
+                            confirmFieldName="paymentNotes"
+                            confirmFieldLabel="Motivo"
+                          >
+                            <input
+                              type="hidden"
+                              name="campaignId"
+                              value={campaign.id}
+                            />
+
+                            <h5 className="font-black text-red-950">
+                              No se pudo verificar
+                            </h5>
+
+                            <p className="mt-2 text-sm leading-6 text-gray-600">
+                              Úsalo si no encuentras la transferencia, el monto
+                              no coincide o los datos son incorrectos.
+                            </p>
+
+                            <label className="mt-4 block">
+                              <span className="text-sm font-bold text-red-900">
+                                Motivo
+                              </span>
+
+                              <textarea
+                                name="paymentNotes"
+                                required
+                                minLength={3}
+                                maxLength={2000}
+                                rows={3}
+                                placeholder="Ej. No encontramos una transferencia con este folio."
+                                className="mt-2 w-full rounded-xl border border-red-200 px-3 py-2 text-sm text-gray-950"
+                              />
+                            </label>
+
+                            <button
+                              type="submit"
+                              className="mt-4 rounded-xl bg-red-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-800"
+                            >
+                              Rechazar reporte
+                            </button>
+                          </ConfirmActionForm>
                         </div>
                       </section>
                     ) : null}

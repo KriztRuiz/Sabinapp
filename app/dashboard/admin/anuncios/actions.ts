@@ -286,3 +286,98 @@ export async function activateAdCampaign(
     "Anuncio reactivado correctamente.",
   );
 }
+
+
+export async function verifyAdPaymentAction(
+  formData: FormData,
+) {
+  const { supabase } =
+    await requireAdsAdminPermission();
+
+  const campaignId =
+    getCampaignId(formData);
+
+  const adminNotes = String(
+    formData.get("adminNotes") ?? "",
+  ).trim();
+
+  if (adminNotes.length > 2000) {
+    redirectAdminAdsError(
+      "Las observaciones no pueden superar 2000 caracteres.",
+    );
+  }
+
+  const { data, error } = await supabase.rpc(
+    "verify_ad_payment",
+    {
+      p_campaign_id: campaignId,
+      p_admin_notes:
+        adminNotes || null,
+    },
+  );
+
+  if (error) {
+    redirectAdminAdsError(
+      error.message ||
+        "No se pudo verificar el pago.",
+    );
+  }
+
+  const result =
+    Array.isArray(data)
+      ? data[0]
+      : null;
+
+  revalidateAdManagementPaths();
+  revalidatePublicAdPaths();
+
+  if (
+    result?.starts_at &&
+    result?.ends_at
+  ) {
+    redirectAdminAdsSuccess(
+      "Pago verificado y anuncio habilitado correctamente.",
+    );
+  }
+
+  redirectAdminAdsSuccess(
+    "Pago verificado correctamente.",
+  );
+}
+
+export async function rejectAdPaymentAction(
+  formData: FormData,
+) {
+  const { supabase } =
+    await requireAdsAdminPermission();
+
+  const campaignId =
+    getCampaignId(formData);
+
+  const notes = getRequiredNotes(
+    formData,
+    "paymentNotes",
+    "Explica por qué no se pudo verificar la transferencia.",
+  );
+
+  const { error } = await supabase.rpc(
+    "reject_ad_payment",
+    {
+      p_campaign_id: campaignId,
+      p_notes: notes,
+    },
+  );
+
+  if (error) {
+    redirectAdminAdsError(
+      error.message ||
+        "No se pudo rechazar el reporte de pago.",
+    );
+  }
+
+  revalidateAdManagementPaths();
+
+  redirectAdminAdsSuccess(
+    "El reporte de pago fue rechazado.",
+  );
+}
