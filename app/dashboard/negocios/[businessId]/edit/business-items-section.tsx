@@ -169,19 +169,23 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <label
-                htmlFor="new-item-image-url"
+                htmlFor="new-item-image-file"
                 className="block text-sm font-bold text-gray-800"
               >
-                URL de imagen
+                Imagen
               </label>
 
               <input
-                id="new-item-image-url"
-                name="image_url"
-                type="text"
-                placeholder="https://..."
-                className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                id="new-item-image-file"
+                name="image_file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="mt-2 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
               />
+
+              <p className="mt-1 text-xs text-gray-500">
+                Opcional. JPEG, PNG o WebP · máximo 5 MB.
+              </p>
             </div>
 
             <div>
@@ -417,20 +421,34 @@ export function BusinessItemsSection({ business }: BusinessItemsSectionProps) {
 
                   <div>
                     <label
-                      htmlFor={`item-image-url-${item.id}`}
+                      htmlFor={`item-image-file-${item.id}`}
                       className="block text-sm font-bold text-gray-800"
                     >
-                      URL de imagen
+                      Reemplazar imagen
                     </label>
 
                     <input
-                      id={`item-image-url-${item.id}`}
-                      name="image_url"
-                      type="text"
-                      defaultValue={item.image_url ?? ""}
-                      placeholder="https://..."
-                      className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                      id={`item-image-file-${item.id}`}
+                      name="image_file"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="mt-2 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
                     />
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      Opcional. Déjalo vacío para conservar la imagen actual.
+                      JPEG, PNG o WebP · máximo 5 MB.
+                    </p>
+
+                    {item.image_url ? (
+                      <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-red-700">
+                        <input
+                          type="checkbox"
+                          name="remove_image"
+                        />
+                        Quitar imagen actual
+                      </label>
+                    ) : null}
                   </div>
 
                   <div>

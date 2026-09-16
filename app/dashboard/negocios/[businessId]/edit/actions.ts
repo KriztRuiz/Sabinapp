@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireCompleteProfile } from "@/lib/profiles/require-complete-profile";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { randomUUID } from "node:crypto";
 
 function getFormValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -190,44 +191,211 @@ export async function updateBusinessLanding(
   );
 }
 
+const BUSINESS_MEDIA_BUCKET = "business-media";
+const BUSINESS_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
+
+const BUSINESS_MEDIA_MIME_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+type ValidatedBusinessMediaFile = {
+  file: File;
+  extension: string;
+};
+
 function isValidMediaUrl(url: string) {
   return url.startsWith("http://") || url.startsWith("https://");
 }
 
-function validateRequiredMediaUrl(businessId: string, url: string) {
-  if (!url) {
-    redirectToEditBusiness(businessId, "La URL de la imagen es obligatoria.");
+function getBusinessMediaAltText(formData: FormData) {
+  return getFormValue(formData, "alt_text");
+}
+
+function getBusinessMediaFile(
+  businessId: string,
+  formData: FormData,
+  required: boolean,
+): ValidatedBusinessMediaFile | null {
+  const value = formData.get("image_file");
+
+  if (!value || typeof value === "string" || value.size === 0) {
+    if (required) {
+      redirectToEditBusiness(
+        businessId,
+        "Selecciona una imagen para continuar.",
+      );
+    }
+
+    return null;
   }
 
-  if (!isValidMediaUrl(url)) {
+  const extension = BUSINESS_MEDIA_MIME_EXTENSIONS[value.type];
+
+  if (!extension) {
     redirectToEditBusiness(
       businessId,
-      "La URL de la imagen debe iniciar con http:// o https://.",
+      "La imagen debe ser JPEG, PNG o WebP.",
+    );
+  }
+
+  if (value.size > BUSINESS_MEDIA_MAX_BYTES) {
+    redirectToEditBusiness(
+      businessId,
+      "La imagen no puede superar 5 MB.",
+    );
+  }
+
+  return {
+    file: value,
+    extension,
+  };
+}
+
+async function uploadBusinessMediaFile(
+  supabase: ServerSupabaseClient,
+  businessId: string,
+  image: ValidatedBusinessMediaFile,
+) {
+  const storagePath =
+    `${businessId}/media/${randomUUID()}.${image.extension}`;
+
+  const { error } = await supabase.storage
+    .from(BUSINESS_MEDIA_BUCKET)
+    .upload(storagePath, image.file, {
+      cacheControl: "3600",
+      contentType: image.file.type,
+      upsert: false,
+    });
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo subir la imagen: ${error.message}`,
+    );
+  }
+
+  return storagePath;
+}
+
+async function removeBusinessMediaStorageObject(
+  supabase: ServerSupabaseClient,
+  businessId: string,
+  storageBucket: string | null,
+  storagePath: string | null,
+) {
+  if (
+    storageBucket !== BUSINESS_MEDIA_BUCKET ||
+    !storagePath ||
+    !storagePath.startsWith(`${businessId}/media/`)
+  ) {
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from(BUSINESS_MEDIA_BUCKET)
+    .remove([storagePath]);
+
+  if (error) {
+    console.error(
+      "No se pudo eliminar archivo de business-media:",
+      storagePath,
+      error.message,
     );
   }
 }
 
-function getBusinessMediaFormInput(businessId: string, formData: FormData) {
-  const url = getFormValue(formData, "url");
-  const altText = getFormValue(formData, "alt_text");
+const BUSINESS_ITEM_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
-  validateRequiredMediaUrl(businessId, url);
+type ValidatedBusinessItemImageFile = {
+  file: File;
+  extension: string;
+};
+
+function getBusinessItemImageFile(
+  businessId: string,
+  formData: FormData,
+): ValidatedBusinessItemImageFile | null {
+  const value = formData.get("image_file");
+
+  if (!value || typeof value === "string" || value.size === 0) {
+    return null;
+  }
+
+  const extension = BUSINESS_MEDIA_MIME_EXTENSIONS[value.type];
+
+  if (!extension) {
+    redirectToEditBusiness(
+      businessId,
+      "La imagen del item debe ser JPEG, PNG o WebP.",
+    );
+  }
+
+  if (value.size > BUSINESS_ITEM_IMAGE_MAX_BYTES) {
+    redirectToEditBusiness(
+      businessId,
+      "La imagen del item no puede superar 5 MB.",
+    );
+  }
 
   return {
-    url,
-    altText,
+    file: value,
+    extension,
   };
 }
 
-function validateOptionalItemImageUrl(businessId: string, url: string) {
-  if (!url) {
+async function uploadBusinessItemImageFile(
+  supabase: ServerSupabaseClient,
+  businessId: string,
+  image: ValidatedBusinessItemImageFile,
+) {
+  const storagePath =
+    `${businessId}/items/${randomUUID()}.${image.extension}`;
+
+  const { error } = await supabase.storage
+    .from(BUSINESS_MEDIA_BUCKET)
+    .upload(storagePath, image.file, {
+      cacheControl: "3600",
+      contentType: image.file.type,
+      upsert: false,
+    });
+
+  if (error) {
+    redirectToEditBusiness(
+      businessId,
+      `No se pudo subir la imagen del item: ${error.message}`,
+    );
+  }
+
+  return storagePath;
+}
+
+async function removeBusinessItemStorageObject(
+  supabase: ServerSupabaseClient,
+  businessId: string,
+  storageBucket: string | null,
+  storagePath: string | null,
+) {
+  if (
+    storageBucket !== BUSINESS_MEDIA_BUCKET ||
+    !storagePath ||
+    !storagePath.startsWith(`${businessId}/items/`)
+  ) {
     return;
   }
 
-  if (!isValidMediaUrl(url)) {
-    redirectToEditBusiness(
-      businessId,
-      "La URL de imagen del item debe iniciar con http:// o https://.",
+  const { error } = await supabase.storage
+    .from(BUSINESS_MEDIA_BUCKET)
+    .remove([storagePath]);
+
+  if (error) {
+    console.error(
+      "No se pudo eliminar archivo de item en business-media:",
+      storagePath,
+      error.message,
     );
   }
 }
@@ -250,18 +418,21 @@ function validateBusinessItemInput(
   input: {
     type: string;
     name: string;
-    imageUrl: string;
   },
 ) {
   if (!isBusinessItemType(input.type)) {
-    redirectToEditBusiness(businessId, "Selecciona un tipo de item válido.");
+    redirectToEditBusiness(
+      businessId,
+      "Selecciona un tipo de item válido.",
+    );
   }
 
   if (!input.name) {
-    redirectToEditBusiness(businessId, "El nombre del item es obligatorio.");
+    redirectToEditBusiness(
+      businessId,
+      "El nombre del item es obligatorio.",
+    );
   }
-
-  validateOptionalItemImageUrl(businessId, input.imageUrl);
 }
 
 function redirectToEditBusiness(businessId: string, message: string): never {
@@ -1413,19 +1584,32 @@ export async function updateBusinessMediaDetails(
   mediaId: string,
   formData: FormData,
 ) {
-  const { url, altText } = getBusinessMediaFormInput(businessId, formData);
+  const altText = getBusinessMediaAltText(formData);
+  const replacementImage = getBusinessMediaFile(
+    businessId,
+    formData,
+    false,
+  );
+
   const sortOrderValue = getFormValue(formData, "sort_order");
-  const sortOrder = parseNonNegativeIntegerOrZero(businessId, sortOrderValue);
+  const sortOrder = parseNonNegativeIntegerOrZero(
+    businessId,
+    sortOrderValue,
+  );
+
   const isActive = formData.get("is_active") === "on";
 
-  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
-    businessId,
-    "Inicia sesión para editar imágenes.",
-  );
+  const { supabase, user, business } =
+    await getOwnedBusinessContextOrRedirect(
+      businessId,
+      "Inicia sesión para editar imágenes.",
+    );
 
   const { data: currentMedia, error: currentMediaError } = await supabase
     .from("business_media")
-    .select("id, type, url, alt_text, is_active, is_cover, sort_order")
+    .select(
+      "id, type, url, storage_bucket, storage_path, alt_text, is_active, is_cover, sort_order",
+    )
     .eq("id", mediaId)
     .eq("business_id", businessId)
     .single();
@@ -1439,19 +1623,32 @@ export async function updateBusinessMediaDetails(
     );
   }
 
-  const nextMediaChangeData = {
-    media_type: currentMedia.type,
-    image_url: url,
-    alt_text: altText || null,
-    is_active: isActive,
-    is_cover: currentMedia.is_cover,
-    sort_order: sortOrder,
-  };
+  let uploadedStoragePath: string | null = null;
+
+  if (replacementImage) {
+    uploadedStoragePath = await uploadBusinessMediaFile(
+      supabase,
+      businessId,
+      replacementImage,
+    );
+  }
+
+  const nextUrl = replacementImage ? null : currentMedia.url;
+
+  const nextStorageBucket = replacementImage
+    ? BUSINESS_MEDIA_BUCKET
+    : currentMedia.storage_bucket;
+
+  const nextStoragePath = replacementImage
+    ? uploadedStoragePath
+    : currentMedia.storage_path;
 
   const { data: updatedMedia, error: updateMediaError } = await supabase
     .from("business_media")
     .update({
-      url,
+      url: nextUrl,
+      storage_bucket: nextStorageBucket,
+      storage_path: nextStoragePath,
       alt_text: altText || null,
       is_active: isActive,
       sort_order: sortOrder,
@@ -1463,11 +1660,29 @@ export async function updateBusinessMediaDetails(
     .single();
 
   if (updateMediaError || !updatedMedia) {
+    if (uploadedStoragePath) {
+      await removeBusinessMediaStorageObject(
+        supabase,
+        businessId,
+        BUSINESS_MEDIA_BUCKET,
+        uploadedStoragePath,
+      );
+    }
+
     redirectToEditBusiness(
       businessId,
       `No se pudo actualizar la imagen: ${
         updateMediaError?.message ?? "sin filas actualizadas"
       }`,
+    );
+  }
+
+  if (replacementImage) {
+    await removeBusinessMediaStorageObject(
+      supabase,
+      businessId,
+      currentMedia.storage_bucket,
+      currentMedia.storage_path,
     );
   }
 
@@ -1482,17 +1697,33 @@ export async function updateBusinessMediaDetails(
     beforeData: {
       media_type: currentMedia.type,
       image_url: currentMedia.url,
+      storage_bucket: currentMedia.storage_bucket,
+      storage_path: currentMedia.storage_path,
       alt_text: currentMedia.alt_text,
       is_active: currentMedia.is_active,
       is_cover: currentMedia.is_cover,
       sort_order: currentMedia.sort_order,
     },
-    afterData: nextMediaChangeData,
+    afterData: {
+      media_type: currentMedia.type,
+      image_url: nextUrl,
+      storage_bucket: nextStorageBucket,
+      storage_path: nextStoragePath,
+      alt_text: altText || null,
+      is_active: isActive,
+      is_cover: currentMedia.is_cover,
+      sort_order: sortOrder,
+    },
   });
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
-  redirectToEditBusiness(businessId, "Imagen actualizada correctamente.");
+  redirectToEditBusiness(
+    businessId,
+    replacementImage
+      ? "Imagen reemplazada correctamente."
+      : "Imagen actualizada correctamente.",
+  );
 }
 
 export async function setBusinessMediaAsCover(
@@ -1593,14 +1824,17 @@ export async function deleteBusinessMedia(
   businessId: string,
   mediaId: string,
 ) {
-  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
-    businessId,
-    "Inicia sesión para eliminar imágenes.",
-  );
+  const { supabase, user, business } =
+    await getOwnedBusinessContextOrRedirect(
+      businessId,
+      "Inicia sesión para eliminar imágenes.",
+    );
 
   const { data: currentMedia, error: currentMediaError } = await supabase
     .from("business_media")
-    .select("id, type, url, alt_text, is_active, is_cover, sort_order")
+    .select(
+      "id, type, url, storage_bucket, storage_path, alt_text, is_active, is_cover, sort_order",
+    )
     .eq("id", mediaId)
     .eq("business_id", businessId)
     .single();
@@ -1631,6 +1865,13 @@ export async function deleteBusinessMedia(
     );
   }
 
+  await removeBusinessMediaStorageObject(
+    supabase,
+    businessId,
+    currentMedia.storage_bucket,
+    currentMedia.storage_path,
+  );
+
   await recordPublishedBusinessChangeEvent({
     supabase,
     user,
@@ -1642,6 +1883,8 @@ export async function deleteBusinessMedia(
     beforeData: {
       media_type: currentMedia.type,
       image_url: currentMedia.url,
+      storage_bucket: currentMedia.storage_bucket,
+      storage_path: currentMedia.storage_path,
       alt_text: currentMedia.alt_text,
       is_active: currentMedia.is_active,
       is_cover: currentMedia.is_cover,
@@ -1652,16 +1895,36 @@ export async function deleteBusinessMedia(
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
-  redirectToEditBusiness(businessId, "Imagen eliminada correctamente.");
+  redirectToEditBusiness(
+    businessId,
+    "Imagen eliminada correctamente.",
+  );
 }
 
-export async function addBusinessMedia(businessId: string, formData: FormData) {
-  const { url, altText } = getBusinessMediaFormInput(businessId, formData);
+export async function addBusinessMedia(
+  businessId: string,
+  formData: FormData,
+) {
+  const altText = getBusinessMediaAltText(formData);
 
-  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
+  const image = getBusinessMediaFile(
     businessId,
-    "Inicia sesión para agregar imágenes.",
+    formData,
+    true,
   );
+
+  if (!image) {
+    redirectToEditBusiness(
+      businessId,
+      "Selecciona una imagen para continuar.",
+    );
+  }
+
+  const { supabase, user, business } =
+    await getOwnedBusinessContextOrRedirect(
+      businessId,
+      "Inicia sesión para agregar imágenes.",
+    );
 
   const { data: existingMedia, error: existingMediaError } = await supabase
     .from("business_media")
@@ -1676,17 +1939,23 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
   }
 
   const mediaCount = existingMedia?.length ?? 0;
-
   const nextSortOrder = getNextSortOrder(existingMedia ?? []);
-
   const shouldBeCover = mediaCount === 0;
+
+  const storagePath = await uploadBusinessMediaFile(
+    supabase,
+    businessId,
+    image,
+  );
 
   const { data: createdMedia, error: insertMediaError } = await supabase
     .from("business_media")
     .insert({
       business_id: businessId,
       type: shouldBeCover ? "cover" : "gallery",
-      url,
+      url: null,
+      storage_bucket: BUSINESS_MEDIA_BUCKET,
+      storage_path: storagePath,
       alt_text: altText || null,
       is_active: true,
       is_cover: shouldBeCover,
@@ -1696,6 +1965,13 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
     .single();
 
   if (insertMediaError || !createdMedia) {
+    await removeBusinessMediaStorageObject(
+      supabase,
+      businessId,
+      BUSINESS_MEDIA_BUCKET,
+      storagePath,
+    );
+
     redirectToEditBusiness(
       businessId,
       `No se pudo agregar la imagen: ${
@@ -1715,7 +1991,9 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
     beforeData: {},
     afterData: {
       media_type: shouldBeCover ? "cover" : "gallery",
-      image_url: url,
+      image_url: null,
+      storage_bucket: BUSINESS_MEDIA_BUCKET,
+      storage_path: storagePath,
       alt_text: altText || null,
       is_active: true,
       is_cover: shouldBeCover,
@@ -1725,7 +2003,10 @@ export async function addBusinessMedia(businessId: string, formData: FormData) {
 
   revalidateBusinessEditAndPublic(businessId, business.slug);
 
-  redirectToEditBusiness(businessId, "Imagen agregada correctamente.");
+  redirectToEditBusiness(
+    businessId,
+    "Imagen agregada correctamente.",
+  );
 }
 
 export async function updateBusinessItemDetails(
@@ -1738,17 +2019,28 @@ export async function updateBusinessItemDetails(
   const description = getFormValue(formData, "description");
   const priceValue = getFormValue(formData, "price").replace(",", ".");
   const currency = getFormValue(formData, "currency") || "MXN";
-  const imageUrl = getFormValue(formData, "image_url");
   const imageAlt = getFormValue(formData, "image_alt");
   const sortOrderValue = getFormValue(formData, "sort_order");
   const showPrice = formData.get("show_price") === "on";
   const isFeatured = formData.get("is_featured") === "on";
   const isActive = formData.get("is_active") === "on";
+  const removeImage = formData.get("remove_image") === "on";
+
+  const replacementImage = getBusinessItemImageFile(
+    businessId,
+    formData,
+  );
+
+  if (replacementImage && removeImage) {
+    redirectToEditBusiness(
+      businessId,
+      "Elige reemplazar la imagen o quitarla, no ambas opciones.",
+    );
+  }
 
   validateBusinessItemInput(businessId, {
     type,
     name,
-    imageUrl,
   });
 
   const sortOrder = parseNonNegativeIntegerOrZero(
@@ -1756,17 +2048,22 @@ export async function updateBusinessItemDetails(
     sortOrderValue,
   );
 
-  const price = parseOptionalNonNegativePrice(businessId, priceValue);
-
-
-  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
+  const price = parseOptionalNonNegativePrice(
     businessId,
-    "Inicia sesión para editar items.",
+    priceValue,
   );
+
+  const { supabase, user, business } =
+    await getOwnedBusinessContextOrRedirect(
+      businessId,
+      "Inicia sesión para editar items.",
+    );
 
   const { data: currentItem, error: currentItemError } = await supabase
     .from("business_items")
-    .select("id, type, name, description, price, currency, show_price, is_featured, is_active, image_url, image_alt, sort_order")
+    .select(
+      "id, type, name, description, price, currency, show_price, is_featured, is_active, image_url, image_storage_bucket, image_storage_path, image_alt, sort_order",
+    )
     .eq("id", itemId)
     .eq("business_id", businessId)
     .single();
@@ -1780,6 +2077,33 @@ export async function updateBusinessItemDetails(
     );
   }
 
+  let uploadedStoragePath: string | null = null;
+
+  if (replacementImage) {
+    uploadedStoragePath = await uploadBusinessItemImageFile(
+      supabase,
+      businessId,
+      replacementImage,
+    );
+  }
+
+  const nextImageUrl =
+    replacementImage || removeImage
+      ? null
+      : currentItem.image_url;
+
+  const nextImageStorageBucket = replacementImage
+    ? BUSINESS_MEDIA_BUCKET
+    : removeImage
+      ? null
+      : currentItem.image_storage_bucket;
+
+  const nextImageStoragePath = replacementImage
+    ? uploadedStoragePath
+    : removeImage
+      ? null
+      : currentItem.image_storage_path;
+
   const nextItemData = {
     item_type: type,
     name,
@@ -1789,7 +2113,9 @@ export async function updateBusinessItemDetails(
     show_price: showPrice,
     is_featured: isFeatured,
     is_active: isActive,
-    image_url: imageUrl || null,
+    image_url: nextImageUrl,
+    image_storage_bucket: nextImageStorageBucket,
+    image_storage_path: nextImageStoragePath,
     image_alt: imageAlt || null,
     sort_order: sortOrder,
   };
@@ -1805,7 +2131,9 @@ export async function updateBusinessItemDetails(
       show_price: showPrice,
       is_featured: isFeatured,
       is_active: isActive,
-      image_url: imageUrl || null,
+      image_url: nextImageUrl,
+      image_storage_bucket: nextImageStorageBucket,
+      image_storage_path: nextImageStoragePath,
       image_alt: imageAlt || null,
       sort_order: sortOrder,
       updated_at: getNowIsoTimestamp(),
@@ -1816,11 +2144,29 @@ export async function updateBusinessItemDetails(
     .single();
 
   if (updateItemError || !updatedItem) {
+    if (uploadedStoragePath) {
+      await removeBusinessItemStorageObject(
+        supabase,
+        businessId,
+        BUSINESS_MEDIA_BUCKET,
+        uploadedStoragePath,
+      );
+    }
+
     redirectToEditBusiness(
       businessId,
       `No se pudo actualizar el item: ${
         updateItemError?.message ?? "sin filas actualizadas"
       }`,
+    );
+  }
+
+  if (replacementImage || removeImage) {
+    await removeBusinessItemStorageObject(
+      supabase,
+      businessId,
+      currentItem.image_storage_bucket,
+      currentItem.image_storage_path,
     );
   }
 
@@ -1842,29 +2188,40 @@ export async function updateBusinessItemDetails(
       is_featured: currentItem.is_featured,
       is_active: currentItem.is_active,
       image_url: currentItem.image_url,
+      image_storage_bucket: currentItem.image_storage_bucket,
+      image_storage_path: currentItem.image_storage_path,
       image_alt: currentItem.image_alt,
       sort_order: currentItem.sort_order,
     },
     afterData: nextItemData,
   });
 
-  revalidateBusinessEditAndPublic(businessId, business.slug);
+  revalidateBusinessEditAndPublic(
+    businessId,
+    business.slug,
+  );
 
-  redirectToEditBusiness(businessId, "Item actualizado correctamente.");
+  redirectToEditBusiness(
+    businessId,
+    "Item actualizado correctamente.",
+  );
 }
 
 export async function deleteBusinessItem(
   businessId: string,
   itemId: string,
 ) {
-  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
-    businessId,
-    "Inicia sesión para eliminar items.",
-  );
+  const { supabase, user, business } =
+    await getOwnedBusinessContextOrRedirect(
+      businessId,
+      "Inicia sesión para eliminar items.",
+    );
 
   const { data: currentItem, error: currentItemError } = await supabase
     .from("business_items")
-    .select("id, type, name, description, price, currency, show_price, is_featured, is_active, image_url, image_alt, sort_order")
+    .select(
+      "id, type, name, description, price, currency, show_price, is_featured, is_active, image_url, image_storage_bucket, image_storage_path, image_alt, sort_order",
+    )
     .eq("id", itemId)
     .eq("business_id", businessId)
     .single();
@@ -1895,6 +2252,13 @@ export async function deleteBusinessItem(
     );
   }
 
+  await removeBusinessItemStorageObject(
+    supabase,
+    businessId,
+    currentItem.image_storage_bucket,
+    currentItem.image_storage_path,
+  );
+
   await recordPublishedBusinessChangeEvent({
     supabase,
     user,
@@ -1913,42 +2277,59 @@ export async function deleteBusinessItem(
       is_featured: currentItem.is_featured,
       is_active: currentItem.is_active,
       image_url: currentItem.image_url,
+      image_storage_bucket: currentItem.image_storage_bucket,
+      image_storage_path: currentItem.image_storage_path,
       image_alt: currentItem.image_alt,
       sort_order: currentItem.sort_order,
     },
     afterData: {},
   });
 
-  revalidateBusinessEditAndPublic(businessId, business.slug);
+  revalidateBusinessEditAndPublic(
+    businessId,
+    business.slug,
+  );
 
-  redirectToEditBusiness(businessId, "Item eliminado correctamente.");
+  redirectToEditBusiness(
+    businessId,
+    "Item eliminado correctamente.",
+  );
 }
 
-export async function addBusinessItem(businessId: string, formData: FormData) {
+export async function addBusinessItem(
+  businessId: string,
+  formData: FormData,
+) {
   const type = getFormValue(formData, "type");
   const name = getFormValue(formData, "name");
   const description = getFormValue(formData, "description");
   const priceValue = getFormValue(formData, "price").replace(",", ".");
   const currency = getFormValue(formData, "currency") || "MXN";
-  const imageUrl = getFormValue(formData, "image_url");
   const imageAlt = getFormValue(formData, "image_alt");
 
   const showPrice = formData.get("show_price") === "on";
   const isFeatured = formData.get("is_featured") === "on";
 
+  const image = getBusinessItemImageFile(
+    businessId,
+    formData,
+  );
+
   validateBusinessItemInput(businessId, {
     type,
     name,
-    imageUrl,
   });
 
-  const price = parseOptionalNonNegativePrice(businessId, priceValue);
-
-
-  const { supabase, user, business } = await getOwnedBusinessContextOrRedirect(
+  const price = parseOptionalNonNegativePrice(
     businessId,
-    "Inicia sesión para agregar items.",
+    priceValue,
   );
+
+  const { supabase, user, business } =
+    await getOwnedBusinessContextOrRedirect(
+      businessId,
+      "Inicia sesión para agregar items.",
+    );
 
   const { data: existingItems, error: existingItemsError } = await supabase
     .from("business_items")
@@ -1962,7 +2343,19 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
     );
   }
 
-  const nextSortOrder = getNextSortOrder(existingItems ?? []);
+  const nextSortOrder = getNextSortOrder(
+    existingItems ?? [],
+  );
+
+  let storagePath: string | null = null;
+
+  if (image) {
+    storagePath = await uploadBusinessItemImageFile(
+      supabase,
+      businessId,
+      image,
+    );
+  }
 
   const { data: createdItem, error: insertItemError } = await supabase
     .from("business_items")
@@ -1976,7 +2369,11 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
       show_price: showPrice,
       is_featured: isFeatured,
       is_active: true,
-      image_url: imageUrl || null,
+      image_url: null,
+      image_storage_bucket: storagePath
+        ? BUSINESS_MEDIA_BUCKET
+        : null,
+      image_storage_path: storagePath,
       image_alt: imageAlt || null,
       sort_order: nextSortOrder,
     })
@@ -1984,6 +2381,15 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
     .single();
 
   if (insertItemError || !createdItem) {
+    if (storagePath) {
+      await removeBusinessItemStorageObject(
+        supabase,
+        businessId,
+        BUSINESS_MEDIA_BUCKET,
+        storagePath,
+      );
+    }
+
     redirectToEditBusiness(
       businessId,
       `No se pudo agregar el item: ${
@@ -2010,15 +2416,25 @@ export async function addBusinessItem(businessId: string, formData: FormData) {
       show_price: showPrice,
       is_featured: isFeatured,
       is_active: true,
-      image_url: imageUrl || null,
+      image_url: null,
+      image_storage_bucket: storagePath
+        ? BUSINESS_MEDIA_BUCKET
+        : null,
+      image_storage_path: storagePath,
       image_alt: imageAlt || null,
       sort_order: nextSortOrder,
     },
   });
 
-  revalidateBusinessEditAndPublic(businessId, business.slug);
+  revalidateBusinessEditAndPublic(
+    businessId,
+    business.slug,
+  );
 
-  redirectToEditBusiness(businessId, "Item agregado correctamente.");
+  redirectToEditBusiness(
+    businessId,
+    "Item agregado correctamente.",
+  );
 }
 export async function submitBusinessForReview(businessId: string) {
   const { supabase, business } = await getOwnedBusinessContextOrRedirect(

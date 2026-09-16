@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 import { getPublicAds } from "@/lib/ads/public-ads";
 import { textMatchesSearch } from "@/lib/search/local-search";
 import Link from "next/link";
@@ -46,6 +47,8 @@ type ProductRow = {
   show_price: boolean;
   is_featured: boolean;
   image_url: string | null;
+  image_storage_bucket: string | null;
+  image_storage_path: string | null;
   image_alt: string | null;
   sort_order: number | null;
   businesses: BusinessRelation | BusinessRelation[] | null;
@@ -164,6 +167,8 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
       show_price,
       is_featured,
       image_url,
+      image_storage_bucket,
+      image_storage_path,
       image_alt,
       sort_order,
       businesses!inner (
@@ -184,7 +189,16 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
     .order("sort_order", { ascending: true })
     .limit(80);
 
-  const allItems = (data ?? []) as unknown as ProductRow[];
+  const allItems = ((data ?? []) as unknown as ProductRow[]).map(
+    (item) => ({
+      ...item,
+      image_url: getPublicStorageUrl({
+        bucket: item.image_storage_bucket,
+        path: item.image_storage_path,
+        legacyUrl: item.image_url,
+      }),
+    }),
+  );
 
   const itemTypeOptions = getUniqueOptions(
     allItems.map((item) => ({

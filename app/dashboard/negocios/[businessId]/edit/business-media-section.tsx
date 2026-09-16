@@ -22,8 +22,8 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
       <h2 className="text-xl font-bold text-gray-950">Imágenes actuales</h2>
 
       <p className="mt-2 text-sm text-gray-600">
-        Edita las URLs de imágenes, el texto alternativo y cuál imagen se usa
-        como portada.
+        Sube imágenes del negocio, edita el texto alternativo y cuál imagen se
+        usa como portada.
       </p>
 
       <FieldGuide
@@ -42,26 +42,31 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
         </h3>
 
         <p className="mt-1 text-sm text-gray-600">
-          Pega una URL pública de imagen. Si el negocio no tiene imágenes, se
-          usará como portada automáticamente.
+          Selecciona una imagen desde tu dispositivo. Si el negocio no tiene
+          imágenes, se usará como portada automáticamente.
         </p>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div>
             <label
-              htmlFor="new-media-url"
+              htmlFor="new-media-file"
               className="block text-sm font-semibold text-gray-800"
             >
-              URL de imagen
+              Imagen
             </label>
 
             <input
-              id="new-media-url"
-              name="url"
-              type="text"
-              placeholder="https://..."
-              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              id="new-media-file"
+              name="image_file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 file:mr-4 file:rounded-md file:border-0 file:bg-gray-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
             />
+
+            <p className="mt-1 text-xs text-gray-500">
+              JPEG, PNG o WebP · máximo 5 MB.
+            </p>
           </div>
 
           <div>
@@ -150,19 +155,24 @@ export function BusinessMediaSection({ business }: BusinessMediaSectionProps) {
                   >
                     <div>
                       <label
-                        htmlFor={`media-url-${media.id}`}
+                        htmlFor={`media-file-${media.id}`}
                         className="block text-sm font-semibold text-gray-800"
                       >
-                        URL de imagen
+                        Reemplazar imagen
                       </label>
 
                       <input
-                        id={`media-url-${media.id}`}
-                        name="url"
-                        type="text"
-                        defaultValue={media.url}
-                        className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                        id={`media-file-${media.id}`}
+                        name="image_file"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 file:mr-4 file:rounded-md file:border-0 file:bg-gray-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
                       />
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        Opcional. Déjalo vacío para conservar la imagen actual.
+                        JPEG, PNG o WebP · máximo 5 MB.
+                      </p>
                     </div>
 
                     <div>

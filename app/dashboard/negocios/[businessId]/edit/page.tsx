@@ -1,3 +1,4 @@
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 // app/dashboard/negocios/[businessId]/edit/page.tsx
 
 import {
@@ -27,7 +28,9 @@ type PageProps = {
 type BusinessMediaRow = {
   id: string;
   type: string;
-  url: string;
+  url: string | null;
+  storage_bucket: string | null;
+  storage_path: string | null;
   alt_text: string | null;
   is_cover: boolean;
   is_active: boolean;
@@ -44,6 +47,8 @@ type BusinessItemRow = {
   show_price: boolean;
   is_featured: boolean;
   image_url: string | null;
+  image_storage_bucket: string | null;
+  image_storage_path: string | null;
   image_alt: string | null;
   is_active: boolean;
   sort_order: number;
@@ -202,6 +207,8 @@ export default async function EditBusinessPage({
         id,
         type,
         url,
+        storage_bucket,
+        storage_path,
         alt_text,
         is_cover,
         is_active,
@@ -217,6 +224,8 @@ export default async function EditBusinessPage({
         show_price,
         is_featured,
         image_url,
+        image_storage_bucket,
+        image_storage_path,
         image_alt,
         is_active,
         sort_order
@@ -294,12 +303,27 @@ export default async function EditBusinessPage({
     published_at: businessRow.published_at,
     hidden_at: businessRow.hidden_at,
     visual_mode: getBusinessVisualMode(businessRow.business_settings),
-    media: (businessRow.business_media ?? []).sort(
-      (a, b) => a.sort_order - b.sort_order,
-    ),
-    items: (businessRow.business_items ?? []).sort(
-      (a, b) => a.sort_order - b.sort_order,
-    ),
+    media: (businessRow.business_media ?? [])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((media) => ({
+        ...media,
+        url:
+          getPublicStorageUrl({
+            bucket: media.storage_bucket,
+            path: media.storage_path,
+            legacyUrl: media.url,
+          }) ?? "",
+      })),
+    items: (businessRow.business_items ?? [])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((item) => ({
+        ...item,
+        image_url: getPublicStorageUrl({
+          bucket: item.image_storage_bucket,
+          path: item.image_storage_path,
+          legacyUrl: item.image_url,
+        }),
+      })),
     contacts: (businessRow.contact_methods ?? []).sort(
       (a, b) => a.sort_order - b.sort_order,
     ),

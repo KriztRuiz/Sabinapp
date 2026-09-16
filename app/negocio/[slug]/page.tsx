@@ -1,3 +1,4 @@
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 // app/negocio/[slug]/page.tsx
 
 import { PublicBusinessLanding } from "@/components/landing/public-business-landing";
@@ -64,7 +65,9 @@ type BusinessQueryRow = {
     | {
         id: string;
         type: string;
-        url: string;
+        url: string | null;
+        storage_bucket: string | null;
+        storage_path: string | null;
         alt_text: string | null;
         is_cover: boolean;
         sort_order: number | null;
@@ -105,6 +108,8 @@ type BusinessQueryRow = {
         show_price: boolean;
         is_featured: boolean;
         image_url: string | null;
+        image_storage_bucket: string | null;
+        image_storage_path: string | null;
         image_alt: string | null;
         sort_order: number | null;
         is_active: boolean | null;
@@ -197,13 +202,27 @@ function mapBusinessToLandingData(
   const photos: PublicLandingPhoto[] = (row.business_media ?? [])
     .filter((photo) => photo.is_active !== false)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map((photo) => ({
-      id: photo.id,
-      type: photo.type,
-      src: photo.url,
-      alt: photo.alt_text ?? row.name,
-      isCover: photo.is_cover,
-    }));
+    .flatMap((photo) => {
+      const src = getPublicStorageUrl({
+        bucket: photo.storage_bucket,
+        path: photo.storage_path,
+        legacyUrl: photo.url,
+      });
+
+      if (!src) {
+        return [];
+      }
+
+      return [
+        {
+          id: photo.id,
+          type: photo.type,
+          src,
+          alt: photo.alt_text ?? row.name,
+          isCover: photo.is_cover,
+        },
+      ];
+    });
 
   const hours: PublicLandingHour[] = (row.business_hours ?? [])
     .sort((a, b) => a.day_of_week - b.day_of_week)
@@ -243,7 +262,11 @@ function mapBusinessToLandingData(
       currency: item.currency,
       showPrice: item.show_price,
       isFeatured: item.is_featured,
-      imageUrl: item.image_url,
+      imageUrl: getPublicStorageUrl({
+        bucket: item.image_storage_bucket,
+        path: item.image_storage_path,
+        legacyUrl: item.image_url,
+      }),
       imageAlt: item.image_alt,
     }));
 
@@ -381,6 +404,8 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
         id,
         type,
         url,
+        storage_bucket,
+        storage_path,
         alt_text,
         is_cover,
         sort_order,
@@ -415,6 +440,8 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
         show_price,
         is_featured,
         image_url,
+        image_storage_bucket,
+        image_storage_path,
         image_alt,
         sort_order,
         is_active
