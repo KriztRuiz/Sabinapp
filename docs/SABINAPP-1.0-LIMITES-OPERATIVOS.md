@@ -1,211 +1,204 @@
 # Sabinapp 1.0 - Límites operativos
 
-Este documento define límites prácticos para mantener Sabinapp 1.0 estable, económico y controlable.
+Última sincronización documental: 2026-09-15
 
-Sabinapp está pensado inicialmente para Sabinas Hidalgo, Nuevo León. No se espera una escala masiva nacional. Como referencia general, la aplicación no debería necesitar soportar más de 30,000 usuarios locales en su primera etapa.
+## 1. Propósito
 
-Aun así, se definen límites para evitar abuso, costos innecesarios y consumo excesivo de almacenamiento o ancho de banda.
+Este documento registra límites y reglas operativas relevantes para mantener Sabinapp 1.0 estable, controlable y económicamente sostenible.
 
-## Principio general
+Se distinguen cuatro conceptos:
 
-Los límites no existen para bloquear el crecimiento de Sabinapp.
+- límite técnico: impuesto realmente por código, PostgreSQL o infraestructura;
+- límite de producto: regla decidida para una función o plan;
+- límite operativo: medida para controlar costos, abuso o ruido;
+- objetivo futuro: capacidad prevista pero todavía no habilitada.
 
-Existen para evitar que pocos negocios, usuarios o imágenes mal optimizadas vuelvan costosa o lenta la plataforma.
+La existencia de una columna o configuración no demuestra por sí sola que una regla esté aplicada completamente en el producto.
 
-El riesgo principal no es sólo la cantidad de usuarios, sino esta combinación:
+---
 
-cantidad de imágenes x peso de imágenes x cantidad de visitas
+## 2. Alcance local
 
-## Infraestructura inicial recomendada
+Sabinapp 1.0 está enfocado inicialmente en Sabinas Hidalgo, Nuevo León.
 
-Para Sabinapp 1.0:
+No se establece una cantidad fija de usuarios como capacidad garantizada.
 
-- Vercel Hobby: $0
-- Supabase Free: $0
-- OpenAI API: pago por uso, sólo para automatización controlada de noticias
-- Dominio: costo anual aparte
+El crecimiento debe evaluarse mediante uso real, almacenamiento, tráfico, consultas, rendimiento y costos.
 
-No se recomienda pagar Vercel Pro ni Supabase Pro antes de validar uso real.
+---
 
-## Cuándo considerar Supabase Pro
+## 3. Planes configurados actualmente
 
-Supabase Pro debería considerarse antes que Vercel Pro si el problema principal empieza a ser:
+PostgreSQL contiene actualmente tres planes activos.
 
-- muchas imágenes de negocios
-- mucho almacenamiento
-- mucho tráfico sirviendo fotos
-- necesidad de mayor tranquilidad operativa
-- base de datos con uso real constante
+### Gratis
 
-La primera mejora de pago recomendada sería:
+- key: `free`;
+- precio configurado: $0 MXN al mes;
+- máximo de fotos configurado: 5;
+- cupones: no;
+- anuncios: no;
+- modos visuales avanzados: no;
+- métricas avanzadas: no.
 
-Vercel Hobby + Supabase Pro
+### Básico
 
-## Cuándo considerar Vercel Pro
+- key: `basic`;
+- precio configurado: $199 MXN al mes;
+- máximo de fotos configurado: 15;
+- cupones: sí;
+- anuncios: no;
+- modos visuales avanzados: sí;
+- métricas avanzadas: no.
 
-Vercel Pro debería considerarse si Sabinapp necesita:
+### Profesional
 
-- cron jobs más frecuentes que una vez al día
-- automatización de noticias cada 4 a 8 horas
-- mayor uso de funciones server-side
-- más margen de tráfico
-- operación comercial más seria
+- key: `pro`;
+- precio configurado: $499 MXN al mes;
+- máximo de fotos configurado: 50;
+- cupones: sí;
+- anuncios: sí;
+- modos visuales avanzados: sí;
+- métricas avanzadas: sí.
 
-No se recomienda pagar Vercel Pro sólo por noticias antes de validar que la sección tenga uso real.
+## 4. Reglas de planes y monetización
 
-## Límites de imágenes por plan
+Las filas `free`, `basic` y `pro` existentes en PostgreSQL forman parte de la infraestructura de producto.
 
-### Negocio gratuito
+Sabinapp 1.0 no comercializa suscripciones pagadas.
 
-- Imagen principal: 1
-- Fotos adicionales: hasta 3
-- Peso máximo sugerido por imagen: 1 MB
-- Formato recomendado: WebP o JPG
+Los únicos pagos aprobados para Sabinapp 1.0 corresponden a campañas publicitarias.
 
-Uso esperado:
+Los precios configurados actualmente para los planes pagados son:
 
-- foto del negocio
-- foto de fachada
-- foto de producto o servicio
-- imagen básica de referencia
+- `basic`: $199 MXN mensuales;
+- `pro`: $499 MXN mensuales.
 
-### Plan de $100 MXN al mes
+Estos precios están reservados para etapas posteriores de Sabinapp 2.0 / 3.0.
 
-- Imagen principal: 1
-- Fotos adicionales: hasta 6
-- Peso máximo sugerido por imagen: 1.5 MB
-- Formato recomendado: WebP o JPG
+Sabinapp 1.0 no utilizará un límite de cantidad de items por plan como regla de producto.
 
-Uso esperado:
+La cantidad de fotos permanece configurada técnicamente por plan y deberá revisarse nuevamente cuando se habiliten comercialmente los planes pagados.
 
-- galería más completa
-- productos destacados
-- menú visual básico
-- evidencia del trabajo o servicio
+No se define aquí un límite de peso para fotografías normales de negocios mientras no exista una regla técnica validada.
 
-### Plan de $400 MXN al mes
+---
 
-- Imagen principal: 1
-- Fotos adicionales: hasta 12
-- Peso máximo sugerido por imagen: 2 MB
-- Formato recomendado: WebP o JPG
+## 5. Negocios temporales
 
-Uso esperado:
+Entre los tipos activos actuales, sólo `ocasiones_especiales` requiere fechas de inicio y fin.
 
-- galería amplia
-- promociones
-- banners internos
-- secciones visuales destacadas
-- campañas temporales
+No requieren fechas temporales:
 
-## Regla práctica para imágenes
+- `comida_preparada`;
+- `comercio`;
+- `servicios_tecnicos`;
+- `servicios_profesionales`;
+- `sitios_de_interes`.
 
-Para Sabinapp 1.0:
+Las fechas temporales no deben solicitarse para negocios permanentes.
 
-- no permitir galerías infinitas
-- no aceptar imágenes enormes sin control
-- evitar fotos directas del celular sin compresión
-- mantener una cantidad de fotos razonable por negocio
-- priorizar imágenes útiles, no volumen
+Actualmente ninguno de estos seis tipos activos está marcado como `is_adult_related = true`.
 
-Un negocio local normalmente no necesita 30 imágenes para comunicar valor.
+---
 
-Necesita pocas imágenes buenas, claras y rápidas de cargar.
+## 6. Publicidad
 
-## Noticias automáticas
+Sabinapp 1.0 contempla dos formatos principales de campaña.
 
-Para Sabinapp 1.0:
+### Campaña A
 
-- Frecuencia inicial: 1 vez al día
-- Publicación automática: sólo con confianza alta
-- Noticias dudosas: guardar como candidatas o revisar antes de publicar
-- Fuente principal: siempre debe existir
-- Resumen: generado por IA, pero basado en fuentes rastreables
+- anuncio fijo integrado en ubicaciones permitidas de Sabinapp;
+- cada campaña contiene exactamente 1 imagen;
+- no utiliza video;
+- imagen máxima: 1000 KB.
 
-La IA no debe ser la fuente de verdad.
+### Campaña B
 
-La IA puede:
+- formato interstitial de alto impacto;
+- puede contener de 1 a 6 imágenes;
+- alternativamente puede utilizar 1 video;
+- no mezcla carrusel de imágenes y video dentro de la misma campaña;
+- probabilidad objetivo: `0.125`, equivalente a 1/8;
+- tiempo obligatorio antes de permitir cerrar: 10 segundos;
+- cooldown configurado: 30 minutos;
+- imagen máxima: 1000 KB;
+- video máximo: 16000 KB.
 
-- buscar
-- comparar
-- clasificar
-- resumir
-- detectar relevancia local
-- sugerir fuente principal
+No existe un máximo de interstitials por sesión como regla de producto.
 
-Pero cada noticia debe conservar una fuente verificable.
+Campaña B continúa deshabilitada mientras `interstitial_enabled = false`.
 
-## Noticias automáticas futuras
+## 7. Sincronización pendiente de publicidad
 
-Cuando Sabinapp tenga uso real, se puede subir a:
+La configuración actual de PostgreSQL todavía contiene valores anteriores que deben sincronizarse con estas decisiones de producto.
 
-- Frecuencia futura: cada 4 a 8 horas
+En particular debe revisarse:
 
-Eso probablemente requerirá:
+- límite de assets de Campaña A;
+- tamaño máximo de imágenes publicitarias;
+- tamaño máximo de videos publicitarios;
+- uso del campo `max_interstitials_per_session`.
 
-- Vercel Pro o servicio externo de cron
-- control de costos de OpenAI API
-- límites por ejecución
-- deduplicación de noticias
-- revisión de fuentes permitidas
-- registro de errores y resultados
+No es necesario eliminar columnas sólo porque una regla deje de utilizarse.
 
-## Límites sugeridos para automatización de noticias
+Por estabilidad, una columna sin uso puede conservarse mientras el código deje de depender de ella.
 
-Por ejecución automática:
+---
 
-- Máximo de fuentes consultadas: 5 a 10
-- Máximo de noticias candidatas analizadas: 10 a 20
-- Máximo de noticias publicadas por ejecución: 3
+## 8. Noticias asistidas por IA
 
-Para Sabinapp 1.0:
+La IA genera candidatos de noticias, pero no decide qué se publica.
 
-- Máximo recomendado de noticias nuevas por día: 3 a 5
+La publicación actual requiere revisión administrativa manual.
 
-Esto evita llenar la app con ruido.
+Durante la generación se filtran candidatos con más de 24 horas de antigüedad.
 
-## Criterio para publicar noticias
+Una noticia ya publicada no se oculta automáticamente únicamente por antigüedad.
 
-Una noticia debería publicarse si cumple al menos una condición:
+Cada noticia debe conservar una fuente rastreable.
 
-- menciona directamente Sabinas Hidalgo
-- afecta directamente a Sabinas Hidalgo
-- involucra municipios cercanos con impacto local
-- habla de clima, seguridad, servicios, movilidad, economía local o avisos comunitarios relevantes
-- proviene de una fuente rastreable
+La generación debe evitar duplicados, contenido sin relevancia local y fuentes dudosas.
 
-No debería publicarse si:
+No se documenta una frecuencia automática de cron como límite vigente mientras dicho proceso no esté implementado y validado.
 
-- es demasiado general
-- no tiene impacto local claro
-- no tiene fuente confiable
-- parece duplicada
-- parece rumor
-- la IA no puede explicar por qué importa a Sabinas Hidalgo
+## 9. Criterio editorial
 
-## Criterio financiero
+Antes de publicar un candidato, administración debe revisar relevancia local, fuente, fecha y posible duplicidad.
 
-Mientras no haya tracción:
+Los puntajes de relevancia y confianza son apoyo para revisión y no sustituyen la decisión administrativa.
 
-- mantener infraestructura gratuita
+---
 
-Cuando haya negocios reales pagando:
+## 10. Infraestructura y costos
 
-- primero considerar Supabase Pro
+La estrategia inicial es mantener costos bajos mientras Sabinapp valida uso real.
 
-Cuando haya más tráfico, más funciones automáticas o necesidad de cron frecuente:
+No se fijan precios de proveedores externos como límites permanentes porque sus planes y tarifas pueden cambiar.
 
-- después considerar Vercel Pro
+Una ampliación de infraestructura debe responder a señales reales como:
 
-## Decisión para Sabinapp 1.0
+- almacenamiento creciente;
+- tráfico sostenido;
+- ancho de banda;
+- carga de base de datos;
+- automatizaciones más frecuentes;
+- requisitos de disponibilidad.
 
-Sabinapp 1.0 debe iniciar con límites prudentes:
+---
 
-- Vercel gratuito
-- Supabase gratuito
-- imágenes limitadas por negocio
-- noticias automáticas máximo una vez al día
-- OpenAI API con bajo consumo
-- sin pagos de infraestructura hasta validar uso real
+## 11. Prevención de abuso
 
-Los límites podrán ampliarse cuando exista uso real, negocios activos y justificación económica.
+Los límites deben proteger almacenamiento, ancho de banda, automatizaciones, publicidad y contenido generado por usuarios.
+
+Los límites deben revisarse con evidencia real de uso y no sólo mediante estimaciones.
+
+---
+
+## 12. Regla documental
+
+Cuando exista conflicto entre este documento y el sistema real, deben comprobarse PostgreSQL y el código activo.
+
+Un valor existente en base de datos puede representar infraestructura preparada y no necesariamente una función habilitada.
+
+Precios, beneficios y límites comerciales deben validarse nuevamente antes del lanzamiento público.

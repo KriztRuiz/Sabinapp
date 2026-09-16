@@ -1,130 +1,188 @@
 # Sabinapp
 
-Sabinapp es un directorio local moderado de negocios de Sabinas Hidalgo, Nuevo León, México.
+Sabinapp es una plataforma local para Sabinas Hidalgo, Nuevo León, enfocada en conectar ciudadanos con negocios, productos, servicios, noticias, clima e información de la comunidad.
 
-El objetivo del proyecto es permitir que negocios locales registren su información, pasen por revisión manual, sean publicados en un directorio público y tengan una página pública automática en `/negocio/[slug]`.
+Sabinapp 1.0 mantiene un modelo moderado: los negocios, campañas publicitarias y noticias sensibles pasan por flujos administrativos antes de publicarse cuando corresponde.
 
 ## Stack
 
-- Next.js 16.2 App Router
-- TypeScript
-- Tailwind CSS
-- Supabase
-- PostgreSQL
-- @supabase/supabase-js
-- @supabase/ssr
+- Next.js 16.3.3 con App Router;
+- React 19.2.4;
+- TypeScript;
+- Tailwind CSS;
+- Supabase;
+- PostgreSQL;
+- `@supabase/supabase-js`;
+- `@supabase/ssr`;
+- OpenAI API para generación asistida de candidatos de noticias.
+
+## Funciones principales
+
+Sabinapp 1.0 incluye actualmente:
+
+- autenticación y recuperación de contraseña;
+- perfiles de usuario;
+- registro y administración de negocios;
+- revisión y publicación administrativa;
+- directorio público de negocios;
+- búsqueda de negocios, productos y servicios;
+- páginas públicas automáticas en `/negocio/[slug]`;
+- contactos, horarios, ubicaciones, imágenes y contenido comercial;
+- menú, productos, servicios y destacados;
+- modos visuales por negocio;
+- clima local;
+- noticias locales asistidas por IA con publicación manual;
+- comentarios y mecanismos de reporte donde están habilitados;
+- campañas publicitarias locales;
+- métricas básicas de publicidad y contactos.
 
 ## Rutas principales
 
-Públicas:
+### Públicas
 
-- `/`
-- `/negocios`
-- `/productos`
-- `/noticias`
-- `/tiempo`
-- `/negocio/[slug]`
+- `/`;
+- `/negocios`;
+- `/productos`;
+- `/noticias`;
+- `/clima`;
+- `/negocio/[slug]`.
 
-Autenticación:
+`/clima` es la ruta canónica del módulo de clima.
 
-- `/auth/login`
-- `/auth/sign-up`
-- `/auth/forgot-password`
-- `/auth/update-password`
-- `/auth/callback`
+`/tiempo` se conserva como ruta de compatibilidad y redirige hacia `/clima`.
 
-Panel:
+### Autenticación
 
-- `/dashboard`
-- `/dashboard/negocios`
-- `/dashboard/negocios/new`
-- `/dashboard/negocios/[businessId]/edit`
-- `/dashboard/negocios/[businessId]/preview`
-- `/dashboard/admin/negocios`
-- `/dashboard/admin/negocios/[businessId]/preview`
+- `/auth/login`;
+- `/auth/sign-up`;
+- `/auth/sign-up-success`;
+- `/auth/forgot-password`;
+- `/auth/update-password`;
+- `/auth/callback`.
 
-Desarrollo:
+### Panel del usuario
 
-- `/dev/db-test`
+- `/dashboard`;
+- `/dashboard/perfil`;
+- `/dashboard/negocios`;
+- `/dashboard/negocios/new`;
+- `/dashboard/negocios/[businessId]/edit`;
+- `/dashboard/negocios/[businessId]/preview`;
+- `/dashboard/anuncios`;
+- `/dashboard/anuncios/nuevo`;
+- `/dashboard/anuncios/[campaignId]/editar`.
 
-La ruta `/dev/db-test` responde 404 en producción.
+### Administración
 
-## Funciones actuales
+- `/dashboard/admin/negocios`;
+- `/dashboard/admin/negocios/[businessId]/preview`;
+- `/dashboard/admin/noticias`;
+- `/dashboard/admin/anuncios`.
 
-- Registro e inicio de sesión.
-- Recuperación de contraseña.
-- Panel de usuario.
-- Registro de negocios como borrador.
-- Edición de contenido del negocio.
-- Edición de imágenes.
-- Edición de contactos.
-- Edición de horarios.
-- Edición de ubicaciones.
-- Edición de productos, servicios, menú y destacados.
-- Vista previa privada del negocio.
-- Envío a revisión.
-- Revisión administrativa.
-- Publicación de negocios aprobados.
-- Directorio público de negocios.
-- Vitrina pública de productos y servicios.
-- Página pública automática por negocio.
-- Modos visuales para el negocio público.
-- Botón flotante de contacto.
+### Desarrollo
 
-## Modos visuales
+- `/dev/db-test`;
+- `/dev/ads-test`.
 
-Los modos actuales son:
+Las rutas de desarrollo no deben considerarse rutas públicas de producción.
 
-- classic
-- modern
-- warm
-- compact
-- elegant
-- impact
+## APIs relevantes
 
-Cada modo visual tiene su propio archivo de estilos y su propio componente visual.
+- `/api/admin/news/generate`;
+- `/api/admin/news/candidates/publish`;
+- `/api/admin/news/candidates/reject`;
+- `/api/ads/events`.
 
-## Comandos principales
+Las operaciones sensibles deben comprobar autenticación, permisos y reglas de servidor; la interfaz no debe ser la única barrera de seguridad.
+
+## Modos visuales de negocios
+
+Los modos disponibles actualmente son:
+
+- `classic`;
+- `modern`;
+- `warm`;
+- `compact`;
+- `elegant`;
+- `impact`.
+
+Los estilos viven en `lib/landing/styles/`.
+
+Cada modo debe mantenerse separado y el selector visual debe permanecer debajo de la sección donde se edita el contenido del negocio.
+
+## Desarrollo local
 
 Instalar dependencias:
 
-`npm install`
+```bash
+npm install
+```
 
-Levantar desarrollo:
+Iniciar desarrollo:
 
-`npm run dev`
+```bash
+npm run dev
+```
 
-Validar código:
+Validar lint:
 
-`npm run lint`
+```bash
+npm run lint
+```
 
 Compilar producción:
 
-`npm run build`
+```bash
+npm run build
+```
 
-Levantar build de producción:
+Iniciar el build de producción:
 
-`npm start`
+```bash
+npm start
+```
 
 ## Variables de entorno
 
-El proyecto requiere variables de Supabase en `.env.local`:
+`.env.example` documenta actualmente:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`;
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
+- `OPENAI_API_KEY`;
+- `SABINAPP_NEWS_AUTO_PUBLISH`;
+- `SABINAPP_NEWS_CRON_SECRET`;
+- `SABINAPP_NEWS_MAX_PUBLISHED_PER_RUN`;
+- `SABINAPP_NEWS_MODEL`.
 
-No subir archivos `.env` al repositorio.
+No subir secretos ni archivos `.env.local` al repositorio.
 
-## Reglas técnicas del proyecto
+En Sabinapp 1.0 la publicación de noticias continúa siendo administrativa y manual aunque exista configuración preparada para automatización.
 
-- Priorizar estabilidad antes que arquitectura perfecta.
-- Separar datos, permisos, interfaces y estilos.
-- No eliminar negocios físicamente desde admin en el flujo normal.
-- Los negocios se ocultan, archivan o despublican según el caso.
-- La autorización del negocio la confirma administración, no el dueño al registrarlo.
-- Los negocios temporales sólo usan fechas cuando el tipo de negocio lo requiere.
-- Antes de cerrar una fase, ejecutar `npm run lint && npm run build`.
+## Reglas técnicas esenciales
 
-## Documentación interna
+- priorizar estabilidad antes que arquitectura perfecta;
+- separar datos, permisos, interfaces y estilos;
+- no eliminar físicamente negocios desde el flujo administrativo normal;
+- archivar, ocultar o despublicar cuando corresponda;
+- la autorización del negocio la confirma administración;
+- las fechas temporales sólo aplican cuando el tipo de negocio lo requiere;
+- proteger operaciones sensibles también en servidor y PostgreSQL;
+- no asumir rutas o estructuras sin comprobar el árbol real;
+- ejecutar `npm run lint` y `npm run build` antes de cerrar una fase técnica.
 
-La documentación interna vive en `docs/`.
+## Documentación del proyecto
+
+La documentación principal vive en `docs/`:
+
+- `00-sabinapp-alcance-mvp-v1.md`: alcance de Sabinapp 1.0;
+- `01-modelo-base-datos.md`: modelo e inventario de datos;
+- `02-fases-desarrollo.md`: árbol maestro de avance y pendientes;
+- `03-reglas-tecnicas.md`: reglas de desarrollo;
+- `04-pruebas-manuales.md`: regresión manual;
+- `05-auditoria-cambios-publicos.md`: auditoría de cambios;
+- `SABINAPP-1.0-ESTADO-LOCAL.md`: estado local actual;
+- `SABINAPP-1.0-LIMITES-OPERATIVOS.md`: límites y reglas operativas;
+- `SABINAPP-ANUNCIOS-1.0.md`: publicidad local;
+- `SABINAPP-NOTICIAS-AUTOMATICAS-1.0.md`: noticias asistidas por IA.
+
+Para conocer qué está terminado y qué falta para lanzamiento, usar `docs/02-fases-desarrollo.md` como referencia principal.

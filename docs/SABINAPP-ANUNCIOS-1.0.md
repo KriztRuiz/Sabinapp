@@ -1,399 +1,266 @@
-# Sabinapp 1.0 - Modelo local de anuncios
+# Sabinapp 1.0 - Sistema local de publicidad
 
-Fecha: 2026-09-03
+Última sincronización documental: 2026-09-15
 
-Este documento define el modelo inicial de anuncios para Sabinapp 1.0.
+## 1. Propósito
 
-La meta no es crear una red publicitaria compleja, sino permitir campañas locales moderadas, vendidas manualmente y controladas por administrador.
+Sabinapp permite campañas publicitarias locales moderadas y administradas dentro de la plataforma.
 
-No preparar despliegue sin confirmación explícita.
+El objetivo de Sabinapp 1.0 no es construir una red publicitaria compleja, sino ofrecer una primera herramienta comercial controlable para negocios locales.
 
-## Principio general
+---
 
-Sabinapp es primero un directorio local útil.
+## 2. Reglas generales
 
-Los anuncios deben generar ingresos, pero sin destruir la confianza de usuarios ni dueños de negocios.
+- toda campaña requiere revisión administrativa;
+- el anunciante no puede autoaprobar una campaña;
+- el anunciante puede reportar un pago, pero no verificarlo;
+- no existe cobro automático en Sabinapp 1.0;
+- no mostrar publicidad en autenticación ni paneles administrativos;
+- no aceptar scripts, HTML o iframes arbitrarios del anunciante;
+- el administrador puede rechazar, pausar o archivar campañas;
+- las campañas vencidas, rechazadas o pausadas no deben mostrarse públicamente.
 
-Reglas base:
+---
 
-- Todo anuncio requiere aprobación manual.
-- No hay publicación automática de anuncios.
-- No hay cobro automático en Sabinapp 1.0.
-- No se muestran anuncios en rutas de autenticación.
-- No se muestran anuncios en dashboard.
-- No se muestran anuncios en paneles admin.
-- No se muestran anuncios de contenido adulto fuera de espacios permitidos.
-- No se deben mostrar anuncios engañosos, fraudulentos o claramente invasivos.
-- El administrador puede pausar o archivar cualquier campaña.
+## 3. Campaña A - Anuncio fijo
 
-## Campaña A - Anuncio fijo local
+Campaña publicitaria integrada en páginas públicas de Sabinapp sin bloquear la navegación.
 
-### Descripción
+Reglas de formato:
 
-Campaña económica para negocios locales que quieren aparecer dentro de Sabinapp sin interrumpir al usuario.
+- tipo interno: `fixed_banner`;
+- exactamente 1 imagen por campaña;
+- no admite video;
+- imagen máxima: 1000 KB;
+- debe identificarse claramente como publicidad o promoción;
+- no reproduce sonido;
+- no abre destinos automáticamente.
 
-Precio inicial sugerido:
+Páginas contempladas:
 
-- $150 MXN
+- `/`;
+- `/negocios`;
+- `/productos`;
+- `/noticias`;
+- `/clima`;
+- `/negocio/[slug]`.
 
-El precio debe quedar configurable, no hardcodeado.
+Una campaña activa puede aparecer también en la página pública del propio negocio anunciante.
 
-### Formato
+---
 
-- Sección fija dentro de páginas públicas.
-- Carrusel simple de imágenes.
-- De 3 a 5 imágenes.
-- Las imágenes se muestran en bucle.
-- El anuncio debe estar claramente identificado como anuncio o promoción.
-- Puede tener botón o enlace hacia:
-  - Página pública del negocio en Sabinapp.
-  - WhatsApp.
-  - Facebook.
-  - Sitio externo aprobado.
-  - Teléfono.
-  - Ubicación.
+## 4. Campaña B - Interstitial
 
-### Páginas elegibles
+Campaña emergente de alto impacto.
 
-Campaña A puede aparecer en:
+Reglas de formato:
 
-- /
-- /negocios
-- /productos
-- /noticias
-- /clima
-- /negocio/[slug]
+- tipo interno: `interstitial`;
+- puede contener de 1 a 6 imágenes;
+- alternativamente puede utilizar 1 video;
+- no mezcla carrusel de imágenes y video en la misma campaña;
+- imagen máxima: 1000 KB;
+- video máximo: 16000 KB;
+- probabilidad objetivo: `0.125`, equivalente a 1/8;
+- espera obligatoria antes de cerrar: 10 segundos;
+- cooldown configurado: 30 minutos.
 
-Motivo especial para /negocio/[slug]:
+No existe un máximo de interstitials por sesión como regla de producto.
 
-- Mostrar anuncios en páginas de negocio puede incentivar al dueño a contratar su propio plan.
-- En Sabinapp 2.0 puede convertirse en beneficio de pago:
-  - Plan de $100 MXN/mes: no recibir anuncios de negocios del mismo rubro en tu página de negocio.
-  - Plan de $400 MXN/mes: no recibir publicidad de negocios ajenos en tu página de negocio, excepto Campaña B si se decide mantenerla global.
+Campaña B continúa deshabilitada mientras `interstitial_enabled = false`.
 
-### Ubicación visual sugerida
+Su activación pública requiere una decisión explícita después de pruebas funcionales y de UX.
 
-Prioridad para Sabinapp 1.0:
+---
 
-- En home: sección intermedia o inferior.
-- En /negocios: entre filtros y resultados, o después de algunos resultados.
-- En /productos: entre filtros y productos, o después de algunos productos.
-- En /noticias: después de noticias recientes o antes del archivo.
-- En /clima: después de lectura práctica.
-- En /negocio/[slug]: debajo del bloque principal o entre secciones secundarias.
+## 5. Estados de campaña
 
-### Reglas de carga
+El enum `ad_campaign_status` contiene:
 
-- No debe bloquear la navegación.
-- No debe tapar contenido.
-- No debe reproducir sonido.
-- No debe abrir enlaces automáticamente.
-- No debe cargar demasiadas imágenes.
-- Debe tener límite de peso por imagen.
+- `draft`;
+- `pending_review`;
+- `approved`;
+- `active`;
+- `paused`;
+- `expired`;
+- `rejected`;
+- `archived`.
 
-### Riesgo UX
+La existencia de un estado no significa que cualquier usuario pueda establecerlo directamente.
 
-Bajo.
+Las transiciones sensibles deben pasar por las operaciones autorizadas correspondientes.
 
-Es el formato más seguro para iniciar monetización sin molestar demasiado.
+---
 
-## Campaña B - Anuncio emergente de alto impacto
+## 6. Tablas actuales
 
-### Descripción
+El módulo utiliza actualmente:
 
-Campaña más agresiva y más cara para anuncios de alto impacto.
+- `ad_campaigns`;
+- `ad_assets`;
+- `ad_payments`;
+- `ad_impressions`;
+- `ad_clicks`;
+- `ad_settings`.
 
-Precio inicial sugerido:
+Estas tablas ya existen; no deben describirse como infraestructura futura.
 
-- $400 MXN por semana
+---
 
-El precio debe quedar configurable, no hardcodeado.
+## 7. Flujo del anunciante
 
-### Formato
+El flujo actual contempla:
 
-- Anuncio emergente al entrar a una página pública elegible.
-- Probabilidad inicial: 1 de cada 8 oportunidades.
-- Puede mostrar:
-  - 1 a 6 imágenes.
-  - O 1 video.
-- El usuario debe esperar 10 segundos antes de poder cerrar.
-- Después de 10 segundos aparece botón de cerrar.
-- El anuncio debe estar claramente marcado como anuncio.
+1. crear una solicitud;
+2. editarla mientras corresponda;
+3. enviarla a revisión;
+4. recibir aprobación, rechazo o solicitud de cambios;
+5. reenviar después de correcciones;
+6. reportar el pago cuando corresponda;
+7. esperar verificación administrativa.
 
-### Páginas elegibles
+El anunciante no puede verificar su propio pago.
 
-Campaña B puede aparecer en páginas públicas:
+---
 
-- /
-- /negocios
-- /productos
-- /noticias
-- /clima
-- /negocio/[slug]
+## 8. Flujo administrativo
 
-No debe aparecer en:
+Administración puede:
 
-- /auth/login
-- /auth/sign-up
-- /auth/forgot-password
-- /auth/update-password
-- /dashboard
-- /dashboard/*
-- /api/*
-- /dev/db-test
+- revisar campañas;
+- aprobar;
+- rechazar;
+- solicitar cambios;
+- revisar el pago reportado;
+- verificar el pago;
+- rechazar el pago;
+- administrar el estado de la campaña según permisos.
 
-### Regla importante de frecuencia
+---
 
-Aunque la idea comercial sea 1 de cada 8, para no dañar la experiencia se recomienda que Sabinapp 1.0 aplique además:
+## 9. Flujo de pago
 
-- Máximo 1 anuncio emergente por sesión.
-- Cooldown mínimo sugerido: 30 minutos.
-- No mostrar inmediatamente después de cerrar otro anuncio.
-- No mostrar si el usuario viene de una acción sensible como login, registro o edición.
+El pago de publicidad permanece manual en Sabinapp 1.0.
 
-Decisión brutalmente honesta:
+El sistema genera y conserva una referencia de pago esperada.
 
-- Un anuncio imposible de cerrar por 10 segundos puede generar ingresos.
-- También puede hacer que usuarios abandonen la página si se usa demasiado.
-- Para Sabinapp 1.0 conviene mantenerlo controlado, medible y fácil de apagar desde admin.
+El dueño puede reportar una referencia bancaria o comprobante textual según el flujo disponible.
 
-### Reglas de video
+Administración verifica o rechaza el pago.
 
-- Sin autoplay con sonido.
-- Video corto.
-- Peso limitado.
-- Debe verse bien en móvil.
-- Debe tener fallback si no carga.
-- No debe bloquear la página indefinidamente.
+Caso positivo validado:
 
-### Riesgo UX
+- el pago queda verificado;
+- la campaña puede pasar a `active`;
+- se establecen fechas de vigencia según corresponda.
 
-Alto.
+Caso negativo validado:
 
-Debe implementarse con interruptor global para poder apagarlo rápido.
+- el pago queda `rejected`;
+- la campaña permanece sin activarse;
+- no comienza la vigencia;
+- no consume días contratados;
+- se conserva el motivo administrativo.
 
-## Estados de campaña
+La fase 118E-3 quedó validada funcionalmente.
 
-Estados sugeridos:
+---
 
-- draft
-- pending_review
-- approved
-- active
-- paused
-- expired
-- rejected
-- archived
+## 10. Destino del anuncio
 
-Significado:
+Una campaña puede dirigir al usuario hacia un destino permitido, como una página del negocio o un método de contacto aprobado.
 
-- draft: creada pero incompleta.
-- pending_review: lista para revisión admin.
-- approved: aprobada pero todavía no activa.
-- active: visible públicamente.
-- paused: detenida temporalmente.
-- expired: terminó por fecha.
-- rejected: rechazada por admin.
-- archived: conservada sólo para historial.
+La resolución de contactos debe respetar contactos válidos del negocio y las reglas del servidor.
 
-## Tipos de campaña
+No aceptar destinos `javascript:` ni redirecciones arbitrarias inseguras.
 
-Valores sugeridos:
+---
 
-- fixed_banner
-- interstitial
+## 11. Métricas
 
-Equivalencias:
+El módulo dispone de infraestructura para:
 
-- fixed_banner = Campaña A
-- interstitial = Campaña B
+- impresiones;
+- clics;
+- campaña;
+- asset;
+- página donde ocurrió la interacción;
+- negocio relacionado cuando corresponda;
+- sesión técnica para control y métricas.
 
-## Entidades futuras de base de datos
+Las métricas avanzadas quedan fuera del cierre inmediato del módulo básico.
 
-No ejecutar SQL todavía.
+---
 
-Tablas candidatas:
-
-### ad_campaigns
-
-Guardaría la información principal de la campaña.
-
-Campos conceptuales:
-
-- id
-- advertiser_business_id
-- title
-- description
-- campaign_type
-- status
-- price_mxn
-- starts_at
-- ends_at
-- target_url
-- placement_scope
-- priority
-- probability_weight
-- max_impressions
-- max_clicks
-- created_by
-- reviewed_by
-- reviewed_at
-- rejection_reason
-- created_at
-- updated_at
-
-### ad_assets
-
-Guardaría imágenes o videos de cada campaña.
-
-Campos conceptuales:
-
-- id
-- campaign_id
-- asset_type
-- url
-- alt_text
-- sort_order
-- duration_seconds
-- is_active
-- created_at
-- updated_at
-
-### ad_impressions
-
-Guardaría vistas de anuncios.
-
-Campos conceptuales:
-
-- id
-- campaign_id
-- asset_id
-- page_path
-- business_id
-- session_key
-- shown_at
-
-### ad_clicks
-
-Guardaría clics en anuncios.
-
-Campos conceptuales:
-
-- id
-- campaign_id
-- asset_id
-- page_path
-- business_id
-- session_key
-- clicked_at
-
-### ad_settings
-
-Guardaría interruptores globales.
-
-Campos conceptuales:
-
-- id
-- fixed_banner_enabled
-- interstitial_enabled
-- interstitial_probability
-- interstitial_cooldown_minutes
-- interstitial_required_seconds
-- updated_at
-
-## Métricas mínimas para Sabinapp 1.0
-
-Mínimo necesario:
-
-- Impresiones por campaña.
-- Clics por campaña.
-- CTR básico.
-- Estado de campaña.
-- Fecha de inicio.
-- Fecha de fin.
-
-No necesario para 1.0:
-
-- Segmentación avanzada.
-- Subasta de anuncios.
-- Pago automático.
-- Facturación automática.
-- Reportes descargables.
-- Panel avanzado para anunciantes.
-
-## Moderación
-
-El administrador debe poder:
-
-- Aprobar campaña.
-- Rechazar campaña.
-- Pausar campaña.
-- Activar campaña.
-- Archivar campaña.
-- Ver imágenes o video.
-- Ver enlace destino.
-- Ver negocio anunciante, si existe.
-- Ver fechas.
-- Ver métricas básicas.
-
-## Seguridad
+## 12. Seguridad y moderación
 
 No permitir:
 
-- Scripts externos del anunciante.
-- HTML personalizado.
-- iframes arbitrarios.
-- URLs javascript.
-- Redirecciones sospechosas.
-- Contenido adulto en espacios generales.
-- Contenido engañoso.
-- Contenido de apuestas, drogas, armas o fraude.
+- scripts del anunciante;
+- HTML personalizado;
+- iframes arbitrarios;
+- URLs `javascript:`;
+- redirecciones sospechosas;
+- fraude;
+- anuncios engañosos;
+- contenido prohibido por las reglas de Sabinapp;
+- exposición de datos privados.
 
-## Decisión para Sabinapp 1.0
+La interfaz no debe ser la única barrera de seguridad.
 
-Implementación recomendada por fases:
+RLS, servidor, RPC, ownership, roles y estados deben proteger las operaciones sensibles según corresponda.
 
-### Fase Ads 1
+---
 
-Crear tablas y políticas RLS.
+## 13. Configuración pendiente de sincronización
 
-### Fase Ads 2
+PostgreSQL todavía conserva algunos valores anteriores en `ad_settings`.
 
-Crear panel admin básico para campañas.
+Las decisiones actuales requieren sincronizar posteriormente:
 
-### Fase Ads 3
+- Campaña A a exactamente 1 asset de imagen;
+- máximo de imagen publicitaria a 1000 KB;
+- máximo de video publicitario a 16000 KB;
+- eliminación del máximo por sesión como regla utilizada por producto.
 
-Mostrar Campaña A en páginas públicas.
+No es obligatorio eliminar columnas antiguas si dejan de utilizarse.
 
-### Fase Ads 4
+Campaña B debe permanecer deshabilitada durante esta sincronización.
 
-Medir impresiones y clics básicos.
+---
 
-### Fase Ads 5
+## 14. Fase 118E-4
 
-Agregar Campaña B con interruptor global apagado por defecto.
+118E-4 se define como la fase de alineación de assets y límites publicitarios.
 
-### Fase Ads 6
+Debe comprobar y sincronizar:
 
-Activar Campaña B sólo después de prueba local y decisión explícita.
+- PostgreSQL;
+- RPC y funciones relacionadas;
+- validaciones de servidor;
+- formularios del dueño;
+- panel administrativo;
+- render público;
+- límites de archivos;
+- comportamiento de Campaña A y Campaña B.
 
-## Decisión de estabilidad
+Campaña B no se activa públicamente como parte automática de 118E-4.
 
-Para Sabinapp 1.0, Campaña A es segura para implementar primero.
+---
 
-Campaña B debe tratarse como función de alto riesgo UX y debe tener:
+## 15. Estado actual
 
-- Interruptor global.
-- Límite por sesión.
-- Cooldown.
-- Tiempo de cierre configurable.
-- Registro de impresiones.
-- Posibilidad de apagarse sin modificar código.
+La infraestructura principal de publicidad, revisión y pagos ya existe.
 
-No preparar despliegue sin confirmación explícita.
+118E-3 está completada y validada.
 
-## Actualizacion 2026-09-07
+118E-4 queda pendiente para sincronizar las nuevas reglas de assets y tamaños.
 
-Para Sabinapp 1.0, los anuncios activos pueden mostrarse tambien dentro de la pagina publica del negocio anunciante. Esto simplifica la primera version, permite que el dueño vea su propia promocion activa y conserva la presion comercial dentro de `/negocio/[slug]`.
+Campaña A es el formato de menor riesgo UX y debe mantenerse como prioridad de lanzamiento.
 
-El parametro `current_business_id` se mantiene en `get_public_ads` para metricas y posibles reglas comerciales futuras, pero ya no excluye automaticamente al negocio anunciante.
+Campaña B permanece preparada pero deshabilitada hasta completar pruebas y una decisión explícita de activación.
+
+El estado exacto de avance debe mantenerse sincronizado con `docs/02-fases-desarrollo.md`.
+
+No preparar despliegue público hasta cerrar los criterios pendientes de Sabinapp 1.0.
