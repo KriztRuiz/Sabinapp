@@ -163,8 +163,8 @@ export default async function NewOwnerAdPage({
         </h1>
 
         <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
-          Promociona uno de tus negocios publicados por
-          $50 MXN al día.
+          Elige entre un anuncio fijo de $50 MXN al día o
+          una campaña emergente de $100 MXN al día.
         </p>
       </header>
 

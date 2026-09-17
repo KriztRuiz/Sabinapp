@@ -1,8 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import { useFormStatus } from "react-dom";
-import { submitOwnerAdRequest } from "../actions";
+import { useRouter } from "next/navigation";
+
+import {
+  uploadInterstitialAssets,
+  validateInterstitialFiles,
+} from "@/lib/ads/interstitial-storage-client";
+
+import {
+  submitOwnerAdRequest,
+  submitOwnerInterstitialAdRequest,
+} from "../actions";
 
 export type AdContactOption = {
   id: string;
@@ -22,16 +36,23 @@ type Props = {
   businesses: AdBusinessOption[];
 };
 
-function SubmitButton() {
+function SubmitButton({
+  isSubmittingInterstitial,
+}: {
+  isSubmittingInterstitial: boolean;
+}) {
   const { pending } = useFormStatus();
+
+  const isSubmitting =
+    pending || isSubmittingInterstitial;
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={isSubmitting}
       className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending
+      {isSubmitting
         ? "Enviando solicitud..."
         : "Enviar anuncio a revisión"}
     </button>
@@ -56,6 +77,13 @@ function getContactTypeLabel(type: string) {
 }
 
 export function AdRequestForm({ businesses }: Props) {
+  const router = useRouter();
+
+  const [campaignType, setCampaignType] =
+    useState<"fixed_banner" | "interstitial">(
+      "fixed_banner",
+    );
+
   const [businessId, setBusinessId] = useState(
     businesses[0]?.id ?? "",
   );
@@ -65,6 +93,21 @@ export function AdRequestForm({ businesses }: Props) {
   const [targetChoice, setTargetChoice] =
     useState("business_page");
 
+  const [
+    interstitialFiles,
+    setInterstitialFiles,
+  ] = useState<File[]>([]);
+
+  const [
+    interstitialError,
+    setInterstitialError,
+  ] = useState<string | null>(null);
+
+  const [
+    isSubmittingInterstitial,
+    setIsSubmittingInterstitial,
+  ] = useState(false);
+
   const selectedBusiness = useMemo(
     () =>
       businesses.find(
@@ -73,9 +116,15 @@ export function AdRequestForm({ businesses }: Props) {
     [businessId, businesses],
   );
 
+  const dailyPrice =
+    campaignType === "interstitial"
+      ? 100
+      : 50;
+
   const totalPrice =
-    Number.isFinite(requestedDays) && requestedDays > 0
-      ? requestedDays * 50
+    Number.isFinite(requestedDays) &&
+    requestedDays > 0
+      ? requestedDays * dailyPrice
       : 0;
 
   function handleBusinessChange(
@@ -85,11 +134,224 @@ export function AdRequestForm({ businesses }: Props) {
     setTargetChoice("business_page");
   }
 
+  function handleInterstitialFilesChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const files = Array.from(
+      event.target.files ?? [],
+    );
+
+    setInterstitialFiles(files);
+
+    setInterstitialError(
+      validateInterstitialFiles(
+        files,
+        "images",
+      ),
+    );
+  }
+
+  async function handleInterstitialSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    if (campaignType !== "interstitial") {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (isSubmittingInterstitial) {
+      return;
+    }
+
+    const validationError =
+      validateInterstitialFiles(
+        interstitialFiles,
+        "images",
+      );
+
+    if (validationError) {
+      setInterstitialError(
+        validationError,
+      );
+
+      return;
+    }
+
+    const sourceFormData =
+      new FormData(event.currentTarget);
+
+    setInterstitialError(null);
+    setIsSubmittingInterstitial(true);
+
+    try {
+      const uploadedAssets =
+        await uploadInterstitialAssets({
+          businessId,
+          files: interstitialFiles,
+          mode: "images",
+        });
+
+      const requestFormData =
+        new FormData();
+
+      const stringFields = [
+        "businessId",
+        "title",
+        "description",
+        "requestedDays",
+        "startMode",
+        "requestedStartAt",
+        "targetChoice",
+      ];
+
+      for (const field of stringFields) {
+        const value =
+          sourceFormData.get(field);
+
+        if (typeof value === "string") {
+          requestFormData.set(
+            field,
+            value,
+          );
+        }
+      }
+
+      requestFormData.set(
+        "assetMode",
+        "images",
+      );
+
+      for (const asset of uploadedAssets) {
+        requestFormData.append(
+          "storagePaths",
+          asset.storagePath,
+        );
+      }
+
+      const result =
+        await submitOwnerInterstitialAdRequest(
+          requestFormData,
+        );
+
+      if (!result.ok) {
+        setInterstitialError(
+          result.error ??
+            "No se pudo enviar la campaña emergente.",
+        );
+
+        return;
+      }
+
+      router.push(
+        "/dashboard/anuncios?message=" +
+          encodeURIComponent(
+            "Tu campaña emergente fue enviada a revisión correctamente.",
+          ),
+      );
+
+      router.refresh();
+    } catch (error) {
+      setInterstitialError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo preparar la campaña emergente.",
+      );
+    } finally {
+      setIsSubmittingInterstitial(false);
+    }
+  }
+
   return (
     <form
-      action={submitOwnerAdRequest}
+      action={
+        campaignType === "fixed_banner"
+          ? submitOwnerAdRequest
+          : undefined
+      }
+      onSubmit={
+        campaignType === "interstitial"
+          ? handleInterstitialSubmit
+          : undefined
+      }
       className="mt-8 space-y-8"
     >
+      <section className="rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-sm">
+        <h2 className="text-xl font-black text-gray-950">
+          Tipo de publicidad
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-gray-700">
+          Elige cómo quieres promocionar tu negocio.
+        </p>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => {
+              setCampaignType("fixed_banner");
+              setInterstitialError(null);
+            }}
+            className={`rounded-2xl border p-5 text-left transition ${
+              campaignType === "fixed_banner"
+                ? "border-violet-600 bg-white ring-2 ring-violet-200"
+                : "border-violet-200 bg-violet-50 hover:bg-white"
+            }`}
+          >
+            <span className="block text-lg font-black text-gray-950">
+              Campaña A
+            </span>
+
+            <span className="mt-1 block text-sm font-bold text-violet-800">
+              Anuncio fijo
+            </span>
+
+            <span className="mt-3 block text-sm text-gray-700">
+              $50 MXN por día
+            </span>
+
+            <span className="mt-1 block text-xs text-gray-500">
+              Una imagen en espacios fijos de Sabinapp.
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCampaignType("interstitial");
+              setInterstitialError(null);
+            }}
+            className={`rounded-2xl border p-5 text-left transition ${
+              campaignType === "interstitial"
+                ? "border-violet-600 bg-white ring-2 ring-violet-200"
+                : "border-violet-200 bg-violet-50 hover:bg-white"
+            }`}
+          >
+            <span className="block text-lg font-black text-gray-950">
+              Campaña B
+            </span>
+
+            <span className="mt-1 block text-sm font-bold text-violet-800">
+              Anuncio emergente
+            </span>
+
+            <span className="mt-3 block text-sm text-gray-700">
+              $100 MXN por día
+            </span>
+
+            <span className="mt-1 block text-xs text-gray-500">
+              De 1 a 6 imágenes. El video se habilitará en la siguiente fase.
+            </span>
+          </button>
+        </div>
+
+        {interstitialError ? (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+            {interstitialError}
+          </div>
+        ) : null}
+      </section>
+
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-black text-gray-950">
           Negocio y contenido
@@ -149,23 +411,56 @@ export function AdRequestForm({ businesses }: Props) {
             />
           </label>
 
-          <label>
-            <span className="text-sm font-bold text-gray-700">
-              Imagen del anuncio
-            </span>
+          {campaignType === "fixed_banner" ? (
+            <label>
+              <span className="text-sm font-bold text-gray-700">
+                Imagen del anuncio
+              </span>
 
-            <input
-              name="imageFile"
-              type="file"
-              required
-              accept="image/jpeg,image/png,image/webp"
-              className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
-            />
+              <input
+                name="imageFile"
+                type="file"
+                required
+                accept="image/jpeg,image/png,image/webp"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
+              />
 
-            <span className="mt-2 block text-xs leading-5 text-gray-500">
-              JPEG, PNG o WebP. Máximo 1000 KB. Esta campaña utiliza exactamente una imagen.
-            </span>
-          </label>
+              <span className="mt-2 block text-xs leading-5 text-gray-500">
+                JPEG, PNG o WebP. Máximo 1000 KB. Esta campaña utiliza exactamente una imagen.
+              </span>
+            </label>
+          ) : (
+            <label>
+              <span className="text-sm font-bold text-gray-700">
+                Imágenes del anuncio emergente
+              </span>
+
+              <input
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleInterstitialFilesChange}
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
+              />
+
+              <span className="mt-2 block text-xs leading-5 text-gray-500">
+                Selecciona de 1 a 6 imágenes JPEG, PNG o WebP. Máximo 1000 KB por imagen.
+              </span>
+
+              {interstitialFiles.length > 0 ? (
+                <span className="mt-2 block text-sm font-semibold text-violet-800">
+                  {interstitialFiles.length} imagen
+                  {interstitialFiles.length === 1
+                    ? ""
+                    : "es"}{" "}
+                  seleccionada
+                  {interstitialFiles.length === 1
+                    ? ""
+                    : "s"}.
+                </span>
+              ) : null}
+            </label>
+          )}
         </div>
       </section>
 
@@ -175,7 +470,7 @@ export function AdRequestForm({ businesses }: Props) {
         </h2>
 
         <p className="mt-2 text-sm text-gray-700">
-          El precio es fijo: $50 MXN por día.
+          El precio es fijo: ${dailyPrice} MXN por día.
         </p>
 
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -213,8 +508,8 @@ export function AdRequestForm({ businesses }: Props) {
 
             <p className="mt-1 text-xs font-semibold text-violet-700">
               {requestedDays > 0
-                ? `${requestedDays} × $50`
-                : "$50 por día"}
+                ? `${requestedDays} × $${dailyPrice}`
+                : `$${dailyPrice} por día`}
             </p>
           </div>
         </div>
@@ -353,7 +648,11 @@ export function AdRequestForm({ businesses }: Props) {
         </p>
       </section>
 
-      <SubmitButton />
+      <SubmitButton
+        isSubmittingInterstitial={
+          isSubmittingInterstitial
+        }
+      />
     </form>
   );
 }
