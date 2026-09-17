@@ -819,7 +819,7 @@ Corrección:
 
 ### J9. 118E-4 - alineación de assets y límites publicitarios
 
-Estado: 🔵 Pendiente de implementación
+Estado: ✅ Completada
 
 Objetivo:
 
@@ -1316,7 +1316,9 @@ Estado: ✅ Documentación sincronizada
 
 Documento: `docs/SABINAPP-ANUNCIOS-1.0.md`
 
-La documentación está sincronizada aunque la fase técnica 118E-4 siga pendiente.
+La fase técnica 118E-4 quedó completada, validada y versionada.
+
+La arquitectura actual utiliza Supabase Storage para nuevos assets de negocios y publicidad, conserva únicamente los assets URL antiguos como historial y mantiene Campaña B deshabilitada hasta completar J10.
 
 ---
 
