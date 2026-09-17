@@ -1,3 +1,4 @@
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 import Link from "next/link";
 import {
   redirect,
@@ -44,7 +45,9 @@ type CampaignRow = {
 type AssetRow = {
   id: string;
   asset_type: string;
-  url: string;
+  url: string | null;
+  storage_bucket: string | null;
+  storage_path: string | null;
   is_active: boolean;
 };
 
@@ -307,7 +310,7 @@ export default async function EditOwnerAdPage({
   } = await supabase
     .from("ad_assets")
     .select(
-      "id, asset_type, url, is_active",
+      "id, asset_type, url, storage_bucket, storage_path, is_active",
     )
     .eq(
       "campaign_id",
@@ -330,6 +333,22 @@ export default async function EditOwnerAdPage({
       "/dashboard/anuncios?error=" +
         encodeURIComponent(
           "No se pudo cargar la imagen del anuncio.",
+        ),
+    );
+  }
+
+  const currentImageUrl =
+    getPublicStorageUrl({
+      bucket: assets[0].storage_bucket,
+      path: assets[0].storage_path,
+      legacyUrl: assets[0].url,
+    });
+
+  if (!currentImageUrl) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          "El anuncio no tiene una imagen válida.",
         ),
     );
   }
@@ -421,7 +440,7 @@ export default async function EditOwnerAdPage({
           targetChoice
         }
         imageUrl={
-          assets[0].url
+          currentImageUrl
         }
         contacts={contacts}
         correctionNotes={

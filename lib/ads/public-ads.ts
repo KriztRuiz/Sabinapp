@@ -1,3 +1,4 @@
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 import { createClient } from "@/lib/supabase/server";
 
 export type PublicAdCampaignType = "fixed_banner" | "interstitial";
@@ -24,7 +25,9 @@ type PublicAdRpcRow = {
   probability_weight: number | string;
   asset_id: string;
   asset_type: PublicAdAssetType;
-  asset_url: string;
+  asset_url: string | null;
+  asset_storage_bucket: string | null;
+  asset_storage_path: string | null;
   asset_alt_text: string | null;
   asset_sort_order: number;
   asset_duration_seconds: number | null;
@@ -75,12 +78,22 @@ function groupPublicAds(rows: PublicAdRpcRow[]) {
   const campaigns = new Map<string, PublicAdCampaign>();
 
   for (const row of rows) {
+    const assetUrl = getPublicStorageUrl({
+      bucket: row.asset_storage_bucket,
+      path: row.asset_storage_path,
+      legacyUrl: row.asset_url,
+    });
+
+    if (!assetUrl) {
+      continue;
+    }
+
     const existingCampaign = campaigns.get(row.campaign_id);
 
     const asset: PublicAdAsset = {
       id: row.asset_id,
       type: row.asset_type,
-      url: row.asset_url,
+      url: assetUrl,
       altText: row.asset_alt_text ?? row.title,
       sortOrder: row.asset_sort_order,
       durationSeconds: row.asset_duration_seconds,
@@ -118,7 +131,7 @@ export async function getPublicAds(params: {
 }): Promise<PublicAdsResult> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.rpc("get_public_ads", {
+  const { data, error } = await supabase.rpc("get_public_ads_storage", {
     requested_placement: params.placement,
     current_business_id: params.currentBusinessId ?? null,
     include_interstitial: params.includeInterstitial ?? false,

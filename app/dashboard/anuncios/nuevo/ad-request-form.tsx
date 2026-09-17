@@ -155,15 +155,15 @@ export function AdRequestForm({ businesses }: Props) {
             </span>
 
             <input
-              name="imageUrl"
-              type="url"
+              name="imageFile"
+              type="file"
               required
+              accept="image/jpeg,image/png,image/webp"
               className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
-              placeholder="https://..."
             />
 
             <span className="mt-2 block text-xs leading-5 text-gray-500">
-              Este anuncio utiliza una sola imagen.
+              JPEG, PNG o WebP. Máximo 1000 KB. Esta campaña utiliza exactamente una imagen.
             </span>
           </label>
         </div>

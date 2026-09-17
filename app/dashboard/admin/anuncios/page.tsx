@@ -1,3 +1,4 @@
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -25,6 +26,8 @@ type AdAssetRow = {
   campaign_id: string;
   asset_type: string;
   url: string;
+  storage_bucket: string | null;
+  storage_path: string | null;
   is_active: boolean;
   sort_order: number | null;
 };
@@ -254,7 +257,7 @@ export default async function AdminAdsPage({
   if (campaignIds.length > 0) {
     const { data: assetsRaw } = await supabase
       .from("ad_assets")
-      .select("id, campaign_id, asset_type, url, is_active, sort_order")
+      .select("id, campaign_id, asset_type, url, storage_bucket, storage_path, is_active, sort_order")
       .in("campaign_id", campaignIds)
       .order("sort_order", { ascending: true });
 
@@ -275,7 +278,17 @@ export default async function AdminAdsPage({
       )
       .in("campaign_id", campaignIds);
 
-    assets = (assetsRaw ?? []) as AdAssetRow[];
+    assets = (
+      (assetsRaw ?? []) as unknown as AdAssetRow[]
+    ).map((asset) => ({
+      ...asset,
+      url:
+        getPublicStorageUrl({
+          bucket: asset.storage_bucket,
+          path: asset.storage_path,
+          legacyUrl: asset.url,
+        }) ?? "",
+    }));
     impressions = (impressionsRaw ?? []) as MetricRow[];
     clicks = (clicksRaw ?? []) as MetricRow[];
     payments = (paymentsRaw ?? []) as AdPaymentRow[];

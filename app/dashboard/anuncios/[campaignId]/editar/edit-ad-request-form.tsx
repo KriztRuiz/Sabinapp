@@ -177,15 +177,14 @@ export function EditAdRequestForm({
             </span>
 
             <input
-              name="imageUrl"
-              type="url"
-              required
-              defaultValue={imageUrl}
+              name="imageFile"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
               className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
             />
 
             <span className="mt-2 block text-xs text-gray-500">
-              El anuncio utiliza exactamente una imagen.
+              JPEG, PNG o WebP. Máximo 1000 KB. Si no seleccionas otro archivo, se conservará la imagen actual.
             </span>
           </label>
 

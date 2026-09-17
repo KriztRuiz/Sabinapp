@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "crypto";
+
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -58,6 +60,81 @@ function parseScheduledDate(value: string) {
 
   return date.toISOString();
 }
+
+
+const AD_ASSETS_BUCKET = "ad-assets";
+const AD_IMAGE_MAX_BYTES = 1000 * 1024;
+
+const AD_IMAGE_EXTENSION_BY_MIME = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+} as const;
+
+function getAdImageFile(
+  formData: FormData,
+  key = "imageFile",
+): File | null {
+  const value = formData.get(key);
+
+  if (!(value instanceof File) || value.size <= 0) {
+    return null;
+  }
+
+  return value;
+}
+
+function getAdImageValidationError(
+  file: File,
+): string | null {
+  if (
+    !Object.prototype.hasOwnProperty.call(
+      AD_IMAGE_EXTENSION_BY_MIME,
+      file.type,
+    )
+  ) {
+    return "La imagen debe ser JPEG, PNG o WebP.";
+  }
+
+  if (file.size > AD_IMAGE_MAX_BYTES) {
+    return "La imagen del anuncio no puede superar 1000 KB.";
+  }
+
+  return null;
+}
+
+function getAdImageExtension(file: File) {
+  return AD_IMAGE_EXTENSION_BY_MIME[
+    file.type as keyof typeof AD_IMAGE_EXTENSION_BY_MIME
+  ];
+}
+
+function createAdStoragePath(
+  businessId: string,
+  file: File,
+) {
+  return `${businessId}/campaigns/${randomUUID()}.${getAdImageExtension(file)}`;
+}
+
+async function cleanupAdStorageObject(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  bucket: string | null | undefined,
+  storagePath: string | null | undefined,
+) {
+  if (
+    bucket !== AD_ASSETS_BUCKET ||
+    !storagePath ||
+    !storagePath.startsWith(`${businessId}/`)
+  ) {
+    return;
+  }
+
+  await supabase.storage
+    .from(AD_ASSETS_BUCKET)
+    .remove([storagePath]);
+}
+
 
 export async function submitOwnerAdRequest(
   formData: FormData,
@@ -156,14 +233,49 @@ export async function submitOwnerAdRequest(
     );
   }
 
-  const imageUrl = getRequiredText(
+  const imageFile = getAdImageFile(
     formData,
-    "imageUrl",
-    "imagen",
+    "imageFile",
   );
 
+  if (!imageFile) {
+    redirectAdError(
+      "Selecciona una imagen para el anuncio.",
+    );
+  }
+
+  const imageValidationError =
+    getAdImageValidationError(imageFile);
+
+  if (imageValidationError) {
+    redirectAdError(imageValidationError);
+  }
+
+  const storagePath = createAdStoragePath(
+    businessId,
+    imageFile,
+  );
+
+  const { error: uploadError } =
+    await supabase.storage
+      .from(AD_ASSETS_BUCKET)
+      .upload(
+        storagePath,
+        imageFile,
+        {
+          contentType: imageFile.type,
+          upsert: false,
+        },
+      );
+
+  if (uploadError) {
+    redirectAdError(
+      `No se pudo subir la imagen del anuncio: ${uploadError.message}`,
+    );
+  }
+
   const { error } = await supabase.rpc(
-    "submit_ad_request",
+    "submit_ad_request_storage",
     {
       p_business_id: businessId,
       p_title: title,
@@ -173,11 +285,19 @@ export async function submitOwnerAdRequest(
       p_requested_start_at: requestedStartAt,
       p_target_kind: targetKind,
       p_target_contact_method_id: targetContactMethodId,
-      p_image_url: imageUrl,
+      p_storage_bucket: AD_ASSETS_BUCKET,
+      p_storage_path: storagePath,
     },
   );
 
   if (error) {
+    await cleanupAdStorageObject(
+      supabase,
+      businessId,
+      AD_ASSETS_BUCKET,
+      storagePath,
+    );
+
     redirectAdError(
       error.message ||
         "No se pudo enviar la solicitud del anuncio.",
@@ -352,13 +472,112 @@ export async function resubmitOwnerAdRequest(
     );
   }
 
-  const imageUrl = getEditRequiredText(
-    "imageUrl",
-    "imagen",
+  const {
+    data: campaignStorageContext,
+    error: campaignStorageError,
+  } = await supabase
+    .from("ad_campaigns")
+    .select("advertiser_business_id")
+    .eq("id", campaignId)
+    .single();
+
+  if (
+    campaignStorageError ||
+    !campaignStorageContext?.advertiser_business_id
+  ) {
+    redirectAdEditError(
+      campaignId,
+      "No se pudo identificar el negocio anunciante.",
+    );
+  }
+
+  const businessId =
+    campaignStorageContext.advertiser_business_id;
+
+  const {
+    data: currentAsset,
+    error: currentAssetError,
+  } = await supabase
+    .from("ad_assets")
+    .select(
+      "id, storage_bucket, storage_path",
+    )
+    .eq("campaign_id", campaignId)
+    .single();
+
+  if (currentAssetError || !currentAsset) {
+    redirectAdEditError(
+      campaignId,
+      "No se pudo localizar la imagen actual del anuncio.",
+    );
+  }
+
+  const imageFile = getAdImageFile(
+    formData,
+    "imageFile",
   );
 
+  let storageBucket =
+    currentAsset.storage_bucket;
+
+  let storagePath =
+    currentAsset.storage_path;
+
+  let uploadedStoragePath: string | null = null;
+
+  if (imageFile) {
+    const imageValidationError =
+      getAdImageValidationError(imageFile);
+
+    if (imageValidationError) {
+      redirectAdEditError(
+        campaignId,
+        imageValidationError,
+      );
+    }
+
+    const newStoragePath =
+      createAdStoragePath(
+        businessId,
+        imageFile,
+      );
+
+    const { error: uploadError } =
+      await supabase.storage
+        .from(AD_ASSETS_BUCKET)
+        .upload(
+          newStoragePath,
+          imageFile,
+          {
+            contentType: imageFile.type,
+            upsert: false,
+          },
+        );
+
+    if (uploadError) {
+      redirectAdEditError(
+        campaignId,
+        `No se pudo subir la nueva imagen: ${uploadError.message}`,
+      );
+    }
+
+    storageBucket = AD_ASSETS_BUCKET;
+    storagePath = newStoragePath;
+    uploadedStoragePath = newStoragePath;
+  }
+
+  if (
+    storageBucket !== AD_ASSETS_BUCKET ||
+    !storagePath
+  ) {
+    redirectAdEditError(
+      campaignId,
+      "Este anuncio todavía utiliza una imagen antigua. Selecciona un archivo nuevo antes de reenviarlo.",
+    );
+  }
+
   const { error } = await supabase.rpc(
-    "resubmit_ad_request",
+    "resubmit_ad_request_storage",
     {
       p_campaign_id: campaignId,
       p_title: title,
@@ -371,15 +590,38 @@ export async function resubmitOwnerAdRequest(
       p_target_kind: targetKind,
       p_target_contact_method_id:
         targetContactMethodId,
-      p_image_url: imageUrl,
+      p_storage_bucket: storageBucket,
+      p_storage_path: storagePath,
     },
   );
 
   if (error) {
+    if (uploadedStoragePath) {
+      await cleanupAdStorageObject(
+        supabase,
+        businessId,
+        AD_ASSETS_BUCKET,
+        uploadedStoragePath,
+      );
+    }
+
     redirectAdEditError(
       campaignId,
       error.message ||
         "No se pudo reenviar el anuncio.",
+    );
+  }
+
+  if (
+    uploadedStoragePath &&
+    currentAsset.storage_bucket &&
+    currentAsset.storage_path
+  ) {
+    await cleanupAdStorageObject(
+      supabase,
+      businessId,
+      currentAsset.storage_bucket,
+      currentAsset.storage_path,
     );
   }
 
