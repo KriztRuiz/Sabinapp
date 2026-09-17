@@ -640,6 +640,314 @@ export async function resubmitOwnerAdRequest(
 }
 
 
+
+export async function submitOwnerInterstitialAdRequest(
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      ok: false,
+      error: "Debes iniciar sesión para solicitar un anuncio.",
+    };
+  }
+
+  const businessId = String(
+    formData.get("businessId") ?? "",
+  ).trim();
+
+  const title = String(
+    formData.get("title") ?? "",
+  ).trim();
+
+  const description = String(
+    formData.get("description") ?? "",
+  ).trim();
+
+  const requestedDaysRaw = String(
+    formData.get("requestedDays") ?? "",
+  ).trim();
+
+  const startMode = String(
+    formData.get("startMode") ?? "",
+  ).trim();
+
+  const requestedStartValue = String(
+    formData.get("requestedStartAt") ?? "",
+  ).trim();
+
+  const targetChoice = String(
+    formData.get("targetChoice") ?? "",
+  ).trim();
+
+  const assetMode = String(
+    formData.get("assetMode") ?? "",
+  ).trim();
+
+  const storagePaths = formData
+    .getAll("storagePaths")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  async function cleanupUploadedAssets() {
+    if (
+      !businessId ||
+      storagePaths.length === 0
+    ) {
+      return;
+    }
+
+    const expectedPrefix =
+      `${businessId}/campaigns/interstitial/`;
+
+    const safePaths = Array.from(
+      new Set(
+        storagePaths.filter((storagePath) =>
+          storagePath.startsWith(expectedPrefix),
+        ),
+      ),
+    );
+
+    if (safePaths.length === 0) {
+      return;
+    }
+
+    await supabase.storage
+      .from(AD_ASSETS_BUCKET)
+      .remove(safePaths);
+  }
+
+  async function fail(message: string) {
+    await cleanupUploadedAssets();
+
+    return {
+      ok: false,
+      error: message,
+    };
+  }
+
+  if (!businessId) {
+    return fail(
+      "No se pudo identificar el negocio anunciante.",
+    );
+  }
+
+  if (
+    title.length < 3 ||
+    title.length > 120
+  ) {
+    return fail(
+      "El título debe tener entre 3 y 120 caracteres.",
+    );
+  }
+
+  if (description.length > 500) {
+    return fail(
+      "La descripción no puede superar 500 caracteres.",
+    );
+  }
+
+  const requestedDays =
+    Number(requestedDaysRaw);
+
+  if (
+    !Number.isInteger(requestedDays) ||
+    requestedDays < 1
+  ) {
+    return fail(
+      "La duración debe ser de al menos un día.",
+    );
+  }
+
+  if (
+    startMode !== "asap" &&
+    startMode !== "scheduled"
+  ) {
+    return fail(
+      "La opción de inicio seleccionada no es válida.",
+    );
+  }
+
+  let requestedStartAt:
+    string | null = null;
+
+  if (startMode === "scheduled") {
+    const validFormat =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(
+        requestedStartValue,
+      );
+
+    if (!validFormat) {
+      return fail(
+        "La fecha y hora de inicio no son válidas.",
+      );
+    }
+
+    const withSeconds =
+      requestedStartValue.length === 16
+        ? `${requestedStartValue}:00`
+        : requestedStartValue;
+
+    const date = new Date(
+      `${withSeconds}-06:00`,
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return fail(
+        "La fecha y hora de inicio no son válidas.",
+      );
+    }
+
+    requestedStartAt =
+      date.toISOString();
+  }
+
+  let targetKind = "";
+  let targetContactMethodId:
+    string | null = null;
+
+  if (targetChoice === "business_page") {
+    targetKind = "business_page";
+  } else if (
+    targetChoice.startsWith("contact:")
+  ) {
+    const contactId = targetChoice
+      .slice("contact:".length)
+      .trim();
+
+    if (!contactId) {
+      return fail(
+        "El contacto seleccionado no es válido.",
+      );
+    }
+
+    targetKind = "contact";
+    targetContactMethodId =
+      contactId;
+  } else {
+    return fail(
+      "El destino seleccionado no es válido.",
+    );
+  }
+
+  if (
+    assetMode !== "images" &&
+    assetMode !== "video"
+  ) {
+    return fail(
+      "El formato del anuncio emergente no es válido.",
+    );
+  }
+
+  if (assetMode === "images") {
+    if (
+      storagePaths.length < 1 ||
+      storagePaths.length > 6
+    ) {
+      return fail(
+        "La campaña emergente debe contener entre 1 y 6 imágenes.",
+      );
+    }
+  }
+
+  if (
+    assetMode === "video" &&
+    storagePaths.length !== 1
+  ) {
+    return fail(
+      "La campaña emergente con video debe contener exactamente un archivo.",
+    );
+  }
+
+  if (
+    new Set(storagePaths).size !==
+    storagePaths.length
+  ) {
+    return fail(
+      "No puedes utilizar el mismo archivo más de una vez.",
+    );
+  }
+
+  const expectedStoragePrefix =
+    `${businessId}/campaigns/interstitial/`;
+
+  if (
+    storagePaths.some(
+      (storagePath) =>
+        !storagePath.startsWith(
+          expectedStoragePrefix,
+        ),
+    )
+  ) {
+    return fail(
+      "Uno de los archivos no pertenece al negocio seleccionado.",
+    );
+  }
+
+  const { error } = await supabase.rpc(
+    "submit_interstitial_ad_request_storage",
+    {
+      p_business_id:
+        businessId,
+
+      p_title:
+        title,
+
+      p_description:
+        description || null,
+
+      p_requested_days:
+        requestedDays,
+
+      p_start_mode:
+        startMode,
+
+      p_requested_start_at:
+        requestedStartAt,
+
+      p_target_kind:
+        targetKind,
+
+      p_target_contact_method_id:
+        targetContactMethodId,
+
+      p_asset_mode:
+        assetMode,
+
+      p_storage_paths:
+        storagePaths,
+    },
+  );
+
+  if (error) {
+    await cleanupUploadedAssets();
+
+    return {
+      ok: false,
+      error:
+        error.message ||
+        "No se pudo enviar la campaña emergente a revisión.",
+    };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/anuncios");
+  revalidatePath(
+    "/dashboard/admin/anuncios",
+  );
+
+  return {
+    ok: true,
+    error: null,
+  };
+}
+
+
 export async function reportOwnerAdPayment(
   formData: FormData,
 ) {
