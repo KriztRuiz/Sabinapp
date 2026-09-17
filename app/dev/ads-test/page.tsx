@@ -90,7 +90,7 @@ export default async function AdsTestPage() {
 
         <p className="mt-3 max-w-3xl text-gray-600">
           Esta ruta verifica que la app pueda leer anuncios activos mediante
-          get_public_ads(). También confirma la regla actual de páginas de negocio.
+          get_public_ads_storage(). También confirma la regla actual de páginas de negocio.
         </p>
       </section>
 
