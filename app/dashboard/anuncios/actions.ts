@@ -948,6 +948,472 @@ export async function submitOwnerInterstitialAdRequest(
 }
 
 
+
+export async function resubmitOwnerInterstitialAdRequest(
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      ok: false,
+      error: "Debes iniciar sesión para corregir el anuncio.",
+    };
+  }
+
+  const campaignId = String(
+    formData.get("campaignId") ?? "",
+  ).trim();
+
+  if (!campaignId) {
+    return {
+      ok: false,
+      error: "No se recibió el identificador del anuncio.",
+    };
+  }
+
+  const {
+    data: campaign,
+    error: campaignError,
+  } = await supabase
+    .from("ad_campaigns")
+    .select(
+      "id, advertiser_business_id, campaign_type, status, correction_requested_at",
+    )
+    .eq("id", campaignId)
+    .single();
+
+  if (
+    campaignError ||
+    !campaign
+  ) {
+    return {
+      ok: false,
+      error: "No se encontró el anuncio.",
+    };
+  }
+
+  if (
+    campaign.campaign_type !==
+    "interstitial"
+  ) {
+    return {
+      ok: false,
+      error:
+        "Este flujo sólo admite campañas emergentes.",
+    };
+  }
+
+  if (
+    campaign.status !== "draft" ||
+    !campaign.correction_requested_at
+  ) {
+    return {
+      ok: false,
+      error:
+        "Este anuncio no está disponible para correcciones.",
+    };
+  }
+
+  const businessId =
+    campaign.advertiser_business_id;
+
+  if (!businessId) {
+    return {
+      ok: false,
+      error:
+        "El anuncio no tiene un negocio anunciante válido.",
+    };
+  }
+
+  const {
+    data: business,
+    error: businessError,
+  } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .eq("status", "published")
+    .eq("is_published", true)
+    .single();
+
+  if (
+    businessError ||
+    !business
+  ) {
+    return {
+      ok: false,
+      error:
+        "El negocio ya no está disponible para publicidad.",
+    };
+  }
+
+  const {
+    data: currentAssetsRaw,
+    error: currentAssetsError,
+  } = await supabase
+    .from("ad_assets")
+    .select(
+      "storage_bucket, storage_path",
+    )
+    .eq("campaign_id", campaignId);
+
+  if (currentAssetsError) {
+    return {
+      ok: false,
+      error:
+        "No se pudieron cargar los archivos actuales del anuncio.",
+    };
+  }
+
+  const currentStoragePaths =
+    (currentAssetsRaw ?? [])
+      .filter(
+        (asset) =>
+          asset.storage_bucket ===
+            AD_ASSETS_BUCKET &&
+          Boolean(asset.storage_path),
+      )
+      .map(
+        (asset) =>
+          asset.storage_path as string,
+      );
+
+  const currentPathSet =
+    new Set(currentStoragePaths);
+
+  const storagePaths = formData
+    .getAll("storagePaths")
+    .map((value) =>
+      String(value).trim(),
+    )
+    .filter(Boolean);
+
+  const expectedStoragePrefix =
+    `${businessId}/campaigns/interstitial/`;
+
+  const newStoragePaths =
+    Array.from(
+      new Set(
+        storagePaths.filter(
+          (storagePath) =>
+            !currentPathSet.has(
+              storagePath,
+            ) &&
+            storagePath.startsWith(
+              expectedStoragePrefix,
+            ),
+        ),
+      ),
+    );
+
+  async function cleanupNewStorage() {
+    if (
+      newStoragePaths.length === 0
+    ) {
+      return;
+    }
+
+    await supabase.storage
+      .from(AD_ASSETS_BUCKET)
+      .remove(newStoragePaths);
+  }
+
+  async function fail(
+    message: string,
+  ) {
+    await cleanupNewStorage();
+
+    return {
+      ok: false,
+      error: message,
+    };
+  }
+
+  const title = String(
+    formData.get("title") ?? "",
+  ).trim();
+
+  const description = String(
+    formData.get("description") ?? "",
+  ).trim();
+
+  const requestedDaysRaw = String(
+    formData.get("requestedDays") ?? "",
+  ).trim();
+
+  const startMode = String(
+    formData.get("startMode") ?? "",
+  ).trim();
+
+  const requestedStartValue = String(
+    formData.get("requestedStartAt") ?? "",
+  ).trim();
+
+  const targetChoice = String(
+    formData.get("targetChoice") ?? "",
+  ).trim();
+
+  const assetMode = String(
+    formData.get("assetMode") ?? "",
+  ).trim();
+
+  if (
+    title.length < 3 ||
+    title.length > 120
+  ) {
+    return fail(
+      "El título debe tener entre 3 y 120 caracteres.",
+    );
+  }
+
+  if (description.length > 500) {
+    return fail(
+      "La descripción no puede superar 500 caracteres.",
+    );
+  }
+
+  const requestedDays =
+    Number(requestedDaysRaw);
+
+  if (
+    !Number.isInteger(requestedDays) ||
+    requestedDays < 1
+  ) {
+    return fail(
+      "La duración debe ser de al menos un día.",
+    );
+  }
+
+  if (
+    startMode !== "asap" &&
+    startMode !== "scheduled"
+  ) {
+    return fail(
+      "La opción de inicio seleccionada no es válida.",
+    );
+  }
+
+  let requestedStartAt:
+    string | null = null;
+
+  if (startMode === "scheduled") {
+    const validFormat =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(
+        requestedStartValue,
+      );
+
+    if (!validFormat) {
+      return fail(
+        "La fecha y hora de inicio no son válidas.",
+      );
+    }
+
+    const withSeconds =
+      requestedStartValue.length === 16
+        ? `${requestedStartValue}:00`
+        : requestedStartValue;
+
+    const date = new Date(
+      `${withSeconds}-06:00`,
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return fail(
+        "La fecha y hora de inicio no son válidas.",
+      );
+    }
+
+    requestedStartAt =
+      date.toISOString();
+  }
+
+  let targetKind = "";
+  let targetContactMethodId:
+    string | null = null;
+
+  if (
+    targetChoice ===
+    "business_page"
+  ) {
+    targetKind =
+      "business_page";
+  } else if (
+    targetChoice.startsWith(
+      "contact:",
+    )
+  ) {
+    const contactId =
+      targetChoice
+        .slice(
+          "contact:".length,
+        )
+        .trim();
+
+    if (!contactId) {
+      return fail(
+        "El contacto seleccionado no es válido.",
+      );
+    }
+
+    targetKind = "contact";
+    targetContactMethodId =
+      contactId;
+  } else {
+    return fail(
+      "El destino seleccionado no es válido.",
+    );
+  }
+
+  if (
+    assetMode !== "images" &&
+    assetMode !== "video"
+  ) {
+    return fail(
+      "El formato del anuncio emergente no es válido.",
+    );
+  }
+
+  if (
+    assetMode === "images" &&
+    (
+      storagePaths.length < 1 ||
+      storagePaths.length > 6
+    )
+  ) {
+    return fail(
+      "La campaña emergente debe contener entre 1 y 6 imágenes.",
+    );
+  }
+
+  if (
+    assetMode === "video" &&
+    storagePaths.length !== 1
+  ) {
+    return fail(
+      "La campaña emergente con video debe contener exactamente un archivo.",
+    );
+  }
+
+  if (
+    new Set(storagePaths).size !==
+    storagePaths.length
+  ) {
+    return fail(
+      "No puedes utilizar el mismo archivo más de una vez.",
+    );
+  }
+
+  if (
+    storagePaths.some(
+      (storagePath) =>
+        !storagePath.startsWith(
+          expectedStoragePrefix,
+        ),
+    )
+  ) {
+    return fail(
+      "Uno de los archivos no pertenece al negocio anunciante.",
+    );
+  }
+
+  const { error } =
+    await supabase.rpc(
+      "resubmit_interstitial_ad_request_storage",
+      {
+        p_campaign_id:
+          campaignId,
+
+        p_title:
+          title,
+
+        p_description:
+          description || null,
+
+        p_requested_days:
+          requestedDays,
+
+        p_start_mode:
+          startMode,
+
+        p_requested_start_at:
+          requestedStartAt,
+
+        p_target_kind:
+          targetKind,
+
+        p_target_contact_method_id:
+          targetContactMethodId,
+
+        p_asset_mode:
+          assetMode,
+
+        p_storage_paths:
+          storagePaths,
+      },
+    );
+
+  if (error) {
+    await cleanupNewStorage();
+
+    return {
+      ok: false,
+      error:
+        error.message ||
+        "No se pudo reenviar la campaña emergente.",
+    };
+  }
+
+  const submittedPathSet =
+    new Set(storagePaths);
+
+  const replacedOldPaths =
+    currentStoragePaths.filter(
+      (storagePath) =>
+        !submittedPathSet.has(
+          storagePath,
+        ),
+    );
+
+  if (
+    replacedOldPaths.length > 0
+  ) {
+    const {
+      error: cleanupOldError,
+    } = await supabase.storage
+      .from(AD_ASSETS_BUCKET)
+      .remove(
+        replacedOldPaths,
+      );
+
+    if (cleanupOldError) {
+      console.error(
+        "No se pudieron eliminar archivos antiguos de la campaña emergente:",
+        cleanupOldError.message,
+      );
+    }
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(
+    "/dashboard/anuncios",
+  );
+  revalidatePath(
+    "/dashboard/admin/anuncios",
+  );
+
+  return {
+    ok: true,
+    error: null,
+  };
+}
+
+
 export async function reportOwnerAdPayment(
   formData: FormData,
 ) {
