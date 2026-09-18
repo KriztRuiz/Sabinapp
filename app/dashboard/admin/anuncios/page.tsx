@@ -966,6 +966,19 @@ export default async function AdminAdsPage({
                                 </div>
                               ) : null}
 
+                              {asset.asset_type === "video" ? (
+                                <div className="mt-3">
+                                  <video
+                                    src={asset.url}
+                                    controls
+                                    preload="metadata"
+                                    className="max-h-96 w-full rounded-xl border border-gray-200 bg-black object-contain"
+                                  >
+                                    Tu navegador no puede reproducir este video.
+                                  </video>
+                                </div>
+                              ) : null}
+
                               <p className="mt-2 break-all text-gray-600">
                                 {asset.url}
                               </p>
