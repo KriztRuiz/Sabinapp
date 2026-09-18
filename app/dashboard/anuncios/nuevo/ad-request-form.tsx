@@ -94,6 +94,13 @@ export function AdRequestForm({ businesses }: Props) {
     useState("business_page");
 
   const [
+    assetMode,
+    setAssetMode,
+  ] = useState<"images" | "video">(
+    "images",
+  );
+
+  const [
     interstitialFiles,
     setInterstitialFiles,
   ] = useState<File[]>([]);
@@ -146,9 +153,17 @@ export function AdRequestForm({ businesses }: Props) {
     setInterstitialError(
       validateInterstitialFiles(
         files,
-        "images",
+        assetMode,
       ),
     );
+  }
+
+  function handleAssetModeChange(
+    mode: "images" | "video",
+  ) {
+    setAssetMode(mode);
+    setInterstitialFiles([]);
+    setInterstitialError(null);
   }
 
   async function handleInterstitialSubmit(
@@ -167,7 +182,7 @@ export function AdRequestForm({ businesses }: Props) {
     const validationError =
       validateInterstitialFiles(
         interstitialFiles,
-        "images",
+        assetMode,
       );
 
     if (validationError) {
@@ -189,7 +204,7 @@ export function AdRequestForm({ businesses }: Props) {
         await uploadInterstitialAssets({
           businessId,
           files: interstitialFiles,
-          mode: "images",
+          mode: assetMode,
         });
 
       const requestFormData =
@@ -219,7 +234,7 @@ export function AdRequestForm({ businesses }: Props) {
 
       requestFormData.set(
         "assetMode",
-        "images",
+        assetMode,
       );
 
       for (const asset of uploadedAssets) {
@@ -430,36 +445,96 @@ export function AdRequestForm({ businesses }: Props) {
               </span>
             </label>
           ) : (
-            <label>
+            <div>
               <span className="text-sm font-bold text-gray-700">
-                Imágenes del anuncio emergente
+                Contenido del anuncio emergente
               </span>
 
-              <input
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleInterstitialFilesChange}
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
-              />
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleAssetModeChange("images")
+                  }
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    assetMode === "images"
+                      ? "border-violet-600 bg-violet-50 ring-2 ring-violet-200"
+                      : "border-gray-200 bg-white hover:border-violet-300"
+                  }`}
+                >
+                  <span className="block font-black text-gray-950">
+                    Imágenes
+                  </span>
 
-              <span className="mt-2 block text-xs leading-5 text-gray-500">
-                Selecciona de 1 a 6 imágenes JPEG, PNG o WebP. Máximo 1000 KB por imagen.
-              </span>
+                  <span className="mt-1 block text-xs leading-5 text-gray-600">
+                    De 1 a 6 JPEG, PNG o WebP. Máximo 1000 KB cada una.
+                  </span>
+                </button>
 
-              {interstitialFiles.length > 0 ? (
-                <span className="mt-2 block text-sm font-semibold text-violet-800">
-                  {interstitialFiles.length} imagen
-                  {interstitialFiles.length === 1
-                    ? ""
-                    : "es"}{" "}
-                  seleccionada
-                  {interstitialFiles.length === 1
-                    ? ""
-                    : "s"}.
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleAssetModeChange("video")
+                  }
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    assetMode === "video"
+                      ? "border-violet-600 bg-violet-50 ring-2 ring-violet-200"
+                      : "border-gray-200 bg-white hover:border-violet-300"
+                  }`}
+                >
+                  <span className="block font-black text-gray-950">
+                    Video
+                  </span>
+
+                  <span className="mt-1 block text-xs leading-5 text-gray-600">
+                    Exactamente 1 MP4 o WebM. Máximo 16000 KB.
+                  </span>
+                </button>
+              </div>
+
+              <label className="mt-5 block">
+                <span className="text-sm font-bold text-gray-700">
+                  {assetMode === "images"
+                    ? "Imágenes del anuncio"
+                    : "Video del anuncio"}
                 </span>
-              ) : null}
-            </label>
+
+                <input
+                  key={assetMode}
+                  type="file"
+                  multiple={assetMode === "images"}
+                  accept={
+                    assetMode === "images"
+                      ? "image/jpeg,image/png,image/webp"
+                      : "video/mp4,video/webm"
+                  }
+                  onChange={handleInterstitialFilesChange}
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
+                />
+
+                <span className="mt-2 block text-xs leading-5 text-gray-500">
+                  {assetMode === "images"
+                    ? "Selecciona de 1 a 6 imágenes. Máximo 1000 KB por imagen."
+                    : "Selecciona exactamente un video MP4 o WebM. Máximo 16000 KB."}
+                </span>
+
+                {interstitialFiles.length > 0 ? (
+                  <span className="mt-2 block text-sm font-semibold text-violet-800">
+                    {assetMode === "images"
+                      ? `${interstitialFiles.length} imagen${
+                          interstitialFiles.length === 1
+                            ? ""
+                            : "es"
+                        } seleccionada${
+                          interstitialFiles.length === 1
+                            ? ""
+                            : "s"
+                        }.`
+                      : "1 video seleccionado."}
+                  </span>
+                ) : null}
+              </label>
+            </div>
           )}
         </div>
       </section>
