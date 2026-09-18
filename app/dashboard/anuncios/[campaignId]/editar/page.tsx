@@ -11,6 +11,11 @@ import {
   type EditAdContact,
 } from "./edit-ad-request-form";
 
+import {
+  EditInterstitialAdRequestForm,
+  type EditInterstitialAsset,
+} from "./edit-interstitial-ad-request-form";
+
 type PageProps = {
   params: Promise<{
     campaignId: string;
@@ -28,6 +33,7 @@ type CampaignRow = {
   title: string;
   description: string | null;
 
+  campaign_type: string;
   status: string;
 
   requested_days: number | null;
@@ -200,6 +206,7 @@ export default async function EditOwnerAdPage({
       advertiser_business_id,
       title,
       description,
+      campaign_type,
       status,
       requested_days,
       start_mode,
@@ -326,29 +333,130 @@ export default async function EditOwnerAdPage({
 
   if (
     assetsError ||
-    assets.length !== 1 ||
-    assets[0].asset_type !== "image"
+    assets.length === 0
   ) {
     redirect(
       "/dashboard/anuncios?error=" +
         encodeURIComponent(
-          "No se pudo cargar la imagen del anuncio.",
+          "No se pudieron cargar los archivos del anuncio.",
         ),
     );
   }
 
-  const currentImageUrl =
-    getPublicStorageUrl({
-      bucket: assets[0].storage_bucket,
-      path: assets[0].storage_path,
-      legacyUrl: assets[0].url,
-    });
+  const resolvedAssets: Array<
+    AssetRow & {
+      public_url: string;
+    }
+  > = [];
 
-  if (!currentImageUrl) {
+  for (const asset of assets) {
+    const publicUrl =
+      getPublicStorageUrl({
+        bucket:
+          asset.storage_bucket,
+        path:
+          asset.storage_path,
+        legacyUrl:
+          asset.url,
+      });
+
+    if (!publicUrl) {
+      redirect(
+        "/dashboard/anuncios?error=" +
+          encodeURIComponent(
+            "Uno de los archivos del anuncio no tiene una URL válida.",
+          ),
+      );
+    }
+
+    resolvedAssets.push({
+      ...asset,
+      public_url: publicUrl,
+    });
+  }
+
+  let currentImageUrl:
+    string | null = null;
+
+  let interstitialAssets:
+    Array<
+      AssetRow & {
+        public_url: string;
+      }
+    > = [];
+
+  if (
+    campaign.campaign_type ===
+    "fixed_banner"
+  ) {
+    if (
+      resolvedAssets.length !== 1 ||
+      resolvedAssets[0].asset_type !==
+        "image"
+    ) {
+      redirect(
+        "/dashboard/anuncios?error=" +
+          encodeURIComponent(
+            "No se pudo cargar la imagen del anuncio.",
+          ),
+      );
+    }
+
+    currentImageUrl =
+      resolvedAssets[0].public_url;
+  } else if (
+    campaign.campaign_type ===
+    "interstitial"
+  ) {
+    interstitialAssets =
+      resolvedAssets.filter(
+        (asset) =>
+          asset.is_active,
+      );
+
+    const validImageMode =
+      interstitialAssets.length >= 1 &&
+      interstitialAssets.length <= 6 &&
+      interstitialAssets.every(
+        (asset) =>
+          asset.asset_type ===
+          "image",
+      );
+
+    const validVideoMode =
+      interstitialAssets.length === 1 &&
+      interstitialAssets[0]
+        .asset_type === "video";
+
+    const usesStorage =
+      interstitialAssets.every(
+        (asset) =>
+          asset.storage_bucket ===
+            "ad-assets" &&
+          Boolean(
+            asset.storage_path,
+          ),
+      );
+
+    if (
+      (
+        !validImageMode &&
+        !validVideoMode
+      ) ||
+      !usesStorage
+    ) {
+      redirect(
+        "/dashboard/anuncios?error=" +
+          encodeURIComponent(
+            "Los archivos actuales de la campaña emergente no tienen una composición válida.",
+          ),
+      );
+    }
+  } else {
     redirect(
       "/dashboard/anuncios?error=" +
         encodeURIComponent(
-          "El anuncio no tiene una imagen válida.",
+          "El tipo de campaña no es compatible con este formulario.",
         ),
     );
   }
@@ -418,35 +526,83 @@ export default async function EditOwnerAdPage({
         </section>
       ) : null}
 
-      <EditAdRequestForm
-        campaignId={campaign.id}
-        businessName={business.name}
-        title={campaign.title}
-        description={
-          campaign.description ?? ""
-        }
-        requestedDays={
-          campaign.requested_days
-        }
-        startMode={
-          campaign.start_mode
-        }
-        requestedStartAt={
-          toDateTimeLocal(
-            campaign.requested_start_at,
-          )
-        }
-        targetChoice={
-          targetChoice
-        }
-        imageUrl={
-          currentImageUrl
-        }
-        contacts={contacts}
-        correctionNotes={
-          campaign.correction_notes
-        }
-      />
+      {campaign.campaign_type ===
+      "interstitial" ? (
+        <EditInterstitialAdRequestForm
+          campaignId={campaign.id}
+          businessId={business.id}
+          businessName={business.name}
+          title={campaign.title}
+          description={
+            campaign.description ?? ""
+          }
+          requestedDays={
+            campaign.requested_days
+          }
+          startMode={
+            campaign.start_mode
+          }
+          requestedStartAt={
+            toDateTimeLocal(
+              campaign.requested_start_at,
+            )
+          }
+          targetChoice={
+            targetChoice
+          }
+          contacts={contacts}
+          correctionNotes={
+            campaign.correction_notes
+          }
+          assets={
+            interstitialAssets.map(
+              (asset): EditInterstitialAsset => ({
+                id: asset.id,
+                assetType:
+                  asset.asset_type === "video"
+                    ? "video"
+                    : "image",
+                storagePath:
+                  asset.storage_path as string,
+                publicUrl:
+                  asset.public_url,
+              }),
+            )
+          }
+        />
+      ) : currentImageUrl ? (
+        <EditAdRequestForm
+          campaignId={campaign.id}
+          businessName={
+            business.name
+          }
+          title={campaign.title}
+          description={
+            campaign.description ?? ""
+          }
+          requestedDays={
+            campaign.requested_days
+          }
+          startMode={
+            campaign.start_mode
+          }
+          requestedStartAt={
+            toDateTimeLocal(
+              campaign.requested_start_at,
+            )
+          }
+          targetChoice={
+            targetChoice
+          }
+          imageUrl={
+            currentImageUrl
+          }
+          contacts={contacts}
+          correctionNotes={
+            campaign.correction_notes
+          }
+        />
+      ) : null}
     </main>
   );
 }
