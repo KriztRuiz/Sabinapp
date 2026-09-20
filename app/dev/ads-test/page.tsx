@@ -1,11 +1,41 @@
 import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
+import { InterstitialAdPreview } from "./interstitial-preview";
+import { createClient } from "@/lib/supabase/server";
+import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 import {
   getPublicAds,
   type PublicAdPlacement,
+  type PublicAdCampaign,
+  type PublicAdAsset,
 } from "@/lib/ads/public-ads";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+type PreviewAssetRow = {
+  id: string;
+  campaign_id: string;
+  asset_type: "image" | "video";
+  url: string | null;
+  storage_bucket: string | null;
+  storage_path: string | null;
+  alt_text: string | null;
+  sort_order: number | null;
+  duration_seconds: number | null;
+};
+
+const interstitialPreviewSpecs = [
+  {
+    id: "c62f7759-dace-4c2e-a332-843521bf0af8",
+    title: "Prueba de Campaña B: 3 imágenes",
+    assetType: "image",
+  },
+  {
+    id: "a189e2ca-c66d-49e8-a9be-dae9d3e2ff68",
+    title: "Prueba de Campaña B: video",
+    assetType: "video",
+  },
+] as const;
 
 const placements: PublicAdPlacement[] = [
   "home",
@@ -22,6 +52,92 @@ export default async function AdsTestPage() {
   if (process.env.NODE_ENV === "production") {
     notFound();
   }
+
+  // Vista previa local: lectura directa de archivos de
+  // campañas de prueba. NO utiliza el lector público,
+  // NO cambia ad_settings y NO registra métricas.
+  const supabase = await createClient();
+
+  const {
+    data: previewAssetsRaw,
+    error: previewError,
+  } = await supabase
+    .from("ad_assets")
+    .select(
+      "id, campaign_id, asset_type, url, storage_bucket, storage_path, alt_text, sort_order, duration_seconds",
+    )
+    .in(
+      "campaign_id",
+      interstitialPreviewSpecs.map((spec) => spec.id),
+    )
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  const previewAssets =
+    (previewAssetsRaw ?? []) as PreviewAssetRow[];
+
+  const previewCampaigns: PublicAdCampaign[] =
+    interstitialPreviewSpecs.flatMap(
+      (spec): PublicAdCampaign[] => {
+        const matching = previewAssets.filter(
+          (asset) => asset.campaign_id === spec.id,
+        );
+
+        const validComposition =
+          spec.assetType === "image"
+            ? matching.length >= 1 &&
+              matching.length <= 6 &&
+              matching.every(
+                (asset) => asset.asset_type === "image",
+              )
+            : matching.length === 1 &&
+              matching[0].asset_type === "video";
+
+        if (!validComposition) {
+          return [];
+        }
+
+        const assets: PublicAdAsset[] =
+          matching.flatMap((asset) => {
+            const url = getPublicStorageUrl({
+              bucket: asset.storage_bucket,
+              path: asset.storage_path,
+              legacyUrl: asset.url,
+            });
+
+            if (!url) {
+              return [];
+            }
+
+            return [{
+              id: asset.id,
+              type: asset.asset_type,
+              url,
+              altText: asset.alt_text ?? spec.title,
+              sortOrder: asset.sort_order ?? 0,
+              durationSeconds: asset.duration_seconds,
+            }];
+          });
+
+        if (assets.length !== matching.length) {
+          return [];
+        }
+
+        return [{
+          id: spec.id,
+          type: "interstitial",
+          title: spec.title,
+          description:
+            "Vista previa local con archivos reales de Supabase Storage.",
+          targetLabel: "Ver negocio",
+          targetUrl: null,
+          advertiserBusinessId: null,
+          priority: 0,
+          probabilityWeight: 1,
+          assets,
+        }];
+      },
+    );
 
   const placementResults = await Promise.all(
     placements.map(async (placement) => {
@@ -93,6 +209,11 @@ export default async function AdsTestPage() {
           get_public_ads_storage(). También confirma la regla actual de páginas de negocio.
         </p>
       </section>
+
+      <InterstitialAdPreview
+        campaigns={previewCampaigns}
+        readError={previewError?.message ?? null}
+      />
 
       <section className="space-y-3">
         <h2 className="text-xl font-bold text-gray-950">
