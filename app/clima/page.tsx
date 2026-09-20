@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
+import { PublicInterstitial } from "@/components/ads/public-interstitial";
 import Link from "next/link";
 import { getPublicAds } from "@/lib/ads/public-ads";
+import { createClient } from "@/lib/supabase/server";
 import {
   getSabinasWeather,
   getWeatherAdvice,
@@ -130,13 +132,23 @@ function getRainStatus(value: number | null | undefined) {
 }
 
 export default async function WeatherPage() {
-  const [weather, adsResult] = await Promise.all([
+  const publicInterstitialEnabled =
+    process.env.SABINAPP_INTERSTITIAL_PUBLIC_ENABLED === "true";
+
+  const supabase = await createClient();
+
+  const [weather, adsResult, authResult] = await Promise.all([
     getSabinasWeather(),
     getPublicAds({
       placement: "clima",
-      includeInterstitial: false,
+      includeInterstitial: publicInterstitialEnabled,
     }),
+    supabase.auth.getUser(),
   ]);
+
+  const {
+    data: { user },
+  } = authResult;
 
   const mainTemperature =
     weather?.temperature ?? weather?.apparentTemperature ?? null;
@@ -170,6 +182,11 @@ export default async function WeatherPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-orange-50 px-6 py-10 text-gray-950">
+      <PublicInterstitial
+        ads={adsResult.ads}
+        enabled={publicInterstitialEnabled}
+        viewerId={user?.id ?? null}
+      />
       <div className="mx-auto max-w-5xl">
         <Link
           href="/"

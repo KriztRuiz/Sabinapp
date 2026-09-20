@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
+import { PublicInterstitial } from "@/components/ads/public-interstitial";
 import Link from "next/link";
 import { NewsCommentForm } from "@/components/news/news-comment-form";
 import { NewsCommentReportForm } from "@/components/news/news-comment-report-form";
@@ -280,12 +281,15 @@ function PublicNewsCard({
 
 export default async function LocalNewsPage({ searchParams }: PageProps) {
   const searchParamsValue = searchParams ? await searchParams : {};
+  const publicInterstitialEnabled =
+    process.env.SABINAPP_INTERSTITIAL_PUBLIC_ENABLED === "true";
+
   const supabase = await createClient();
   const now = new Date().toISOString();
 
   const adsResult = await getPublicAds({
     placement: "noticias",
-    includeInterstitial: false,
+    includeInterstitial: publicInterstitialEnabled,
   });
 
   const {
@@ -375,6 +379,11 @@ export default async function LocalNewsPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
+      <PublicInterstitial
+        ads={adsResult.ads}
+        enabled={publicInterstitialEnabled}
+        viewerId={user?.id ?? null}
+      />
       <div className="mx-auto max-w-5xl">
         <header className="border-b border-orange-100 pb-8">
           <Link
