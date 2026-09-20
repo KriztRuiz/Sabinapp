@@ -237,3 +237,98 @@ export function claimInterstitialOpportunity({
 
   return decision;
 }
+
+// =========================================================
+// J10-7D - Política por tipo de visitante.
+// =========================================================
+
+export const INTERSTITIAL_USER_KEY_PREFIX =
+  "sabinapp:interstitial:user:";
+
+export type ViewerInterstitialInput = {
+  viewerId: string | null;
+
+  eligibleCampaignCount: number;
+
+  nowMs: number;
+
+  randomValue: number;
+
+  storage: InterstitialStorage | null;
+};
+
+/**
+ * Visitante anónimo:
+ * - Probabilidad de 1/8.
+ * - Sin cooldown.
+ * - No necesita localStorage.
+ *
+ * Visitante autenticado:
+ * - Probabilidad de 1/8.
+ * - Cooldown de 30 minutos.
+ * - Clave individual por usuario.
+ */
+export function claimViewerInterstitialOpportunity({
+  viewerId,
+  eligibleCampaignCount,
+  nowMs,
+  randomValue,
+  storage,
+}: ViewerInterstitialInput): InterstitialClaimDecision {
+
+  // -------------------------------------------------------
+  // Visitante sin sesión iniciada.
+  // -------------------------------------------------------
+
+  if (viewerId === null) {
+    return decideInterstitialDisplay({
+      eligibleCampaignCount,
+      nowMs,
+      lastShownAtMs: null,
+      randomValue,
+    });
+  }
+
+  // -------------------------------------------------------
+  // Identidad autenticada válida.
+  // -------------------------------------------------------
+
+  const validUserId =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      .test(viewerId);
+
+  if (!validUserId) {
+    return deny("invalid_input");
+  }
+
+  // -------------------------------------------------------
+  // Separar el cooldown de cada cuenta.
+  // -------------------------------------------------------
+
+  const scopedKey =
+    `${INTERSTITIAL_USER_KEY_PREFIX}${viewerId.toLowerCase()}:last-shown-at:v1`;
+
+  const scopedStorage: InterstitialStorage | null =
+    storage
+      ? {
+          getItem: () =>
+            storage.getItem(scopedKey),
+
+          setItem: (
+            _key,
+            value,
+          ) =>
+            storage.setItem(
+              scopedKey,
+              value,
+            ),
+        }
+      : null;
+
+  return claimInterstitialOpportunity({
+    eligibleCampaignCount,
+    nowMs,
+    randomValue,
+    storage: scopedStorage,
+  });
+}

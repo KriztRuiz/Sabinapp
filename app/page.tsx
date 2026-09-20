@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
+import { PublicInterstitial } from "@/components/ads/public-interstitial";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicAds } from "@/lib/ads/public-ads";
@@ -236,6 +237,9 @@ async function getRandomBusinesses(supabase: SupabaseServerClient) {
 }
 
 export default async function Home() {
+  const publicInterstitialEnabled =
+    process.env.SABINAPP_INTERSTITIAL_PUBLIC_ENABLED === "true";
+
   const supabase = await createClient();
 
   const {
@@ -257,7 +261,7 @@ export default async function Home() {
     getPortalStats(supabase),
     getPublicAds({
       placement: "home",
-      includeInterstitial: false,
+      includeInterstitial: publicInterstitialEnabled,
     }),
   ]);
 
@@ -266,6 +270,11 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#fff7ed] text-gray-950">
+      <PublicInterstitial
+        ads={homeAdsResult.ads}
+        enabled={publicInterstitialEnabled}
+        viewerId={user?.id ?? null}
+      />
       <section className="relative border-b border-orange-100 bg-gradient-to-br from-orange-50 via-white to-sky-50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.20),transparent_35%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.16),transparent_30%)]" />
 
