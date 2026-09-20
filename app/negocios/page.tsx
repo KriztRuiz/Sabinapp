@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FixedAdBanner } from "@/components/ads/fixed-ad-banner";
+import { PublicInterstitial } from "@/components/ads/public-interstitial";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicAds } from "@/lib/ads/public-ads";
 import { textMatchesSearch } from "@/lib/search/local-search";
@@ -189,12 +190,20 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
   const selectedType = String(params.tipo ?? "").trim();
   const selectedCategory = String(params.categoria ?? "").trim();
 
+  const publicInterstitialEnabled =
+    process.env.SABINAPP_INTERSTITIAL_PUBLIC_ENABLED === "true";
+
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const now = new Date().toISOString();
 
   const adsResult = await getPublicAds({
     placement: "negocios",
-    includeInterstitial: false,
+    includeInterstitial: publicInterstitialEnabled,
   });
 
   const { data, error } = await supabase
@@ -283,6 +292,11 @@ export default async function PublicBusinessesPage({ searchParams }: PageProps) 
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-sky-50 px-6 py-10 text-gray-950">
+      <PublicInterstitial
+        ads={adsResult.ads}
+        enabled={publicInterstitialEnabled}
+        viewerId={user?.id ?? null}
+      />
       <div className="mx-auto max-w-7xl">
         <header className="border-b border-orange-100 pb-8">
           <Link
