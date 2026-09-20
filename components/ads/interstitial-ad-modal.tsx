@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -51,6 +52,10 @@ export function InterstitialAdModal({
     activeIndex,
     setActiveIndex,
   ] = useState(0);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const [isMuted, setIsMuted] = useState(true);
 
   const images =
     campaign.assets.filter(
@@ -104,6 +109,23 @@ export function InterstitialAdModal({
           targetUrl,
         )
       : false;
+
+  function toggleSound() {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    const nextMuted = !video.muted;
+
+    if (!nextMuted && video.volume === 0) {
+      video.volume = 1;
+    }
+
+    video.muted = nextMuted;
+    setIsMuted(nextMuted);
+  }
 
   // -------------------------------------------------------
   // Contador obligatorio de 10 segundos.
@@ -266,7 +288,7 @@ export function InterstitialAdModal({
           </button>
         </header>
 
-        <div className="bg-gray-950">
+        <div className="relative bg-gray-950">
           {activeImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -282,19 +304,45 @@ export function InterstitialAdModal({
 
           {activeVideo ? (
             <video
+              ref={videoRef}
               src={
                 activeVideo.url
               }
               autoPlay
-              muted
+              muted={isMuted}
               playsInline
               loop
               controls
               preload="metadata"
+              onVolumeChange={(event) => {
+                const video = event.currentTarget;
+
+                setIsMuted(
+                  video.muted || video.volume === 0,
+                );
+              }}
               className="mx-auto max-h-[50dvh] min-h-48 w-full object-contain"
             >
               Tu navegador no puede reproducir este video.
             </video>
+          ) : null}
+
+          {activeVideo ? (
+            <button
+              type="button"
+              onClick={toggleSound}
+              aria-pressed={!isMuted}
+              aria-label={
+                isMuted
+                  ? "Activar sonido del anuncio"
+                  : "Silenciar anuncio"
+              }
+              className="absolute right-3 top-3 z-10 rounded-full border border-white/40 bg-black/85 px-5 py-3 text-sm font-black text-white shadow-xl backdrop-blur-sm transition hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:right-5 sm:top-5"
+            >
+              {isMuted
+                ? "🔊 Activar sonido"
+                : "🔇 Silenciar"}
+            </button>
           ) : null}
         </div>
 
