@@ -22,6 +22,7 @@ type Props = {
   ads: PublicAdCampaign[];
   enabled: boolean;
   viewerId: string | null;
+  businessId?: string | null;
 };
 
 function hasValidComposition(
@@ -70,6 +71,7 @@ export function PublicInterstitial({
   ads,
   enabled,
   viewerId,
+  businessId = null,
 }: Props) {
   const attemptedRef = useRef(false);
 
@@ -165,6 +167,8 @@ export function PublicInterstitial({
   return (
     <InterstitialAdModal
       campaign={selectedCampaign}
+      trackMetrics={true}
+      businessId={businessId}
       onClose={() =>
         setSelectedCampaign(null)
       }

@@ -512,6 +512,7 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
         ads={adsResult.ads}
         enabled={publicInterstitialEnabled}
         viewerId={user?.id ?? null}
+        businessId={businessRow.id}
       />
 
       <PublicBusinessLanding
