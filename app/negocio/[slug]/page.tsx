@@ -2,6 +2,7 @@ import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
 // app/negocio/[slug]/page.tsx
 
 import { PublicBusinessLanding } from "@/components/landing/public-business-landing";
+import { PublicInterstitial } from "@/components/ads/public-interstitial";
 import {
   getBusinessVisualMode,
   type BusinessSettingsRelation,
@@ -346,13 +347,12 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PublicBusinessPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const searchParamsValue = searchParams ? await searchParams : {};
+
+  const publicInterstitialEnabled =
+    process.env.SABINAPP_INTERSTITIAL_PUBLIC_ENABLED === "true";
+
   const supabase = await createClient();
   const now = new Date().toISOString();
-
-  const adsResult = await getPublicAds({
-    placement: "business_profile",
-    includeInterstitial: false,
-  });
 
   const {
     data: { user },
@@ -475,6 +475,13 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
   }
 
   const businessRow = data as unknown as BusinessQueryRow;
+
+  const adsResult = await getPublicAds({
+    placement: "business_profile",
+    currentBusinessId: businessRow.id,
+    includeInterstitial: publicInterstitialEnabled,
+  });
+
   const reviewUserIds = Array.from(
     new Set((businessRow.reviews ?? []).map((review) => review.user_id)),
   );
@@ -499,5 +506,20 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
     reviewNotice,
   });
 
-  return <PublicBusinessLanding data={landingData} fixedAds={adsResult.ads} />;
+  return (
+    <>
+      <PublicInterstitial
+        ads={adsResult.ads}
+        enabled={publicInterstitialEnabled}
+        viewerId={user?.id ?? null}
+      />
+
+      <PublicBusinessLanding
+        data={landingData}
+        fixedAds={adsResult.ads.filter(
+          (ad) => ad.type === "fixed_banner",
+        )}
+      />
+    </>
+  );
 }
