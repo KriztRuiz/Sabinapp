@@ -12,6 +12,12 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+type PreviewCampaignRow = {
+  id: string;
+  target_label: string | null;
+  target_url: string | null;
+};
+
 type PreviewAssetRow = {
   id: string;
   campaign_id: string;
@@ -76,9 +82,35 @@ export default async function AdsTestPage() {
   const previewAssets =
     (previewAssetsRaw ?? []) as PreviewAssetRow[];
 
+  const {
+    data: previewCampaignsRaw,
+  } = await supabase
+    .from("ad_campaigns")
+    .select(
+      "id, target_label, target_url",
+    )
+    .in(
+      "id",
+      interstitialPreviewSpecs.map(
+        (spec) => spec.id,
+      ),
+    );
+
+  const previewCampaignTargets =
+    (previewCampaignsRaw ?? []) as PreviewCampaignRow[];
+
   const previewCampaigns: PublicAdCampaign[] =
     interstitialPreviewSpecs.flatMap(
       (spec): PublicAdCampaign[] => {
+        const campaignTarget =
+          previewCampaignTargets.find(
+            (campaign) =>
+              campaign.id === spec.id,
+          );
+
+        const configuredTargetUrl =
+          campaignTarget?.target_url?.trim() || null;
+
         const matching = previewAssets.filter(
           (asset) => asset.campaign_id === spec.id,
         );
@@ -129,8 +161,13 @@ export default async function AdsTestPage() {
           title: spec.title,
           description:
             "Vista previa local con archivos reales de Supabase Storage.",
-          targetLabel: "Ver negocio",
-          targetUrl: null,
+          targetLabel: configuredTargetUrl
+            ? campaignTarget?.target_label || "Ver negocio"
+            : "Abrir negocio de prueba",
+
+          targetUrl:
+            configuredTargetUrl ??
+            "/negocio/taqueria-el-primo",
           advertiserBusinessId: null,
           priority: 0,
           probabilityWeight: 1,

@@ -55,7 +55,13 @@ export function InterstitialAdPreview({
     setDecisionMessage(result.reason);
 
     if (result.shouldShow) {
-      setSelectedId(campaigns[0].id);
+      const randomIndex = Math.floor(
+        Math.random() * campaigns.length,
+      );
+
+      setSelectedId(
+        campaigns[randomIndex]?.id ?? null,
+      );
     }
   }
 

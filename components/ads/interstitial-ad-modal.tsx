@@ -10,9 +10,15 @@ import type {
   PublicAdCampaign,
 } from "@/lib/ads/public-ads";
 
+import {
+  sendAdEvent,
+} from "@/lib/ads/ad-events-client";
+
 type Props = {
   campaign: PublicAdCampaign;
   onClose: () => void;
+  trackMetrics?: boolean;
+  businessId?: string | null;
 };
 
 const REQUIRED_SECONDS = 10;
@@ -42,6 +48,8 @@ function getSafeTargetUrl(
 export function InterstitialAdModal({
   campaign,
   onClose,
+  trackMetrics = false,
+  businessId = null,
 }: Props) {
   const [
     remainingSeconds,
@@ -54,6 +62,10 @@ export function InterstitialAdModal({
   ] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const registeredImpressionsRef = useRef(
+    new Set<string>(),
+  );
 
   const [isMuted, setIsMuted] = useState(true);
 
@@ -103,11 +115,10 @@ export function InterstitialAdModal({
       campaign.targetUrl,
     );
 
-  const externalTarget =
+  const opensNewTab =
     targetUrl
-      ? /^https?:\/\//i.test(
-          targetUrl,
-        )
+      ? /^https?:\/\//i.test(targetUrl) ||
+        targetUrl.startsWith("/")
       : false;
 
   function toggleSound() {
@@ -252,6 +263,90 @@ export function InterstitialAdModal({
     canClose,
     onClose,
   ]);
+
+  // -------------------------------------------------------
+  // Archivo visible actualmente.
+  //
+  // En imágenes cambia durante la rotación.
+  // En video permanece fijo.
+  // -------------------------------------------------------
+
+  const activeAsset =
+    activeImage ?? activeVideo;
+
+  // -------------------------------------------------------
+  // Impresiones de Campaña B.
+  //
+  // Cada archivo se registra una sola vez durante
+  // esta aparición del anuncio.
+  // -------------------------------------------------------
+
+  useEffect(() => {
+    if (
+      !trackMetrics ||
+      !validCampaign ||
+      !activeAsset
+    ) {
+      return;
+    }
+
+    const impressionKey =
+      `${campaign.id}:${activeAsset.id}`;
+
+    if (
+      registeredImpressionsRef.current.has(
+        impressionKey,
+      )
+    ) {
+      return;
+    }
+
+    registeredImpressionsRef.current.add(
+      impressionKey,
+    );
+
+    sendAdEvent({
+      eventType: "impression",
+      campaignId: campaign.id,
+      assetId: activeAsset.id,
+      pagePath: window.location.pathname,
+      businessId,
+    });
+  }, [
+    activeAsset,
+    businessId,
+    campaign.id,
+    trackMetrics,
+    validCampaign,
+  ]);
+
+  // -------------------------------------------------------
+  // Clic publicitario.
+  //
+  // Un evento contiene:
+  // - campaignId: clic total de la publicidad.
+  // - assetId: imagen o video que recibió el clic.
+  //
+  // NO enviamos dos eventos por un mismo clic.
+  // -------------------------------------------------------
+
+  function handleAdClick() {
+    if (
+      !trackMetrics ||
+      !validCampaign ||
+      !activeAsset
+    ) {
+      return;
+    }
+
+    sendAdEvent({
+      eventType: "click",
+      campaignId: campaign.id,
+      assetId: activeAsset.id,
+      pagePath: window.location.pathname,
+      businessId,
+    });
+  }
 
   if (!validCampaign) {
     return null;
@@ -400,16 +495,17 @@ export function InterstitialAdModal({
 
           {targetUrl ? (
             <a
+              onClick={handleAdClick}
               href={
                 targetUrl
               }
               target={
-                externalTarget
+                opensNewTab
                   ? "_blank"
                   : undefined
               }
               rel={
-                externalTarget
+                opensNewTab
                   ? "noopener noreferrer"
                   : undefined
               }
