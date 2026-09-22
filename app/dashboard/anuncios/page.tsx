@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { reportOwnerAdPayment } from "./actions";
 
+import {
+  OwnerAdMetrics,
+  type OwnerAdMetric,
+} from "@/components/ads/owner-ad-metrics";
+
 type PageProps = {
   searchParams: Promise<{
     message?: string;
@@ -232,6 +237,49 @@ export default async function DashboardAdsPage({
     payments = (paymentsRaw ?? []) as AdPaymentRow[];
   }
 
+  // La RPC valida la propiedad mediante auth.uid().
+  // No se consultan directamente ad_clicks ni
+  // ad_impressions desde el dashboard del dueño.
+
+  let metricsError: string | null = null;
+
+  const metricsMap = new Map<
+    string,
+    OwnerAdMetric
+  >();
+
+  if (campaignIds.length > 0) {
+    const {
+      data: metricsRaw,
+      error,
+    } = await supabase.rpc(
+      "get_owner_ad_metrics",
+    );
+
+    if (error) {
+      metricsError = error.message;
+    } else {
+      const metrics =
+        (metricsRaw ?? []) as OwnerAdMetric[];
+
+      const allowedCampaignIds =
+        new Set(campaignIds);
+
+      for (const metric of metrics) {
+        if (
+          allowedCampaignIds.has(
+            metric.campaign_id,
+          )
+        ) {
+          metricsMap.set(
+            metric.campaign_id,
+            metric,
+          );
+        }
+      }
+    }
+  }
+
   const businessMap = new Map(
     businesses.map((business) => [business.id, business]),
   );
@@ -302,6 +350,14 @@ export default async function DashboardAdsPage({
       {query.error ? (
         <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
           {query.error}
+        </section>
+      ) : null}
+
+      {metricsError ? (
+        <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          No se pudieron cargar las estadísticas
+          publicitarias. Inténtalo nuevamente
+          más tarde.
         </section>
       ) : null}
 
@@ -457,6 +513,16 @@ export default async function DashboardAdsPage({
                       </dd>
                     </div>
                   </dl>
+
+                  {!metricsError ? (
+                    <OwnerAdMetrics
+                      metrics={
+                        metricsMap.get(
+                          campaign.id,
+                        ) ?? null
+                      }
+                    />
+                  ) : null}
 
                   {payment ? (
                     <section className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
