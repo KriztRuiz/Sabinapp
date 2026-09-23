@@ -14,6 +14,10 @@ import {
   claimViewerInterstitialOpportunity,
 } from "@/lib/ads/interstitial-policy";
 
+import {
+  consumeClickedInterstitialDestination,
+} from "@/lib/ads/interstitial-navigation";
+
 import type {
   PublicAdCampaign,
 } from "@/lib/ads/public-ads";
@@ -95,11 +99,21 @@ export function PublicInterstitial({
         return;
       }
 
+      // Evitar repetir inmediatamente la campaña
+      // que abrió esta página mediante su enlace.
+      // Las demás campañas siguen siendo elegibles.
+
+      const recentlyClickedCampaignId =
+        consumeClickedInterstitialDestination();
+
       const eligible = ads.filter(
-        hasValidComposition,
+        (campaign) =>
+          hasValidComposition(campaign) &&
+          campaign.id !== recentlyClickedCampaignId,
       );
 
       if (eligible.length === 0) {
+        attemptedRef.current = true;
         return;
       }
 

@@ -14,6 +14,10 @@ import {
   sendAdEvent,
 } from "@/lib/ads/ad-events-client";
 
+import {
+  rememberClickedInterstitialDestination,
+} from "@/lib/ads/interstitial-navigation";
+
 type Props = {
   campaign: PublicAdCampaign;
   onClose: () => void;
@@ -378,6 +382,11 @@ export function InterstitialAdModal({
       pagePath: window.location.pathname,
       businessId,
     });
+
+    rememberClickedInterstitialDestination(
+      campaign.id,
+      targetUrl,
+    );
   }
 
   if (!validCampaign) {
