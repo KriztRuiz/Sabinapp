@@ -1,6 +1,6 @@
 # Sabinapp 1.0 - Sistema local de publicidad
 
-Última sincronización documental: 2026-09-15
+Última sincronización documental: 2026-09-23
 
 ## 1. Propósito
 
@@ -68,9 +68,11 @@ Reglas de formato:
 
 No existe un máximo de interstitials por sesión como regla de producto.
 
-Campaña B continúa deshabilitada mientras `interstitial_enabled = false`.
+Campaña B fue implementada y probada en entorno local con imágenes y video.
 
-Su activación pública requiere una decisión explícita después de pruebas funcionales y de UX.
+Permanece deshabilitada mientras `interstitial_enabled = false`. Su activación pública requiere una decisión explícita y pruebas en producción.
+
+En la navegación desde «Ver negocio» hacia una página interna del anunciante, se excluye temporalmente esa misma campaña para evitar su repetición inmediata. Otras campañas elegibles pueden seguir participando.
 
 ---
 
@@ -179,17 +181,20 @@ No aceptar destinos `javascript:` ni redirecciones arbitrarias inseguras.
 
 ## 11. Métricas
 
-El módulo dispone de infraestructura para:
+El módulo registra:
 
-- impresiones;
-- clics;
+- apariciones del anuncio completo;
+- impresiones individuales de imágenes o videos;
+- clics publicitarios;
 - campaña;
 - asset;
 - página donde ocurrió la interacción;
 - negocio relacionado cuando corresponda;
 - sesión técnica para control y métricas.
 
-Las métricas avanzadas quedan fuera del cierre inmediato del módulo básico.
+El propietario puede consultar clics y apariciones totales, además del rendimiento por archivo.
+
+Las apariciones anteriores a la implementación del evento `appearance` no se reconstruyen artificialmente. Las métricas avanzadas adicionales quedan fuera del cierre inmediato del módulo básico.
 
 ---
 
@@ -213,28 +218,31 @@ RLS, servidor, RPC, ownership, roles y estados deben proteger las operaciones se
 
 ---
 
-## 13. Configuración pendiente de sincronización
+## 13. Configuración publicitaria
 
-PostgreSQL todavía conserva algunos valores anteriores en `ad_settings`.
+La fase 118E-4 de alineación de assets y límites publicitarios quedó completada.
 
-Las decisiones actuales requieren sincronizar posteriormente:
+Reglas de producto:
 
-- Campaña A a exactamente 1 asset de imagen;
-- máximo de imagen publicitaria a 1000 KB;
-- máximo de video publicitario a 16000 KB;
-- eliminación del máximo por sesión como regla utilizada por producto.
+- Campaña A: exactamente una imagen;
+- Campaña B: de 1 a 6 imágenes o un video;
+- máximo de imagen publicitaria: 1000 KB;
+- máximo de video publicitario: 16000 KB;
+- probabilidad de Campaña B: 1/8;
+- espera para cerrar Campaña B: 10 segundos;
+- cooldown de 30 minutos para visitantes autenticados;
+- visitantes anónimos sin cooldown;
+- sin máximo por sesión como regla de producto.
 
-No es obligatorio eliminar columnas antiguas si dejan de utilizarse.
-
-Campaña B debe permanecer deshabilitada durante esta sincronización.
+No es obligatorio eliminar columnas históricas que ya no utilice el producto.
 
 ---
 
 ## 14. Fase 118E-4
 
-118E-4 se define como la fase de alineación de assets y límites publicitarios.
+118E-4 quedó completada como fase de alineación de assets y límites publicitarios.
 
-Debe comprobar y sincronizar:
+Se sincronizaron:
 
 - PostgreSQL;
 - RPC y funciones relacionadas;
@@ -245,7 +253,7 @@ Debe comprobar y sincronizar:
 - límites de archivos;
 - comportamiento de Campaña A y Campaña B.
 
-Campaña B no se activa públicamente como parte automática de 118E-4.
+La fase no implicó activar automáticamente Campaña B.
 
 ---
 
@@ -253,13 +261,22 @@ Campaña B no se activa públicamente como parte automática de 118E-4.
 
 La infraestructura principal de publicidad, revisión y pagos ya existe.
 
-118E-3 está completada y validada.
+118E-3 y 118E-4 están completadas.
 
-118E-4 queda pendiente para sincronizar las nuevas reglas de assets y tamaños.
+Campaña A está implementada localmente.
 
-Campaña A es el formato de menor riesgo UX y debe mantenerse como prioridad de lanzamiento.
+Campaña B está implementada y validada localmente con imágenes y video.
 
-Campaña B permanece preparada pero deshabilitada hasta completar pruebas y una decisión explícita de activación.
+J10-7G añadió apariciones reales, impresiones individuales y estadísticas para propietarios.
+
+J10-8 evitó repetir inmediatamente el mismo anuncio al visitar el negocio anunciante.
+
+Commits:
+
+- `f03e40a` - métricas de apariciones;
+- `b698c09` - navegación sin repetición inmediata.
+
+Campaña B está desactivada globalmente después de las pruebas. La activación pública y QA de producción siguen pendientes.
 
 El estado exacto de avance debe mantenerse sincronizado con `docs/02-fases-desarrollo.md`.
 

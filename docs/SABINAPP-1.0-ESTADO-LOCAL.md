@@ -1,6 +1,6 @@
 # Sabinapp 1.0 - Estado local actual
 
-Última sincronización documental: 2026-09-15
+Última sincronización documental: 2026-09-23
 
 ## 1. Propósito
 
@@ -180,7 +180,8 @@ Incluye:
 - campañas;
 - assets;
 - configuración;
-- impresiones;
+- apariciones del anuncio;
+- impresiones por archivo;
 - clics;
 - pagos;
 - revisión administrativa.
@@ -203,7 +204,18 @@ La fase 118E-3 de verificación de pagos quedó validada funcionalmente.
 
 Un pago rechazado no activa la campaña, no inicia vigencia y no consume días contratados.
 
-La Campaña A y la Campaña B forman parte de la evolución definida para Sabinapp 1.0, pero su estado exacto debe consultarse en `docs/02-fases-desarrollo.md` y `docs/SABINAPP-ANUNCIOS-1.0.md`.
+Campaña A y Campaña B están implementadas localmente.
+
+Campaña B superó pruebas reales con imágenes y video. Las estadísticas distinguen apariciones, impresiones por archivo y clics. Se comprobó que «Ver negocio» no repite inmediatamente la misma campaña en la página del anunciante.
+
+Commits de cierre:
+
+- `f03e40a` - apariciones y estadísticas;
+- `b698c09` - navegación publicitaria sin repetición inmediata.
+
+Campaña B permanece desactivada globalmente después de las pruebas. La activación pública y QA de producción siguen pendientes.
+
+El detalle se mantiene en `docs/02-fases-desarrollo.md` y `docs/SABINAPP-ANUNCIOS-1.0.md`.
 
 ---
 
@@ -244,7 +256,7 @@ Los pendientes exactos se mantienen en el árbol maestro `docs/02-fases-desarrol
 
 Las áreas que todavía requieren cierre incluyen, según corresponda:
 
-- publicidad restante;
+- decisión de activación pública y QA de publicidad en producción;
 - revisión final de comunidad;
 - seguridad y prevención de abuso;
 - auditoría final de RLS;

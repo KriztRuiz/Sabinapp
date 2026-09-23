@@ -693,7 +693,7 @@ Incluye entidades y lógica para:
 
 ### J2. Campaña A - publicidad fija
 
-Estado: 🟡 En progreso avanzado
+Estado: ✅ Implementada y probada localmente; QA de producción pendiente
 
 Objetivo:
 
@@ -860,7 +860,7 @@ Documento de referencia:
 
 ### J10. Campaña B - anuncio emergente
 
-Estado: 🔵 Comprometido para 1.0, todavía deshabilitado
+Estado: ✅ Implementada y probada localmente; activación pública pendiente de decisión
 
 Definición actual:
 
@@ -873,29 +873,47 @@ Definición actual:
 - 10 segundos antes de permitir cerrar;
 - cooldown de 30 minutos;
 - sin máximo por sesión como regla de producto;
-- métricas de impresiones y clics;
+- métricas de apariciones, impresiones por archivo y clics;
 - moderación administrativa;
 - interruptor global.
 
-Debe permanecer con `interstitial_enabled = false` hasta completar pruebas y tomar una decisión explícita de activación.
+Pruebas locales completadas:
 
-No está marcada como terminada.
+- Campaña B con tres imágenes: PASS;
+- Campaña B con video: 8/8 PASS;
+- apariciones separadas de impresiones individuales: PASS;
+- métricas visibles para el propietario: PASS;
+- exclusión temporal del mismo anuncio tras pulsar «Ver negocio»: 5/5 PASS.
+
+Commits relacionados:
+
+- `f03e40a` - apariciones reales y estadísticas;
+- `b698c09` - evitar repetición inmediata en el negocio anunciante.
+
+`interstitial_enabled` permanece en `false`. La activación pública requiere una decisión explícita y validación en producción.
+
 ---
 
 ### J11. Métricas publicitarias
 
-Estado: 🟡 Base implementada
+Estado: ✅ Implementadas y probadas localmente; QA de producción pendiente
 
 Endpoint:
 
 `/api/ads/events`
 
-Debe comprobarse antes del lanzamiento:
+Implementado y validado localmente:
 
-- impresión;
-- clic;
-- deduplicación cuando corresponda;
-- comportamiento en producción.
+- aparición del anuncio completo;
+- impresión individual de imagen o video;
+- clic publicitario asociado al archivo;
+- estadísticas por campaña y archivo;
+- consulta restringida de métricas del propietario.
+
+Pendiente antes del lanzamiento:
+
+- comprobar comportamiento en producción;
+- repetir prueba de regresión publicitaria.
 
 ---
 
@@ -1455,18 +1473,17 @@ Estado: 🔵 Pendiente
 
 Los principales bloques todavía abiertos son:
 
-1. terminar el sistema publicitario comprometido para 1.0;
-2. auditar comentarios, reseñas y reportes;
-3. cerrar controles de autenticidad y abuso;
-4. realizar auditoría final de permisos y RLS;
-5. cerrar SEO local;
-6. revisar experiencia móvil;
-7. decidir situación final de `/tiempo`;
-8. proteger o retirar rutas `/dev`;
-9. limpiar datos de desarrollo;
-10. preparar contenido inicial de lanzamiento;
-11. sincronizar documentación;
-12. preparar y validar despliegue de producción.
+1. auditar comentarios, reseñas y reportes;
+2. cerrar controles de autenticidad y abuso;
+3. realizar auditoría final de permisos y RLS;
+4. cerrar SEO local;
+5. revisar experiencia móvil;
+6. decidir situación final de `/tiempo`;
+7. proteger o retirar rutas `/dev`;
+8. limpiar datos de desarrollo;
+9. preparar contenido inicial de lanzamiento;
+10. repetir QA publicitario y decidir activación pública de Campaña B;
+11. preparar y validar despliegue de producción.
 
 Este listado debe reducirse conforme las áreas obtengan PASS.
 
@@ -1476,25 +1493,25 @@ Este listado debe reducirse conforme las áreas obtengan PASS.
 
 Última fase técnica cerrada:
 
-**118E-3 — Verificación manual de pagos de publicidad**
+**J10-8 — Evitar repetición inmediata del anuncio al visitar el negocio anunciante**
 
 Estado:
 
-✅ 100% PASS
+✅ PASS en entorno local
 
 Commit:
 
-`45d1ded feat: complete ad payment verification flow`
+`b698c09 fix: evitar repetir anuncio al visitar negocio anunciante`
 
-La siguiente fase técnica del módulo publicitario es:
+La fase J10-7G registró apariciones reales y estadísticas:
 
-**118E-4 — Alineación de assets y límites publicitarios**
+`f03e40a feat: registrar apariciones reales de anuncios`
 
-118E-4 debe sincronizar las reglas definidas en:
+La siguiente área de cierre para Sabinapp 1.0 es:
 
-`docs/SABINAPP-ANUNCIOS-1.0.md`
+**M — Seguridad y permisos**
 
-Campaña B debe permanecer deshabilitada durante 118E-4.
+El módulo publicitario permanece desactivado globalmente en la base de desarrollo después de las pruebas. La decisión de activación pública sigue pendiente.
 ---
 
 # 6. Regla para futuras actualizaciones semanales
