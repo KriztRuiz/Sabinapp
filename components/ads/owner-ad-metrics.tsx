@@ -8,6 +8,7 @@ export type OwnerAdMetricAsset = {
 
 export type OwnerAdMetric = {
   campaign_id: string;
+  total_appearances: number | string;
   total_impressions: number | string;
   total_clicks: number | string;
   assets: OwnerAdMetricAsset[];
@@ -66,19 +67,21 @@ export function OwnerAdMetrics({
 
         <div className="rounded-xl bg-white p-4">
           <p className="text-sm font-semibold text-gray-600">
-            Impresiones de archivos
+            Apariciones del anuncio
           </p>
 
           <p className="mt-2 text-3xl font-black text-violet-700">
-            {formatCount(metrics.total_impressions)}
+            {formatCount(metrics.total_appearances)}
           </p>
         </div>
       </div>
 
       <p className="mt-3 text-xs leading-5 text-gray-600">
-        Las impresiones cuentan imágenes o videos
-        mostrados. Una aparición con varias imágenes
-        puede generar varias impresiones.
+        Cada aparición cuenta una vez que se muestra
+        el anuncio completo. Las apariciones anteriores
+        a esta actualización no se reconstruyen.
+        Las impresiones individuales se conservan
+        debajo, por imagen o video.
       </p>
 
       {metrics.assets.length > 0 ? (

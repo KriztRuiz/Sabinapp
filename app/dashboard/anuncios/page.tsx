@@ -253,7 +253,7 @@ export default async function DashboardAdsPage({
       data: metricsRaw,
       error,
     } = await supabase.rpc(
-      "get_owner_ad_metrics",
+      "get_owner_ad_metrics_v2",
     );
 
     if (error) {

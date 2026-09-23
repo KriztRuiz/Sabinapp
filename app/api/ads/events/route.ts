@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-type AdEventType = "impression" | "click";
+type AdEventType = "appearance" | "impression" | "click";
 
 type AdEventBody = {
   eventType?: unknown;
@@ -70,7 +70,7 @@ function readOptionalUuid(value: unknown) {
 }
 
 function readEventType(value: unknown): AdEventType | null {
-  if (value === "impression" || value === "click") {
+  if (value === "appearance" || value === "impression" || value === "click") {
     return value;
   }
 
@@ -113,12 +113,25 @@ export async function POST(request: NextRequest) {
   const body = parsedBody as AdEventBody;
   const eventType = readEventType(body.eventType);
   const campaignId = readUuid(body.campaignId);
-  const assetId = readUuid(body.assetId);
+  const assetId =
+    body.assetId === null
+      ? null
+      : readUuid(body.assetId);
   const pagePath = readString(body.pagePath, 300);
   const businessId = readOptionalUuid(body.businessId);
   const sessionKey = readOptionalString(body.sessionKey, 120);
 
-  if (!eventType || !campaignId || !assetId || !pagePath) {
+  const validAsset =
+    eventType === "appearance"
+      ? body.assetId === null
+      : assetId !== null;
+
+  if (
+    !eventType ||
+    !campaignId ||
+    !validAsset ||
+    !pagePath
+  ) {
     return NextResponse.json(
       {
         ok: false,
@@ -147,6 +160,15 @@ export async function POST(request: NextRequest) {
     page_path: pagePath,
     business_id: businessId,
     session_key: sessionKey,
+
+    ...(eventType !== "click"
+      ? {
+          impression_kind:
+            eventType === "appearance"
+              ? "appearance"
+              : "asset",
+        }
+      : {}),
   });
 
   if (error) {

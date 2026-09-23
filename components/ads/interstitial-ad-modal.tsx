@@ -67,6 +67,8 @@ export function InterstitialAdModal({
     new Set<string>(),
   );
 
+  const registeredAppearanceRef = useRef(false);
+
   const [isMuted, setIsMuted] = useState(true);
 
   const images =
@@ -273,6 +275,36 @@ export function InterstitialAdModal({
 
   const activeAsset =
     activeImage ?? activeVideo;
+
+  // Registrar una sola aparición por apertura
+  // real de este anuncio emergente.
+
+  useEffect(() => {
+    if (
+      !trackMetrics ||
+      !validCampaign ||
+      !activeAsset ||
+      registeredAppearanceRef.current
+    ) {
+      return;
+    }
+
+    registeredAppearanceRef.current = true;
+
+    sendAdEvent({
+      eventType: "appearance",
+      campaignId: campaign.id,
+      assetId: null,
+      pagePath: window.location.pathname,
+      businessId,
+    });
+  }, [
+    activeAsset,
+    businessId,
+    campaign.id,
+    trackMetrics,
+    validCampaign,
+  ]);
 
   // -------------------------------------------------------
   // Impresiones de Campaña B.

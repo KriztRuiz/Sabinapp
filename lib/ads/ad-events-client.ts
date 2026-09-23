@@ -1,11 +1,11 @@
 "use client";
 
-type AdMetricEventType = "impression" | "click";
+type AdMetricEventType = "appearance" | "impression" | "click";
 
 type SendAdEventParams = {
   eventType: AdMetricEventType;
   campaignId: string;
-  assetId: string;
+  assetId: string | null;
   pagePath: string;
   businessId?: string | null;
 };

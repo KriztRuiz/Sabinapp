@@ -39,6 +39,7 @@ export function FixedAdBanner({
 
   const [activeIndex, setActiveIndex] = useState(0);
   const registeredImpressionsRef = useRef(new Set<string>());
+  const registeredAppearancesRef = useRef(new Set<string>());
 
   useEffect(() => {
     if (assets.length <= 1) {
@@ -57,6 +58,32 @@ export function FixedAdBanner({
   const normalizedActiveIndex =
     assets.length > 0 ? activeIndex % assets.length : 0;
   const activeAsset = assets[normalizedActiveIndex] ?? null;
+
+  // Una aparición por campaña y ubicación durante
+  // este montaje del anuncio fijo.
+
+  useEffect(() => {
+    if (!trackMetrics || !campaign || !activeAsset) {
+      return;
+    }
+
+    const pagePath = window.location.pathname;
+    const appearanceKey = `${campaign.id}:${pagePath}`;
+
+    if (registeredAppearancesRef.current.has(appearanceKey)) {
+      return;
+    }
+
+    registeredAppearancesRef.current.add(appearanceKey);
+
+    sendAdEvent({
+      eventType: "appearance",
+      campaignId: campaign.id,
+      assetId: null,
+      pagePath,
+      businessId,
+    });
+  }, [activeAsset, businessId, campaign, trackMetrics]);
 
   useEffect(() => {
     if (!trackMetrics || !campaign || !activeAsset) {
