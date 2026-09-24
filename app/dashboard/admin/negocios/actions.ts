@@ -167,6 +167,8 @@ export async function approveBusinessForReview(formData: FormData) {
     .update({
       status: "approved",
       is_published: false,
+      show_in_search: true,
+      show_in_home: true,
       approved_at: new Date().toISOString(),
       approved_by: user.id,
       owner_confirmed_authorization: true,
