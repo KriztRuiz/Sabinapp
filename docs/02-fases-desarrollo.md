@@ -1024,15 +1024,17 @@ Estado: ✅ Base funcional
 
 ### M2. Roles y ownership
 
-Estado: ✅ Base funcional
+Estado: ✅ 100% en el ciclo de negocios probado (commit 072ab2a)
 
-Debe continuar auditándose antes de producción.
+Aprobación, publicación, ocultamiento y nueva revisión: PASS. La auditoría transversal continúa en M3.
 
 ---
 
 ### M3. RLS
 
-Estado: 🟡 Auditoría final pendiente
+Estado: 🟡 Auditoría transversal en progreso
+
+Perfiles: bloqueo de autoactivación y alteración directa de edad PASS; edición legítima PASS (commit 84dda1f). Pendientes: privacy_accepted_at, profile_completed_at y las demás tablas.
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
