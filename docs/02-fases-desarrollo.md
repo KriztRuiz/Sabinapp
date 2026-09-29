@@ -1040,6 +1040,8 @@ Sistema de roles y permisos: RLS PASS. Usuarios normales no pueden crear, modifi
 Negocios (tabla raíz): RLS y aislamiento entre propietarios PASS. Ownership, autorización administrativa, aprobación, publicación, clasificación restringida y eliminación física fueron validados. Se detectó y corrigió la falsificación de submitted_at, published_at y hidden_at; regresión M3-16D3 PASS.
 Núcleo editable del negocio: aislamiento RLS PASS en business_hours, business_items, business_locations, business_media, business_settings, business_tags y contact_methods. Pruebas M3-16F3A y M3-16F3B PASS.
 Contactos públicos: se detectó que RLS exponía contactos activos con is_approved=false. Policy corregida para exigir is_active=true e is_approved=true en lectura pública; regresión M3-16F4E PASS.
+Auditoría administrativa del negocio: business_review_logs protegida contra falsificación de actor_id y created_at; regresión M3-16G2D PASS. business_subscriptions: lectura aislada por propietario y escrituras reservadas a administración, M3-16G2A PASS.
+business_members: aislamiento RLS entre negocios PASS, M3-16G3C. La tabla no participa actualmente en autorización efectiva de Sabinapp 1.0; role, status, invited_by y created_at quedan documentados como observación de integridad semántica para una futura fase de miembros/invitaciones.
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
