@@ -1038,6 +1038,8 @@ Perfiles: auditoría de RLS y protección de campos sensibles PASS. Estado, mayo
 Roles de usuario: RLS PASS. Un usuario normal puede consultar sus propias asignaciones, pero no puede autoasignarse roles privilegiados, modificar asignaciones ni eliminarlas. Prueba de ataque controlada M3-14B PASS.
 Sistema de roles y permisos: RLS PASS. Usuarios normales no pueden crear, modificar ni eliminar roles, permisos o relaciones rol-permiso. Prueba de ataque controlada M3-15B PASS.
 Negocios (tabla raíz): RLS y aislamiento entre propietarios PASS. Ownership, autorización administrativa, aprobación, publicación, clasificación restringida y eliminación física fueron validados. Se detectó y corrigió la falsificación de submitted_at, published_at y hidden_at; regresión M3-16D3 PASS.
+Núcleo editable del negocio: aislamiento RLS PASS en business_hours, business_items, business_locations, business_media, business_settings, business_tags y contact_methods. Pruebas M3-16F3A y M3-16F3B PASS.
+Contactos públicos: se detectó que RLS exponía contactos activos con is_approved=false. Policy corregida para exigir is_active=true e is_approved=true en lectura pública; regresión M3-16F4E PASS.
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
