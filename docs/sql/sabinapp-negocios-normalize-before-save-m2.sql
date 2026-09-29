@@ -88,6 +88,11 @@ begin
 
         new.is_published := false;
 
+        -- M3-16D:
+        -- submitted_at es un timestamp de ciclo de vida.
+        -- El propietario no puede elegirlo manualmente.
+        new.submitted_at := null;
+
 
         new.approved_at := null;
         new.approved_by := null;
@@ -124,6 +129,14 @@ begin
 
         new.owner_confirmed_authorization :=
             old.owner_confirmed_authorization;
+
+
+        -- M3-16D:
+        -- Los timestamps del ciclo de vida son administrados
+        -- por la base de datos y no por el propietario.
+        new.submitted_at := old.submitted_at;
+        new.published_at := old.published_at;
+        new.hidden_at := old.hidden_at;
 
 
         -- Historial administrativo.

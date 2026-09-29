@@ -1034,7 +1034,10 @@ Aprobación, publicación, ocultamiento y nueva revisión: PASS. La auditoría t
 
 Estado: 🟡 Auditoría transversal en progreso
 
-Perfiles: bloqueo de autoactivación y alteración directa de edad PASS; edición legítima PASS (commit 84dda1f). Pendientes: privacy_accepted_at, profile_completed_at y las demás tablas.
+Perfiles: auditoría de RLS y protección de campos sensibles PASS. Estado, mayoría de edad declarada, aceptación de privacidad y completitud del perfil están protegidos y fueron validados mediante pruebas de regresión. Registro y edición legítimos PASS (commit 84dda1f). Pendientes: las demás tablas.
+Roles de usuario: RLS PASS. Un usuario normal puede consultar sus propias asignaciones, pero no puede autoasignarse roles privilegiados, modificar asignaciones ni eliminarlas. Prueba de ataque controlada M3-14B PASS.
+Sistema de roles y permisos: RLS PASS. Usuarios normales no pueden crear, modificar ni eliminar roles, permisos o relaciones rol-permiso. Prueba de ataque controlada M3-15B PASS.
+Negocios (tabla raíz): RLS y aislamiento entre propietarios PASS. Ownership, autorización administrativa, aprobación, publicación, clasificación restringida y eliminación física fueron validados. Se detectó y corrigió la falsificación de submitted_at, published_at y hidden_at; regresión M3-16D3 PASS.
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
