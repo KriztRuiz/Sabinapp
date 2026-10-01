@@ -1042,6 +1042,8 @@ Núcleo editable del negocio: aislamiento RLS PASS en business_hours, business_i
 Contactos públicos: se detectó que RLS exponía contactos activos con is_approved=false. Policy corregida para exigir is_active=true e is_approved=true en lectura pública; regresión M3-16F4E PASS.
 Auditoría administrativa del negocio: business_review_logs protegida contra falsificación de actor_id y created_at; regresión M3-16G2D PASS. business_subscriptions: lectura aislada por propietario y escrituras reservadas a administración, M3-16G2A PASS.
 business_members: aislamiento RLS entre negocios PASS, M3-16G3C. La tabla no participa actualmente en autorización efectiva de Sabinapp 1.0; role, status, invited_by y created_at quedan documentados como observación de integridad semántica para una futura fase de miembros/invitaciones.
+Telemetría y métricas: M3-16H PASS. Se corrigió la falsificación de created_at en contact_clicks, page_views y search_logs. contact_clicks ahora exige coherencia entre type y el contact_method real, además de contacto activo y aprobado. search_logs bloquea clicked_business_id hacia negocios no visibles públicamente y conserva la normalización de user_id, query y normalized_query. Regresión M3-16H3C PASS.
+search_logs.result_count permanece deliberadamente como dato client-side y no debe considerarse métrica confiable para decisiones de seguridad, cobros o lógica administrativa.
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
