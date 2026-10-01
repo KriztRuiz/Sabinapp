@@ -1045,13 +1045,18 @@ business_members: aislamiento RLS entre negocios PASS, M3-16G3C. La tabla no par
 Telemetría y métricas: M3-16H PASS. Se corrigió la falsificación de created_at en contact_clicks, page_views y search_logs. contact_clicks ahora exige coherencia entre type y el contact_method real, además de contacto activo y aprobado. search_logs bloquea clicked_business_id hacia negocios no visibles públicamente y conserva la normalización de user_id, query y normalized_query. Regresión M3-16H3C PASS.
 search_logs.result_count permanece deliberadamente como dato client-side y no debe considerarse métrica confiable para decisiones de seguridad, cobros o lógica administrativa.
 
+Publicidad: M3-16I PASS. Se auditó el aislamiento y la autorización de ad_campaigns, ad_clicks, ad_impressions y las RPC SECURITY DEFINER del flujo publicitario. Usuarios normales no pueden autoaprobar, activar, rechazar ni verificar pagos de campañas, tampoco operar campañas ajenas. Las RPC de creación, reenvío y reporte de pago respetan ownership; las métricas del dueño no exponen campañas ajenas. Regresión M3-16I4B PASS.
+
+Eventos publicitarios: se corrigió la falsificación de clicked_at y shown_at, clicks sin asset, impresiones con semántica de asset inconsistente, assets pertenecientes a otra campaña, page_path fuera de placement_scope y business_id incoherente con /negocio/[slug]. Regresión M3-16I3B PASS. session_key permanece deliberadamente client-side y no debe considerarse una identidad confiable para autorización o decisiones comerciales.
+
+Referencias de pago: M3-16I4C PASS. generate_ad_payment_reference() y ad_payment_reference_seq dejaron de ser ejecutables/utilizables directamente por anon y authenticated. El DEFAULT de ad_payments.payment_reference continúa funcionando mediante el flujo privilegiado; service_role conserva acceso explícito.
+
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
 - usuarios no lean datos privados ajenos;
 - usuarios no modifiquen negocios ajenos;
 - acciones admin estén protegidas;
-- comentarios y reportes respeten permisos;
-- anuncios respeten propietario y administrador.
+- comentarios y reportes respeten permisos.
 
 ---
 
