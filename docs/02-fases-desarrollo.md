@@ -1051,12 +1051,15 @@ Eventos publicitarios: se corrigió la falsificación de clicked_at y shown_at, 
 
 Referencias de pago: M3-16I4C PASS. generate_ad_payment_reference() y ad_payment_reference_seq dejaron de ser ejecutables/utilizables directamente por anon y authenticated. El DEFAULT de ad_payments.payment_reference continúa funcionando mediante el flujo privilegiado; service_role conserva acceso explícito.
 
+Comentarios, reseñas y reportes: M3-16J PASS. Se auditaron reviews, news_comments y reports mediante ataques controlados y regresiones. Se protegieron autoría, timestamps, campos de moderación y objetivos inmutables; business_id y user_id de reseñas no pueden cambiarse después de la creación; el cooldown de reseñas no puede evadirse mediante timestamps falsificados. can_write_business_review() dejó de funcionar como oráculo para consultar el cooldown de terceros. Regresión M3-16J2C PASS.
+
+Reportes comunitarios: los reportes de review y news_comment derivan reported_user_id y relaciones asociadas desde el contenido real, bloquean self-report, conservan aislamiento entre usuarios y protegen campos administrativos. Los tipos business, contact_method, media, item, user, platform y other permanecen definidos para evolución futura, pero no están habilitados para escritura pública en Sabinapp 1.0. Regresión M3-16J3E PASS.
+
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
 - usuarios no lean datos privados ajenos;
 - usuarios no modifiquen negocios ajenos;
 - acciones admin estén protegidas;
-- comentarios y reportes respeten permisos.
 
 ---
 
@@ -1489,17 +1492,16 @@ Estado: 🔵 Pendiente
 
 Los principales bloques todavía abiertos son:
 
-1. auditar comentarios, reseñas y reportes;
-2. cerrar controles de autenticidad y abuso;
-3. realizar auditoría final de permisos y RLS;
-4. cerrar SEO local;
-5. revisar experiencia móvil;
-6. decidir situación final de `/tiempo`;
-7. proteger o retirar rutas `/dev`;
-8. limpiar datos de desarrollo;
-9. preparar contenido inicial de lanzamiento;
-10. repetir QA publicitario y decidir activación pública de Campaña B;
-11. preparar y validar despliegue de producción.
+1. cerrar controles de autenticidad y abuso;
+2. realizar auditoría final de permisos y RLS;
+3. cerrar SEO local;
+4. revisar experiencia móvil;
+5. decidir situación final de `/tiempo`;
+6. proteger o retirar rutas `/dev`;
+7. limpiar datos de desarrollo;
+8. preparar contenido inicial de lanzamiento;
+9. repetir QA publicitario y decidir activación pública de Campaña B;
+10. preparar y validar despliegue de producción.
 
 Este listado debe reducirse conforme las áreas obtengan PASS.
 
