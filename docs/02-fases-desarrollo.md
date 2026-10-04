@@ -1055,6 +1055,9 @@ Comentarios, reseñas y reportes: M3-16J PASS. Se auditaron reviews, news_commen
 
 Reportes comunitarios: los reportes de review y news_comment derivan reported_user_id y relaciones asociadas desde el contenido real, bloquean self-report, conservan aislamiento entre usuarios y protegen campos administrativos. Los tipos business, contact_method, media, item, user, platform y other permanecen definidos para evolución futura, pero no están habilitados para escritura pública en Sabinapp 1.0. Regresión M3-16J3E PASS.
 
+Suspensión de cuentas: M3-16K2 PASS. profiles.status utiliza active, suspended y deleted; un perfil suspendido deja de cumplir is_profile_complete() y no puede auto-reactivarse. Se detectó y corrigió que un usuario suspendido todavía podía editar un reporte propio en estado new y modificar directamente tablas hijas de sus negocios mediante RLS. Las policies de escritura de business_hours, business_items, business_locations, business_media, business_settings, business_tags, contact_methods y creación de tags ahora exigen perfil activo/completo en la rama del propietario, conservando las ramas administrativas. M3-16K2D, M3-16K2H, M3-16K2I y M3-16K2K PASS.
+
+
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
 - usuarios no lean datos privados ajenos;
