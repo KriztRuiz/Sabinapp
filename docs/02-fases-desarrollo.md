@@ -1057,6 +1057,8 @@ Reportes comunitarios: los reportes de review y news_comment derivan reported_us
 
 Suspensión de cuentas: M3-16K2 PASS. profiles.status utiliza active, suspended y deleted; un perfil suspendido deja de cumplir is_profile_complete() y no puede auto-reactivarse. Se detectó y corrigió que un usuario suspendido todavía podía editar un reporte propio en estado new y modificar directamente tablas hijas de sus negocios mediante RLS. Las policies de escritura de business_hours, business_items, business_locations, business_media, business_settings, business_tags, contact_methods y creación de tags ahora exigen perfil activo/completo en la rama del propietario, conservando las ramas administrativas. M3-16K2D, M3-16K2H, M3-16K2I y M3-16K2K PASS.
 
+Anti-spam comunitario: M3-16K3 PASS. El ataque controlado M3-16K3D confirmó que un usuario activo podía publicar comentarios consecutivos sin espera y crear reportes activos duplicados sobre el mismo contenido. Se agregó un cooldown global de 30 segundos por usuario para news_comments, protegido con pg_advisory_xact_lock() para evitar carreras concurrentes. Los reports de review y news_comment ahora permiten como máximo un reporte activo por usuario y objetivo mientras el estado sea new o in_review; los estados resolved, rejected y closed permiten posteriormente un nuevo reporte. Las reseñas conservan su cooldown independiente de 8 horas. M3-16K3G PASS estructural y M3-16K3H PASS runtime: primer comentario ALLOWED, segundo inmediato BLOCKED, primer reporte ALLOWED, duplicado activo BLOCKED y nuevo reporte posterior al cierre ALLOWED.
+
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 

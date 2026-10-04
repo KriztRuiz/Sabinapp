@@ -167,11 +167,19 @@ export async function reportBusinessReview(
   });
 
   if (error) {
+    const message =
+      error.code === "23505" &&
+      error.message.includes(
+        "reports_one_active_review_per_reporter_idx",
+      )
+        ? "Ya tienes un reporte activo sobre esta reseña."
+        : "No pudimos registrar el reporte. Intenta de nuevo.";
+
     redirect(
       buildReportRedirect(
         slug,
         "reviewError",
-        "No pudimos registrar el reporte. Intenta de nuevo.",
+        message,
       ),
     );
   }
@@ -320,11 +328,19 @@ export async function reportNewsComment(
   });
 
   if (error) {
+    const message =
+      error.code === "23505" &&
+      error.message.includes(
+        "reports_one_active_news_comment_per_reporter_idx",
+      )
+        ? "Ya tienes un reporte activo sobre este comentario."
+        : "No pudimos registrar el reporte. Intenta de nuevo.";
+
     redirect(
       buildNewsReportRedirect(
         newsId,
         "commentError",
-        "No pudimos registrar el reporte. Intenta de nuevo.",
+        message,
       ),
     );
   }

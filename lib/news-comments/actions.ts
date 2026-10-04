@@ -95,11 +95,17 @@ export async function submitNewsComment(newsId: string, formData: FormData) {
   });
 
   if (error) {
+    const message =
+      error.code === "P0001" &&
+      error.message.includes("Espera 30 segundos")
+        ? "Espera 30 segundos antes de publicar otro comentario."
+        : "No pudimos guardar tu comentario. Intenta de nuevo.";
+
     redirect(
       buildNewsCommentRedirect(
         newsId,
         "commentError",
-        "No pudimos guardar tu comentario. Intenta de nuevo.",
+        message,
       ),
     );
   }
