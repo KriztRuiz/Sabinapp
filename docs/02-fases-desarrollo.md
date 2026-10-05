@@ -1059,6 +1059,8 @@ Suspensión de cuentas: M3-16K2 PASS. profiles.status utiliza active, suspended 
 
 Anti-spam comunitario: M3-16K3 PASS. El ataque controlado M3-16K3D confirmó que un usuario activo podía publicar comentarios consecutivos sin espera y crear reportes activos duplicados sobre el mismo contenido. Se agregó un cooldown global de 30 segundos por usuario para news_comments, protegido con pg_advisory_xact_lock() para evitar carreras concurrentes. Los reports de review y news_comment ahora permiten como máximo un reporte activo por usuario y objetivo mientras el estado sea new o in_review; los estados resolved, rejected y closed permiten posteriormente un nuevo reporte. Las reseñas conservan su cooldown independiente de 8 horas. M3-16K3G PASS estructural y M3-16K3H PASS runtime: primer comentario ALLOWED, segundo inmediato BLOCKED, primer reporte ALLOWED, duplicado activo BLOCKED y nuevo reporte posterior al cierre ALLOWED.
 
+Integridad de edad en perfiles: M3-16K4F PASS. El ataque controlado M3-16K4F2 confirmó que un usuario podía conservar un perfil completo con una fecha de nacimiento equivalente a menos de 13 años o más de 120 años al escribir directamente sobre profiles. Se endureció sync_profile_is_adult_verified() para permitir birthdate NULL en perfiles incompletos y bloquear edades menores de 13 o mayores de 120, conservando la protección de status y la normalización de is_adult_verified, privacy_accepted_at y profile_completed_at. M3-16K4F4 PASS runtime y M3-16K4F5 PASS estructural: 13 y 120 años exactos ALLOWED; menores de 13 y mayores de 120 BLOCKED; actualmente hay 0 perfiles fuera del rango permitido.
+
 
 Antes del lanzamiento debe comprobarse tabla por tabla que:
 
