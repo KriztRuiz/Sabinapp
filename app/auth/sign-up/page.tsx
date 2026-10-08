@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TurnstileWidget from "@/components/auth/turnstile-widget";
 import { signUp } from "../actions";
 
 type SignUpPageProps = {
@@ -150,6 +151,8 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
               falsas o abusivas.
             </span>
           </label>
+
+          <TurnstileWidget />
 
           <button
             type="submit"

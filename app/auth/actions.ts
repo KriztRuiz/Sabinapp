@@ -9,6 +9,20 @@ function getFormValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function requireCaptchaToken(formData: FormData, path: string) {
+  const token = getFormValue(formData, "cf-turnstile-response");
+
+  if (!token) {
+    redirect(
+      `${path}?message=${encodeURIComponent(
+        "Completa la verificación de seguridad e inténtalo de nuevo.",
+      )}`,
+    );
+  }
+
+  return token;
+}
+
 const ALLOWED_SEX_VALUES = ["male", "female", "prefer_not_to_say"] as const;
 
 function isAllowedSex(value: string) {
@@ -44,11 +58,14 @@ export async function login(formData: FormData) {
     redirect("/auth/login?message=Ingresa correo y contraseña.");
   }
 
+  const captchaToken = requireCaptchaToken(formData, "/auth/login");
+
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    options: { captchaToken },
   });
 
   if (error) {
@@ -107,6 +124,8 @@ export async function signUp(formData: FormData) {
     );
   }
 
+  const captchaToken = requireCaptchaToken(formData, "/auth/sign-up");
+
   const now = new Date().toISOString();
 
   const headersList = await headers();
@@ -118,6 +137,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
+      captchaToken,
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
         full_name: fullName,
@@ -148,6 +168,11 @@ export async function resetPassword(formData: FormData) {
     redirect("/auth/forgot-password?message=Ingresa tu correo.");
   }
 
+  const captchaToken = requireCaptchaToken(
+    formData,
+    "/auth/forgot-password",
+  );
+
   const headersList = await headers();
   const origin = headersList.get("origin") ?? "http://localhost:3000";
 
@@ -155,6 +180,7 @@ export async function resetPassword(formData: FormData) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/auth/update-password`,
+    captchaToken,
   });
 
   if (error) {

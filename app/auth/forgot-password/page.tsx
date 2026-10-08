@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TurnstileWidget from "@/components/auth/turnstile-widget";
 import { resetPassword } from "../actions";
 
 type ForgotPasswordPageProps = {
@@ -51,6 +52,8 @@ export default async function ForgotPasswordPage({
               placeholder="correo@ejemplo.com"
             />
           </div>
+
+          <TurnstileWidget />
 
           <button
             type="submit"

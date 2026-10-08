@@ -1571,3 +1571,63 @@ Se considerará lista cuando:
 La prioridad sigue siendo:
 
 **lanzar una Sabinapp local, útil, moderada y sostenible antes de convertirla en una plataforma mucho más grande.**
+
+---
+
+# 8. Seguridad — M3-16K4G — Cloudflare Turnstile
+
+Fecha de verificación: 2026-10-08
+
+Estado: PASS — Integración técnica local.
+
+## Objetivo
+
+Proteger los flujos públicos de autenticación de Sabinapp
+contra automatización y abuso utilizando Cloudflare Turnstile
+con validación del token mediante Supabase Auth.
+
+## Implementación
+
+Componente reutilizable:
+- components/auth/turnstile-widget.tsx
+
+Formularios protegidos:
+- app/auth/login/page.tsx
+- app/auth/sign-up/page.tsx
+- app/auth/forgot-password/page.tsx
+
+Acciones protegidas:
+- app/auth/actions.ts
+
+El token cf-turnstile-response se obtiene del formulario,
+se exige en las Server Actions y se transmite a Supabase
+mediante captchaToken.
+
+La Site Key pública se configura mediante:
+NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
+El Secret Key se mantiene en la configuración de
+Bot and Abuse Protection de Supabase, no en Next.js.
+
+## Evidencia de pruebas
+
+- npm run lint: PASS.
+- npm run build: PASS.
+- git diff --check: PASS.
+- Turnstile aparece en los tres formularios: PASS.
+- Inicio de sesión real con CAPTCHA: PASS.
+- Envío sin token rechazado por Server Action: PASS.
+- Recarga y nueva verificación de Turnstile: PASS.
+
+## Pruebas pendientes para QA final
+
+- Registro completo de cuenta nueva con CAPTCHA.
+- Recuperación real de contraseña con CAPTCHA y correo.
+- Verificación de hostnames y variables en producción.
+- Revisión de protección frente a tokens inválidos y expirados.
+- Configuración de SMTP para producción.
+
+Estas pruebas no bloquean el cierre de la integración local,
+pero deben completarse antes del lanzamiento público.
+
+Resultado: M3-16K4G PASS en entorno local.

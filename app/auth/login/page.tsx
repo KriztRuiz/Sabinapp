@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TurnstileWidget from "@/components/auth/turnstile-widget";
 import { login } from "../actions";
 
 type LoginPageProps = {
@@ -83,6 +84,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 placeholder="Tu contraseña"
             />
           </div>
+
+          <TurnstileWidget />
 
           <button
             type="submit"
