@@ -12,7 +12,6 @@ export const dynamic = "force-dynamic";
 type GenerateNewsRequestBody = {
   maxCandidates?: unknown;
   queryLimit?: unknown;
-  model?: unknown;
   dryRun?: unknown;
 };
 
@@ -24,12 +23,6 @@ function readPositiveInteger(value: unknown, fallback: number, max: number) {
   }
 
   return Math.max(1, Math.min(Math.floor(numericValue), max));
-}
-
-function readOptionalString(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0
-    ? value.trim()
-    : undefined;
 }
 
 function readBooleanFlag(value: unknown) {
@@ -126,7 +119,6 @@ export async function POST(request: Request) {
 
   const maxCandidates = readPositiveInteger(body.maxCandidates, 5, 10);
   const queryLimit = readPositiveInteger(body.queryLimit, 10, 10);
-  const model = readOptionalString(body.model);
   const dryRun = readBooleanFlag(body.dryRun);
 
   try {
@@ -161,7 +153,6 @@ export async function POST(request: Request) {
       searchQueries,
       existingTitles,
       maxCandidates,
-      model,
     });
 
     const storedResult = await saveNewsCandidatesResult({
