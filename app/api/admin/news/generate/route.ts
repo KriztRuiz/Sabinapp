@@ -120,6 +120,7 @@ export async function POST(request: Request) {
   const maxCandidates = readPositiveInteger(body.maxCandidates, 5, 10);
   const queryLimit = readPositiveInteger(body.queryLimit, 10, 10);
   const dryRun = readBooleanFlag(body.dryRun);
+  let reservedFetchRunId: string | null = null;
 
   try {
     const searchQueries = await getActiveNewsSearchQueries(supabase, queryLimit);
@@ -149,6 +150,66 @@ export async function POST(request: Request) {
       });
     }
 
+    // Reservar antes de consumir créditos de OpenAI.
+    const { data: reservationData, error: reservationError } =
+      await supabase.rpc("reserve_admin_news_generation", {
+        p_search_query_count: searchQueries.length,
+      });
+
+    if (reservationError) {
+      const forbidden = reservationError.code === "42501";
+
+      return NextResponse.json(
+        {
+          ok: false,
+          message: forbidden
+            ? "Solo los administradores pueden generar noticias."
+            : "No se pudo reservar la generación de noticias.",
+        },
+        { status: forbidden ? 403 : 500 },
+      );
+    }
+
+    const reservation = reservationData as {
+      ok?: boolean;
+      reason?: string | null;
+      run_id?: string | null;
+    } | null;
+
+    if (!reservation?.ok) {
+      if (reservation?.reason === "already_running") {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Ya existe una generación de noticias en proceso.",
+          },
+          { status: 409 },
+        );
+      }
+
+      if (reservation?.reason === "cooldown") {
+        return NextResponse.json(
+          {
+            ok: false,
+            message:
+              "Debes esperar al menos 5 minutos entre generaciones.",
+          },
+          { status: 429 },
+        );
+      }
+
+      throw new Error("Respuesta inesperada al reservar noticias.");
+    }
+
+    if (
+      typeof reservation.run_id !== "string" ||
+      !reservation.run_id
+    ) {
+      throw new Error("La reserva no devolvió un identificador válido.");
+    }
+
+    reservedFetchRunId = reservation.run_id;
+
     const result = await generateSabinappNewsCandidates({
       searchQueries,
       existingTitles,
@@ -162,6 +223,7 @@ export async function POST(request: Request) {
       triggerSource: "admin",
       createdBy: user.id,
       maxCandidatesToStore: maxCandidates,
+      reservedFetchRunId,
     });
 
     return NextResponse.json({
@@ -174,6 +236,26 @@ export async function POST(request: Request) {
       ...storedResult,
     });
   } catch (error) {
+    // Si OpenAI o el guardado falla, liberar la reserva.
+    if (reservedFetchRunId) {
+      const { error: closeError } = await supabase
+        .from("news_fetch_runs")
+        .update({
+          status: "failed",
+          finished_at: new Date().toISOString(),
+          error_message: getErrorMessage(error).slice(0, 500),
+        })
+        .eq("id", reservedFetchRunId)
+        .eq("status", "running");
+
+      if (closeError) {
+        console.error(
+          "No se pudo finalizar la reserva de noticias:",
+          closeError.code,
+        );
+      }
+    }
+
     return NextResponse.json(
       {
         ok: false,

@@ -1631,3 +1631,56 @@ Estas pruebas no bloquean el cierre de la integración local,
 pero deben completarse antes del lanzamiento público.
 
 Resultado: M3-16K4G PASS en entorno local.
+
+---
+
+## M3-17B3 — Control de concurrencia y costos de noticias
+
+Fecha: 2026-10-10.
+
+Estado: implementación verificada; QA integral pendiente.
+
+### Implementación
+
+- Reserva de generación mediante public.reserve_admin_news_generation().
+- Bloqueo transaccional de PostgreSQL para serializar reservas.
+- Una generación activa a la vez.
+- Cooldown administrativo de 5 minutos entre intentos.
+- Recuperación de ejecuciones running abandonadas tras 10 minutos.
+- Reserva anterior a la llamada a OpenAI.
+- Reutilización del registro reservado en news_fetch_runs.
+- Intento de marcar failed si ocurre un error durante la generación.
+- Timeout HTTP de 180 segundos para OpenAI.
+- Modelo de OpenAI controlado desde configuración del servidor.
+
+Archivos:
+- app/api/admin/news/generate/route.ts
+- lib/news-automation/openai-news-client.ts
+- lib/news-automation/store-news-candidates.ts
+- docs/sql/sabinapp-news-generation-reservation-m3.sql
+
+### Evidencia
+
+- Estructura y permisos de la función SQL: PASS.
+- Primera reserva aceptada dentro de transacción de prueba: PASS.
+- Segunda reserva activa rechazada: PASS.
+- Cooldown de 5 minutos: PASS.
+- Bloqueo entre conexiones PostgreSQL independientes: PASS.
+- Prueba SQL con ROLLBACK: PASS.
+- POST administrativo con dryRun=true: HTTP 200, PASS.
+- Prueba seca: no llamó a OpenAI ni guardó candidatos.
+- npm run lint: PASS.
+- npm run build: PASS.
+- git diff --check: PASS.
+
+### QA pendiente antes del lanzamiento
+
+- Generación real completa usando una reserva.
+- Respuestas HTTP 409 y 429 en condiciones reales.
+- Verificar que una ejecución fallida se cierre correctamente.
+- Comprobar concurrencia entre solicitudes HTTP.
+- Revisar límites de tokens y presupuesto de OpenAI.
+- Revisar consistencia entre permisos de noticias y RLS.
+- Revisar publicación atómica de candidatos de noticias.
+
+No declarar PASS integral hasta completar estas verificaciones.

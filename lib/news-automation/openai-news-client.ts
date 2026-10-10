@@ -1,4 +1,5 @@
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const OPENAI_REQUEST_TIMEOUT_MS = 180_000;
 
 export type NewsCandidateSource = {
   sourceName: string;
@@ -393,6 +394,7 @@ export async function generateSabinappNewsCandidates(
 
   const response = await fetch(OPENAI_RESPONSES_URL, {
     method: "POST",
+    signal: AbortSignal.timeout(OPENAI_REQUEST_TIMEOUT_MS),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",

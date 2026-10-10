@@ -233,46 +233,74 @@ export async function saveNewsCandidatesResult(input: {
   triggerSource?: TriggerSource;
   createdBy?: string | null;
   maxCandidatesToStore?: number;
+  reservedFetchRunId?: string;
 }): Promise<StoredNewsAutomationResult> {
   const candidatesToStore = input.result.candidates.slice(
     0,
     normalizeLimit(input.maxCandidatesToStore, 20),
   );
 
-  let fetchRunId: string | null = null;
+  let fetchRunId: string | null = input.reservedFetchRunId ?? null;
   let candidatesStored = 0;
   let duplicatesSkipped = 0;
   let sourceCount = 0;
 
   try {
-    const { data: fetchRun, error: fetchRunError } = await input.supabase
-      .from("news_fetch_runs")
-      .insert({
-        status: "running",
-        trigger_source: input.triggerSource ?? "manual",
-        model_name: input.result.model,
-        search_query_count: input.searchQueries.length,
-        source_count: 0,
-        candidates_found: input.result.candidates.length,
-        candidates_published: 0,
-        created_by: input.createdBy ?? null,
-        raw_result: {
-          rawText: input.result.rawText,
-          candidatesReturned: input.result.candidates.length,
-        },
-      })
-      .select("id")
-      .single();
+    if (fetchRunId) {
+      const { data: reservedRun, error: reservedRunError } =
+        await input.supabase
+          .from("news_fetch_runs")
+          .update({
+            model_name: input.result.model,
+            search_query_count: input.searchQueries.length,
+            candidates_found: input.result.candidates.length,
+            raw_result: {
+              rawText: input.result.rawText,
+              candidatesReturned: input.result.candidates.length,
+            },
+          })
+          .eq("id", fetchRunId)
+          .eq("status", "running")
+          .select("id")
+          .single();
 
-    if (fetchRunError || !fetchRun) {
-      throw new Error(
-        `No pudimos crear ejecución de noticias: ${getErrorMessage(
-          fetchRunError,
-        )}`,
-      );
+      if (reservedRunError || !reservedRun) {
+        throw new Error(
+          `No pudimos actualizar la ejecución reservada: ${getErrorMessage(
+            reservedRunError,
+          )}`,
+        );
+      }
+    } else {
+      const { data: fetchRun, error: fetchRunError } = await input.supabase
+        .from("news_fetch_runs")
+        .insert({
+          status: "running",
+          trigger_source: input.triggerSource ?? "manual",
+          model_name: input.result.model,
+          search_query_count: input.searchQueries.length,
+          source_count: 0,
+          candidates_found: input.result.candidates.length,
+          candidates_published: 0,
+          created_by: input.createdBy ?? null,
+          raw_result: {
+            rawText: input.result.rawText,
+            candidatesReturned: input.result.candidates.length,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (fetchRunError || !fetchRun) {
+        throw new Error(
+          `No pudimos crear ejecución de noticias: ${getErrorMessage(
+            fetchRunError,
+          )}`,
+        );
+      }
+
+      fetchRunId = String(fetchRun.id);
     }
-
-    fetchRunId = String(fetchRun.id);
 
     for (const candidate of candidatesToStore) {
       const sources = normalizeCandidateSources(candidate);
