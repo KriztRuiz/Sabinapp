@@ -1684,3 +1684,65 @@ Archivos:
 - Revisar publicación atómica de candidatos de noticias.
 
 No declarar PASS integral hasta completar estas verificaciones.
+
+---
+
+## M3-17B4 — Publicación atómica de noticias
+
+Fecha: 2026-10-10.
+
+Estado: implementación y pruebas controladas aprobadas.
+QA integral de concurrencia HTTP pendiente.
+
+### Implementación
+
+- Función SQL public.publish_news_candidate_atomic(uuid).
+- Ejecución con SECURITY INVOKER y comprobación del rol admin.
+- Bloqueo del candidato mediante SELECT FOR UPDATE.
+- Inserción en local_news y actualización de news_candidates
+  dentro de una misma transacción.
+- Protección contra publicaciones duplicadas por source_url.
+- Rechazo condicionado al estado actual del candidato.
+- Códigos HTTP diferenciados para errores esperados.
+- Revalidación de páginas después de publicar.
+
+### Archivos
+
+- docs/sql/sabinapp-news-publish-atomic-m3.sql
+- lib/news-automation/publish-news-candidate.ts
+- app/api/admin/news/candidates/publish/route.ts
+- app/api/admin/news/candidates/reject/route.ts
+
+### Pruebas PostgreSQL
+
+- Publicación y vinculación: PASS.
+- Segunda publicación bloqueada: PASS.
+- Candidato rechazado protegido: PASS.
+- Fuente duplicada detectada: PASS.
+- Todas las pruebas mediante ROLLBACK.
+
+### Pruebas HTTP
+
+- Publicar candidato inexistente: 404, PASS.
+- Rechazar candidato inexistente: 404, PASS.
+- Publicar identificador inválido: 400, PASS.
+- Publicar candidato ya publicado: 409, PASS.
+- Publicar candidato rechazado: 409, PASS.
+- Rechazar candidato ya rechazado: 409, PASS.
+
+### Verificaciones técnicas
+
+- npm run lint: PASS.
+- npm run build: PASS.
+- git diff --check: PASS.
+- git diff --cached --check: PASS.
+
+### Pendiente de QA integral
+
+- Publicación HTTP exitosa con candidato de prueba controlado.
+- Concurrencia real entre peticiones HTTP.
+- Verificación de autorización con usuario no administrador.
+- Revisión de consistencia de respuestas HTTP para todos
+  los estados, incluido el rechazo de un candidato publicado.
+
+No declarar PASS integral hasta completar estas verificaciones.

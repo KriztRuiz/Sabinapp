@@ -163,18 +163,33 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error: updateError } = await supabase
+    const { data: updatedCandidate, error: updateError } = await supabase
       .from("news_candidates")
       .update({
         status: "rejected",
         rejection_reason: rejectionReason,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", candidate.id);
+      .eq("id", candidate.id)
+      .is("published_news_id", null)
+      .in("status", ["candidate", "needs_review", "approved"])
+      .select("id, title")
+      .maybeSingle();
 
     if (updateError) {
       throw new Error(
         `No pudimos rechazar el candidato: ${getErrorMessage(updateError)}`,
+      );
+    }
+
+    if (!updatedCandidate) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "El candidato cambió de estado o ya fue publicado. Actualiza la lista.",
+        },
+        { status: 409 },
       );
     }
 

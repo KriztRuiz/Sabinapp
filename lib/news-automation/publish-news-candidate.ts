@@ -8,177 +8,111 @@ type PublishCandidateResult = {
   sourceUrl: string;
 };
 
-type NewsCandidateRow = {
-  id: string;
-  title: string;
-  summary: string;
-  source_name: string;
-  source_url: string;
-  source_published_at: string | null;
-  status: string;
-  published_news_id: string | null;
-};
+export class PublishNewsCandidateError extends Error {
+  readonly statusCode: number;
 
-type SupabaseErrorLike = {
-  code?: string;
-  message?: string;
-};
-
-function isSupabaseErrorLike(value: unknown): value is SupabaseErrorLike {
-  return typeof value === "object" && value !== null;
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = "PublishNewsCandidateError";
+    this.statusCode = statusCode;
+  }
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  if (isSupabaseErrorLike(error) && typeof error.message === "string") {
-    return error.message;
-  }
-
-  return "Error desconocido.";
-}
-
-function normalizeCandidateId(value: string) {
-  return value.trim();
-}
-
-function getPublishedAt(value: string | null) {
-  if (!value) {
-    return new Date().toISOString();
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return new Date().toISOString();
-  }
-
-  return date.toISOString();
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value)
+  );
 }
 
 export async function publishNewsCandidate(input: {
   supabase: SupabaseClient;
   candidateId: string;
 }): Promise<PublishCandidateResult> {
-  const candidateId = normalizeCandidateId(input.candidateId);
+  const candidateId = input.candidateId.trim();
 
   if (!candidateId) {
-    throw new Error("Falta el candidato de noticia.");
+    throw new PublishNewsCandidateError("Falta el candidato de noticia.", 400);
   }
 
-  const { data: candidateData, error: candidateError } = await input.supabase
-    .from("news_candidates")
-    .select(
-      `
-      id,
-      title,
-      summary,
-      source_name,
-      source_url,
-      source_published_at,
-      status,
-      published_news_id
-    `,
-    )
-    .eq("id", candidateId)
-    .maybeSingle();
+  // PostgreSQL realiza toda la publicacion en una transaccion.
+  const { data, error } = await input.supabase.rpc(
+    "publish_news_candidate_atomic",
+    {
+      p_candidate_id: candidateId,
+    },
+  );
 
-  if (candidateError) {
-    throw new Error(
-      `No pudimos cargar el candidato: ${getErrorMessage(candidateError)}`,
-    );
-  }
+  if (error) {
+    if (error.code === "P0002") {
+      throw new PublishNewsCandidateError("No encontramos el candidato de noticia.", 404);
+    }
 
-  if (!candidateData) {
-    throw new Error("No encontramos el candidato de noticia.");
-  }
+    if (error.code === "P0001") {
+      throw new PublishNewsCandidateError(error.message, 409);
+    }
 
-  const candidate = candidateData as NewsCandidateRow;
+    if (error.code === "42501") {
+      throw new PublishNewsCandidateError("No tienes permiso para publicar noticias.", 403);
+    }
 
-  if (candidate.published_news_id) {
-    throw new Error("Este candidato ya fue publicado.");
-  }
-
-  if (!["candidate", "needs_review", "approved"].includes(candidate.status)) {
-    throw new Error(
-      "Este candidato no está disponible para publicación manual.",
-    );
-  }
-
-  const { data: existingNews } = await input.supabase
-    .from("local_news")
-    .select("id")
-    .eq("source_url", candidate.source_url)
-    .maybeSingle();
-
-  if (existingNews) {
-    const { error: duplicateUpdateError } = await input.supabase
-      .from("news_candidates")
-      .update({
-        status: "duplicate",
-        rejection_reason:
-          "Ya existe una noticia pública con la misma fuente principal.",
-      })
-      .eq("id", candidate.id);
-
-    if (duplicateUpdateError) {
-      throw new Error(
-        `La noticia ya existía, pero no pudimos marcar el candidato como duplicado: ${getErrorMessage(
-          duplicateUpdateError,
-        )}`,
+    if (error.code === "22P02" || error.code === "22023") {
+      throw new PublishNewsCandidateError(
+        "Identificador de candidato inválido.",
+        400,
       );
     }
 
-    throw new Error("Ya existe una noticia pública con esta fuente.");
-  }
+    if (error.code === "23505") {
+      throw new PublishNewsCandidateError(
+        "Ya existe una noticia con esta fuente.",
+        409,
+      );
+    }
 
-  const { data: insertedNews, error: insertError } = await input.supabase
-    .from("local_news")
-    .insert({
-      title: candidate.title,
-      summary: candidate.summary,
-      source_name: candidate.source_name,
-      source_url: candidate.source_url,
-      published_at: getPublishedAt(candidate.source_published_at),
-      is_active: true,
-      expires_at: null,
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !insertedNews) {
     throw new Error(
-      `No pudimos publicar la noticia: ${getErrorMessage(insertError)}`,
+      `No pudimos publicar la noticia: ${error.message}`,
     );
   }
 
-  const publishedNewsId = String(insertedNews.id);
+  // La fuente ya existia: PostgreSQL marco el candidato
+  // como duplicado sin insertar una nueva noticia.
+  if (
+    isRecord(data) &&
+    data.ok === false &&
+    data.reason === "duplicate"
+  ) {
+    revalidatePath("/dashboard/admin/noticias");
 
-  const { error: updateError } = await input.supabase
-    .from("news_candidates")
-    .update({
-      status: "published",
-      published_news_id: publishedNewsId,
-    })
-    .eq("id", candidate.id);
+    throw new PublishNewsCandidateError(
+      "Ya existe una noticia pública con esta fuente.",
+      409,
+    );
+  }
 
-  if (updateError) {
+  // Validar la respuesta antes de informar de un exito.
+  if (
+    !isRecord(data) ||
+    data.ok !== true ||
+    data.candidateId !== candidateId ||
+    typeof data.publishedNewsId !== "string" ||
+    typeof data.title !== "string" ||
+    typeof data.sourceUrl !== "string"
+  ) {
     throw new Error(
-      `La noticia fue publicada, pero no pudimos actualizar el candidato: ${getErrorMessage(
-        updateError,
-      )}`,
+      "La publicación devolvió una respuesta inesperada.",
     );
   }
 
   revalidatePath("/");
   revalidatePath("/noticias");
+  revalidatePath("/dashboard/admin/noticias");
 
   return {
-    candidateId: candidate.id,
-    publishedNewsId,
-    title: candidate.title,
-    sourceUrl: candidate.source_url,
+    candidateId: data.candidateId,
+    publishedNewsId: data.publishedNewsId,
+    title: data.title,
+    sourceUrl: data.sourceUrl,
   };
 }

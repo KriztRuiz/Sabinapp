@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { publishNewsCandidate } from "@/lib/news-automation/publish-news-candidate";
+import {
+  PublishNewsCandidateError,
+  publishNewsCandidate,
+} from "@/lib/news-automation/publish-news-candidate";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -125,7 +128,12 @@ export async function POST(request: Request) {
         ok: false,
         message: getErrorMessage(error),
       },
-      { status: 500 },
+      {
+        status:
+          error instanceof PublishNewsCandidateError
+            ? error.statusCode
+            : 500,
+      },
     );
   }
 }
