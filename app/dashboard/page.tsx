@@ -105,6 +105,10 @@ export default async function DashboardPage() {
     permission_key: "admin.manage_ads",
   });
 
+  const { data: isAdmin } = await supabase.rpc("has_role", {
+    role_key: "admin",
+  });
+
   let pendingReviewCount = 0;
   let approvedWithoutPublishCount = 0;
   let pendingChangeEventsCount = 0;
@@ -146,7 +150,9 @@ export default async function DashboardPage() {
     approvedWithoutPublishCount = approvedCount ?? 0;
     pendingChangeEventsCount = pendingChangeEvents.length;
     pendingChangeBusinessesCount = new Set(pendingChangeBusinessKeys).size;
+  }
 
+  if (isAdmin) {
     const { data: newsCandidatesRaw } = await supabase
       .from("news_candidates")
       .select("status");
@@ -316,7 +322,7 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      {canReviewBusinesses || canManageAds ? (
+      {canReviewBusinesses || canManageAds || isAdmin ? (
         <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="border-b border-gray-100 pb-5">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-orange-700">
@@ -396,7 +402,7 @@ export default async function DashboardPage() {
               </article>
             ) : null}
 
-            {canReviewBusinesses ? (
+            {isAdmin ? (
               <article className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50 p-5">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
@@ -448,6 +454,34 @@ export default async function DashboardPage() {
                     className="inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
                   >
                     Revisar noticias
+                  </Link>
+                </div>
+              </article>
+            ) : null}
+
+            {isAdmin ? (
+              <article className="flex flex-col rounded-2xl border border-violet-200 bg-violet-50 p-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">
+                    Seguridad
+                  </p>
+
+                  <h3 className="mt-2 text-xl font-black text-gray-950">
+                    Usuarios y roles
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-700">
+                    Consulta usuarios registrados, busca cuentas y
+                    administra las asignaciones de subadministrador.
+                  </p>
+                </div>
+
+                <div className="mt-auto pt-5">
+                  <Link
+                    href="/dashboard/admin/usuarios"
+                    className="inline-flex rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-800"
+                  >
+                    Administrar usuarios
                   </Link>
                 </div>
               </article>
