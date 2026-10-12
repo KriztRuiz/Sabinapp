@@ -179,11 +179,11 @@ export default async function AdminNewsPage({ searchParams }: PageProps) {
     redirect("/auth/login?message=Inicia sesión para revisar noticias.");
   }
 
-  const { data: canReviewBusinesses } = await supabase.rpc("has_permission", {
-    permission_key: "admin.review_businesses",
+  const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+    role_key: "admin",
   });
 
-  if (!canReviewBusinesses) {
+  if (roleError || !isAdmin) {
     redirect("/dashboard?error=No tienes permiso para revisar noticias.");
   }
 

@@ -57,11 +57,11 @@ async function requireAdminNewsPermission() {
     };
   }
 
-  const { data: canReviewBusinesses } = await supabase.rpc("has_permission", {
-    permission_key: "admin.review_businesses",
+  const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+    role_key: "admin",
   });
 
-  if (!canReviewBusinesses) {
+  if (roleError || !isAdmin) {
     return {
       supabase,
       response: NextResponse.json(
