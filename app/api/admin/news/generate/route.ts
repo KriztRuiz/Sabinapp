@@ -109,7 +109,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { supabase, user, response } = await requireAdminNewsPermission();
+  const { supabase, response } = await requireAdminNewsPermission();
 
   if (response) {
     return response;
@@ -220,8 +220,6 @@ export async function POST(request: Request) {
       supabase,
       result,
       searchQueries,
-      triggerSource: "admin",
-      createdBy: user.id,
       maxCandidatesToStore: maxCandidates,
       reservedFetchRunId,
     });
@@ -238,20 +236,20 @@ export async function POST(request: Request) {
   } catch (error) {
     // Si OpenAI o el guardado falla, liberar la reserva.
     if (reservedFetchRunId) {
-      const { error: closeError } = await supabase
-        .from("news_fetch_runs")
-        .update({
-          status: "failed",
-          finished_at: new Date().toISOString(),
-          error_message: getErrorMessage(error).slice(0, 500),
-        })
-        .eq("id", reservedFetchRunId)
-        .eq("status", "running");
+      const { data: closeData, error: closeError } =
+        await supabase.rpc("fail_admin_news_generation", {
+          p_run_id: reservedFetchRunId,
+          p_error_message: getErrorMessage(error).slice(0, 500),
+        });
 
-      if (closeError) {
+      const closeResult = closeData as {
+        changed?: boolean;
+      } | null;
+
+      if (closeError || closeResult?.changed !== true) {
         console.error(
           "No se pudo finalizar la reserva de noticias:",
-          closeError.code,
+          closeError?.code ?? "La reserva ya no estaba activa.",
         );
       }
     }

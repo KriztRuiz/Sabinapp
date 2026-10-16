@@ -5,8 +5,6 @@ import type {
   NewsCandidateSource,
 } from "./openai-news-client";
 
-type TriggerSource = "manual" | "cron" | "admin" | "system";
-
 type StoredNewsAutomationResult = {
   fetchRunId: string;
   candidatesFound: number;
@@ -35,10 +33,6 @@ function getErrorMessage(error: unknown) {
   }
 
   return "Error desconocido.";
-}
-
-function isDuplicateError(error: unknown) {
-  return isSupabaseErrorLike(error) && error.code === "23505";
 }
 
 function normalizeLimit(value: number | undefined, fallback: number) {
@@ -81,14 +75,6 @@ function buildFallbackDedupeKey(candidate: NewsCandidate) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 180);
-}
-
-function getCandidateStatus(candidate: NewsCandidate) {
-  if (candidate.relevanceScore >= 0.85 && candidate.confidenceScore >= 0.85) {
-    return "needs_review";
-  }
-
-  return "candidate";
 }
 
 function getSafeDedupeKey(candidate: NewsCandidate) {
@@ -194,199 +180,72 @@ export async function getExistingLocalNewsTitles(
     .filter((title) => title.length > 0);
 }
 
-async function insertCandidateSources(
-  supabase: SupabaseClient,
-  candidateId: string,
-  candidate: NewsCandidate,
-) {
-  const sources = normalizeCandidateSources(candidate);
-
-  if (sources.length === 0) {
-    return 0;
-  }
-
-  const rows = sources.map((source) => ({
-    candidate_id: candidateId,
-    source_name: source.sourceName,
-    source_url: source.sourceUrl,
-    source_title: source.sourceTitle,
-    source_published_at: normalizeDate(source.sourcePublishedAt),
-    excerpt: source.excerpt,
-    is_primary: source.isPrimary,
-  }));
-
-  const { error } = await supabase.from("news_candidate_sources").insert(rows);
-
-  if (error && !isDuplicateError(error)) {
-    throw new Error(
-      `No pudimos guardar fuentes de noticia: ${getErrorMessage(error)}`,
-    );
-  }
-
-  return rows.length;
-}
-
 export async function saveNewsCandidatesResult(input: {
   supabase: SupabaseClient;
   result: GenerateNewsCandidatesResult;
   searchQueries: string[];
-  triggerSource?: TriggerSource;
-  createdBy?: string | null;
   maxCandidatesToStore?: number;
-  reservedFetchRunId?: string;
+  reservedFetchRunId: string;
 }): Promise<StoredNewsAutomationResult> {
-  const candidatesToStore = input.result.candidates.slice(
-    0,
-    normalizeLimit(input.maxCandidatesToStore, 20),
+  if (!input.reservedFetchRunId) {
+    throw new Error("Falta la reserva de generación de noticias.");
+  }
+
+  const limit = Math.min(
+    normalizeLimit(input.maxCandidatesToStore, 5),
+    10,
   );
 
-  let fetchRunId: string | null = input.reservedFetchRunId ?? null;
-  let candidatesStored = 0;
-  let duplicatesSkipped = 0;
-  let sourceCount = 0;
+  const candidatesToStore = input.result.candidates
+    .slice(0, limit)
+    .map((candidate) => ({
+      ...candidate,
+      dedupeKey: getSafeDedupeKey(candidate),
+      sourcePublishedAt: normalizeDate(candidate.sourcePublishedAt),
+      sources: normalizeCandidateSources(candidate).map((source) => ({
+        ...source,
+        sourcePublishedAt: normalizeDate(source.sourcePublishedAt),
+      })),
+    }));
 
-  try {
-    if (fetchRunId) {
-      const { data: reservedRun, error: reservedRunError } =
-        await input.supabase
-          .from("news_fetch_runs")
-          .update({
-            model_name: input.result.model,
-            search_query_count: input.searchQueries.length,
-            candidates_found: input.result.candidates.length,
-            raw_result: {
-              rawText: input.result.rawText,
-              candidatesReturned: input.result.candidates.length,
-            },
-          })
-          .eq("id", fetchRunId)
-          .eq("status", "running")
-          .select("id")
-          .single();
+  // Una RPC realiza inserciones y cierre en una sola transaccion PostgreSQL.
+  const { data, error } = await input.supabase.rpc(
+    "complete_admin_news_generation",
+    {
+      p_run_id: input.reservedFetchRunId,
+      p_model_name: input.result.model,
+      p_search_query_count: input.searchQueries.length,
+      p_raw_text: input.result.rawText,
+      p_candidates: candidatesToStore,
+      p_candidates_found: input.result.candidates.length,
+    },
+  );
 
-      if (reservedRunError || !reservedRun) {
-        throw new Error(
-          `No pudimos actualizar la ejecución reservada: ${getErrorMessage(
-            reservedRunError,
-          )}`,
-        );
-      }
-    } else {
-      const { data: fetchRun, error: fetchRunError } = await input.supabase
-        .from("news_fetch_runs")
-        .insert({
-          status: "running",
-          trigger_source: input.triggerSource ?? "manual",
-          model_name: input.result.model,
-          search_query_count: input.searchQueries.length,
-          source_count: 0,
-          candidates_found: input.result.candidates.length,
-          candidates_published: 0,
-          created_by: input.createdBy ?? null,
-          raw_result: {
-            rawText: input.result.rawText,
-            candidatesReturned: input.result.candidates.length,
-          },
-        })
-        .select("id")
-        .single();
-
-      if (fetchRunError || !fetchRun) {
-        throw new Error(
-          `No pudimos crear ejecución de noticias: ${getErrorMessage(
-            fetchRunError,
-          )}`,
-        );
-      }
-
-      fetchRunId = String(fetchRun.id);
-    }
-
-    for (const candidate of candidatesToStore) {
-      const sources = normalizeCandidateSources(candidate);
-      sourceCount += sources.length;
-
-      const { data: insertedCandidate, error: candidateError } =
-        await input.supabase
-          .from("news_candidates")
-          .insert({
-            fetch_run_id: fetchRunId,
-            title: candidate.title,
-            summary: candidate.summary,
-            source_name: candidate.sourceName,
-            source_url: candidate.sourceUrl,
-            source_published_at: normalizeDate(candidate.sourcePublishedAt),
-            local_relevance: candidate.localRelevance,
-            relevance_score: candidate.relevanceScore,
-            confidence_score: candidate.confidenceScore,
-            status: getCandidateStatus(candidate),
-            dedupe_key: getSafeDedupeKey(candidate),
-            ai_notes: candidate.aiNotes,
-            raw_payload: candidate,
-          })
-          .select("id")
-          .single();
-
-      if (candidateError) {
-        if (isDuplicateError(candidateError)) {
-          duplicatesSkipped += 1;
-          continue;
-        }
-
-        throw new Error(
-          `No pudimos guardar candidato de noticia: ${getErrorMessage(
-            candidateError,
-          )}`,
-        );
-      }
-
-      await insertCandidateSources(
-        input.supabase,
-        String(insertedCandidate.id),
-        candidate,
-      );
-
-      candidatesStored += 1;
-    }
-
-    const { error: updateError } = await input.supabase
-      .from("news_fetch_runs")
-      .update({
-        status: "completed",
-        finished_at: new Date().toISOString(),
-        source_count: sourceCount,
-        candidates_found: input.result.candidates.length,
-        candidates_published: 0,
-      })
-      .eq("id", fetchRunId);
-
-    if (updateError) {
-      throw new Error(
-        `No pudimos cerrar ejecución de noticias: ${getErrorMessage(
-          updateError,
-        )}`,
-      );
-    }
-
-    return {
-      fetchRunId,
-      candidatesFound: input.result.candidates.length,
-      candidatesStored,
-      duplicatesSkipped,
-      candidatesPublished: 0,
-    };
-  } catch (error) {
-    if (fetchRunId) {
-      await input.supabase
-        .from("news_fetch_runs")
-        .update({
-          status: "failed",
-          finished_at: new Date().toISOString(),
-          error_message: getErrorMessage(error),
-        })
-        .eq("id", fetchRunId);
-    }
-
-    throw error;
+  if (error) {
+    throw new Error(
+      "No pudimos completar el guardado atómico de noticias: " +
+        getErrorMessage(error),
+    );
   }
+
+  const storedResult = data as StoredNewsAutomationResult | null;
+
+  if (
+    !storedResult ||
+    storedResult.fetchRunId !== input.reservedFetchRunId ||
+    storedResult.candidatesFound !== input.result.candidates.length ||
+    !Number.isInteger(storedResult.candidatesStored) ||
+    !Number.isInteger(storedResult.duplicatesSkipped) ||
+    storedResult.candidatesStored < 0 ||
+    storedResult.duplicatesSkipped < 0 ||
+    storedResult.candidatesStored + storedResult.duplicatesSkipped !==
+      candidatesToStore.length ||
+    storedResult.candidatesPublished !== 0
+  ) {
+    throw new Error(
+      "La función de guardado atómico devolvió una respuesta inesperada.",
+    );
+  }
+
+  return storedResult;
 }
