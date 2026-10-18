@@ -560,7 +560,7 @@ Ruta:
 
 ### H3. Noticias automáticas
 
-Estado: ✅ Base implementada
+Estado: ✅ Base funcional; QA técnico local M3-17B7 PASS
 
 Documento:
 
@@ -1080,18 +1080,16 @@ Las acciones sensibles deben validar permisos también del lado servidor.
 
 ### M5. Rutas `/dev`
 
-Estado: 🟡 Revisión final pendiente
+Estado: ✅ 100% — M3-17B8A (prueba local en modo producción)
 
-Rutas existentes:
+- `/dev/db-test`: HTTP 404 con `next start` en puerto 3001.
+- `/dev/ads-test`: HTTP 404 en el mismo servidor.
+- `/`: HTTP 200 como control de funcionamiento.
 
-- `/dev/db-test`
-- `/dev/ads-test`
-
-Antes del lanzamiento deben:
-
-- estar protegidas;
-- deshabilitarse;
-- o eliminarse de producción.
+Ambas rutas llaman a `notFound()` antes de leer Supabase cuando
+`NODE_ENV === "production"`. No requirieron cambios de código.
+`npm run lint`, `npm run build` y `git diff --check`: PASS.
+Pendiente externo: smoke test tras desplegar en producción (T6).
 
 ---
 
@@ -1504,11 +1502,13 @@ Los principales bloques todavía abiertos son:
 3. cerrar SEO local;
 4. revisar experiencia móvil;
 5. decidir situación final de `/tiempo`;
-6. proteger o retirar rutas `/dev`;
-7. limpiar datos de desarrollo;
-8. preparar contenido inicial de lanzamiento;
-9. repetir QA publicitario y decidir activación pública de Campaña B;
-10. preparar y validar despliegue de producción.
+6. limpiar datos de desarrollo;
+7. preparar contenido inicial de lanzamiento;
+8. repetir QA publicitario y decidir activación pública de Campaña B;
+9. preparar y validar despliegue de producción.
+
+Resuelto: protección de `/dev` en servidor local de producción (M3-17B8A).
+La validación del despliegue externo continúa pendiente.
 
 Este listado debe reducirse conforme las áreas obtengan PASS.
 
@@ -1516,27 +1516,22 @@ Este listado debe reducirse conforme las áreas obtengan PASS.
 
 # 5. Punto estable actual
 
-Última fase técnica cerrada:
+Última fase técnica validada: **M3-17B8A — Rutas de desarrollo protegidas**.
+Resultado: ✅ PASS en servidor local con configuración de producción.
+No requirió modificar código ni base de datos.
 
-**J10-8 — Evitar repetición inmediata del anuncio al visitar el negocio anunciante**
+Último commit de implementación: `c6be6cb` — guardado atómico de noticias.
+Fases relacionadas: `04d909f` (M3-17B5), `2c66a23` (M3-17B6),
+`c6be6cb` (M3-17B7C3).
 
-Estado:
+Verificación: `npm run lint`, `npm run build`,
+`git diff --check` y `origin/master` sincronizado: PASS.
 
-✅ PASS en entorno local
+Próxima prioridad: **M6 — Auditoría de datos sensibles**.
+H5 (automatización productiva de noticias), publicación HTTP manual,
+SEO local, QA móvil y despliegue siguen pendientes según su alcance.
+La activación pública de Campaña B requiere una decisión explícita.
 
-Commit:
-
-`b698c09 fix: evitar repetir anuncio al visitar negocio anunciante`
-
-La fase J10-7G registró apariciones reales y estadísticas:
-
-`f03e40a feat: registrar apariciones reales de anuncios`
-
-La siguiente área de cierre para Sabinapp 1.0 es:
-
-**M — Seguridad y permisos**
-
-El módulo publicitario permanece desactivado globalmente en la base de desarrollo después de las pruebas. La decisión de activación pública sigue pendiente.
 ---
 
 # 6. Regla para futuras actualizaciones semanales
@@ -1746,3 +1741,61 @@ QA integral de concurrencia HTTP pendiente.
   los estados, incluido el rechazo de un candidato publicado.
 
 No declarar PASS integral hasta completar estas verificaciones.
+
+---
+
+## M3-17B5 — Autorización administrativa de noticias
+
+Estado: ✅ PASS. Commit: `04d909f`.
+
+- Acceso a operaciones administrativas restringido mediante `has_role('admin')`.
+- Solicitud anónima: HTTP 401; subadmin: HTTP 403 en generación.
+- Subadmin redirigido al intentar acceder a administración de noticias.
+
+## M3-17B6 — Gestión de subadministradores
+
+Estado: ✅ PASS. Commit: `2c66a23`.
+
+- Administración de usuarios y roles: solo admin.
+- Asignación y revocación verificadas; filtros conservados.
+- Auditoría SQL de acciones de cambio de rol confirmada.
+- Respaldo: `docs/sql/sabinapp-admin-subadmin-m3-17b6.sql`.
+
+## M3-17B7 — QA integral de noticias candidatas
+
+Fecha de cierre: 2026-10-18.
+Estado: ✅ 100% del alcance técnico de QA local acordado.
+
+- Guardado atómico PostgreSQL y cierre de errores desde el reloj de PostgreSQL.
+- Respaldo: `docs/sql/sabinapp-news-storage-atomic-m3-17b7.sql`.
+- Commit de implementación: `c6be6cb`.
+- QA SQL: guardado 6/6 y cierre fallido 3/3, con ROLLBACK.
+- Autorización: anónimo HTTP 401; admin `dryRun` HTTP 200.
+- Reserva ocupada HTTP 409; cooldown de cinco minutos HTTP 429.
+- Dos HTTP simultáneos: uno HTTP 409 y otro HTTP 500 simulado,
+  sin llamar realmente a OpenAI.
+- Ejecución real con `gpt-5-mini`: completada con cero candidatos.
+- Respuesta de IA simulada por HTTP: un candidato `needs_review`,
+  una fuente primaria, cero noticias publicadas.
+- Limpieza QA: candidato, fuente, ejecución, publicaciones y reservas
+  activas en cero; servidor normal restaurado.
+- `npm run lint`, `npm run build` y Git: PASS.
+
+**Límites del cierre:** H5 continúa pendiente (fuentes, presupuesto,
+frecuencia, monitoreo y operación real en producción). Las pruebas de
+publicación manual HTTP registradas como pendientes en M3-17B4 no se
+sustituyen con el QA del guardado de candidatos.
+
+## M3-17B8A — Protección de rutas de desarrollo
+
+Fecha de cierre: 2026-10-18.
+Estado: ✅ 100% de QA local de modo producción.
+
+- Servidor `next start` ejecutado en puerto 3001.
+- `/dev/db-test`: HTTP 404.
+- `/dev/ads-test`: HTTP 404.
+- `/`: HTTP 200.
+- Las comprobaciones de ambas rutas ocurren antes de leer datos.
+- No se modificaron archivos de código ni SQL.
+- `npm run lint`, `npm run build` y `git diff --check`: PASS.
+- Pendiente: repetir comprobación en despliegue externo (T6).
