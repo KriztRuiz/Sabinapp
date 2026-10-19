@@ -201,11 +201,11 @@ export async function POST(request: Request) {
       candidateId: candidate.id,
       title: candidate.title,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
-        message: getErrorMessage(error),
+        message: "No se pudo rechazar el candidato de noticia. Inténtalo nuevamente.",
       },
       { status: 500 },
     );

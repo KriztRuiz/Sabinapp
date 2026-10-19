@@ -50,7 +50,10 @@ export async function publishNewsCandidate(input: {
     }
 
     if (error.code === "P0001") {
-      throw new PublishNewsCandidateError(error.message, 409);
+      throw new PublishNewsCandidateError(
+        "El candidato no puede publicarse en su estado actual.",
+        409,
+      );
     }
 
     if (error.code === "42501") {

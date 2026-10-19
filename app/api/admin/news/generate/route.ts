@@ -257,7 +257,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        message: getErrorMessage(error),
+        message: "No se pudo completar la generación de noticias. Inténtalo nuevamente.",
       },
       { status: 500 },
     );

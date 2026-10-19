@@ -29,14 +29,6 @@ function readCandidateId(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Error inesperado al publicar candidato de noticia.";
-}
-
 async function requireAdminNewsPermission() {
   const supabase = await createClient();
 
@@ -126,7 +118,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        message: getErrorMessage(error),
+        message:
+          error instanceof PublishNewsCandidateError
+            ? error.message
+            : "No se pudo publicar el candidato de noticia. Inténtalo nuevamente.",
       },
       {
         status:
