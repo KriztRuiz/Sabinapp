@@ -6,6 +6,122 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+const SAFE_FIXED_AD_RPC_MESSAGES = new Set([
+  "Debes iniciar sesión para solicitar un anuncio.",
+  "Debes tener un perfil activo y completo para solicitar anuncios.",
+  "Sólo puedes solicitar anuncios para uno de tus negocios publicados.",
+  "El título debe tener entre 3 y 120 caracteres.",
+  "La descripción no puede superar 500 caracteres.",
+  "Debes contratar al menos un día de publicidad.",
+  "La opción de inicio seleccionada no es válida.",
+  "Debes seleccionar fecha y hora para un anuncio programado.",
+  "La fecha y hora solicitadas deben estar en el futuro.",
+  "Campaña A sólo acepta imágenes JPEG, PNG o WebP.",
+  "La imagen del anuncio no puede superar 1000 KB.",
+  "El archivo del anuncio está vacío o no tiene tamaño válido.",
+  "Debes seleccionar un contacto del negocio.",
+  "El contacto seleccionado no está disponible para este negocio.",
+  "La página del negocio no requiere seleccionar un contacto.",
+  "El destino seleccionado no es válido.",
+  "Debes iniciar sesión para corregir un anuncio.",
+  "Debes tener un perfil activo y completo.",
+  "No se encontró el anuncio.",
+  "Este tipo de campaña no puede editarse desde este formulario.",
+  "Este anuncio pertenece al modelo anterior.",
+  "Este anuncio no está disponible para correcciones.",
+  "No se puede modificar un anuncio que ya tiene un pago asociado.",
+  "El negocio ya no está disponible para publicidad.",
+  "Debes indicar fecha y hora de inicio.",
+  "La nueva fecha solicitada debe estar en el futuro.",
+  "La página del negocio no requiere contacto.",
+  "Debes seleccionar un contacto.",
+  "El contacto seleccionado ya no está disponible.",
+  "El anuncio debe contener exactamente una imagen.",
+  "No se encontró la imagen del anuncio.",
+]);
+
+function getSafeFixedAdRpcErrorMessage(
+  error: { code: string; message: string },
+  fallback: string,
+): string {
+  if (
+    error.code === "P0001" &&
+    SAFE_FIXED_AD_RPC_MESSAGES.has(error.message)
+  ) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+const SAFE_INTERSTITIAL_AD_RPC_MESSAGES = new Set([
+  "El formato del anuncio emergente no es válido.",
+  "La campaña emergente debe contener entre 1 y 6 imágenes.",
+  "La campaña emergente con video debe contener exactamente un archivo.",
+  "No puedes utilizar el mismo archivo más de una vez.",
+  "Una de las rutas Storage está vacía.",
+  "Uno de los archivos no pertenece al negocio seleccionado.",
+  "Uno de los archivos no pertenece al negocio anunciante.",
+  "No se encontró uno de los archivos del anuncio en Storage.",
+  "Uno de los archivos está vacío o no tiene tamaño válido.",
+  "Campaña B en modo imágenes sólo acepta JPEG, PNG o WebP.",
+  "Cada imagen del anuncio puede pesar como máximo 1000 KB.",
+  "Campaña B en modo video sólo acepta MP4 o WebM.",
+  "El video del anuncio puede pesar como máximo 16000 KB.",
+  "Este anuncio no pertenece a Campaña B.",
+  "No se pueden reemplazar los archivos de un anuncio que ya tiene métricas.",
+  "No se encontró la configuración publicitaria.",
+]);
+
+function getSafeInterstitialAdRpcErrorMessage(
+  error: { code: string; message: string },
+  fallback: string,
+): string {
+  if (error.code !== "P0001") {
+    return fallback;
+  }
+
+  const message = error.message.trim();
+
+  if (
+    SAFE_FIXED_AD_RPC_MESSAGES.has(message) ||
+    SAFE_INTERSTITIAL_AD_RPC_MESSAGES.has(message)
+  ) {
+    return message;
+  }
+
+  const dynamicRules = [
+    {
+      pattern: /^La campaña emergente debe contener entre 1 y (\d+) imágenes\.$/,
+      max: 6,
+    },
+    {
+      pattern: /^Cada imagen del anuncio puede pesar como máximo (\d+) KB\.$/,
+      max: 1000,
+    },
+    {
+      pattern: /^El video del anuncio puede pesar como máximo (\d+) KB\.$/,
+      max: 16000,
+    },
+  ];
+
+  for (const rule of dynamicRules) {
+    const match = message.match(rule.pattern);
+
+    if (!match) {
+      continue;
+    }
+
+    const value = Number(match[1]);
+
+    if (Number.isInteger(value) && value >= 1 && value <= rule.max) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
+
 function redirectAdError(message: string): never {
   redirect(
     `/dashboard/anuncios/nuevo?error=${encodeURIComponent(message)}`,
@@ -270,7 +386,7 @@ export async function submitOwnerAdRequest(
 
   if (uploadError) {
     redirectAdError(
-      `No se pudo subir la imagen del anuncio: ${uploadError.message}`,
+      "No se pudo subir la imagen del anuncio. Inténtalo nuevamente.",
     );
   }
 
@@ -299,8 +415,10 @@ export async function submitOwnerAdRequest(
     );
 
     redirectAdError(
-      error.message ||
+      getSafeFixedAdRpcErrorMessage(
+        error,
         "No se pudo enviar la solicitud del anuncio.",
+      ),
     );
   }
 
@@ -557,7 +675,7 @@ export async function resubmitOwnerAdRequest(
     if (uploadError) {
       redirectAdEditError(
         campaignId,
-        `No se pudo subir la nueva imagen: ${uploadError.message}`,
+        "No se pudo subir la nueva imagen. Inténtalo nuevamente.",
       );
     }
 
@@ -607,8 +725,10 @@ export async function resubmitOwnerAdRequest(
 
     redirectAdEditError(
       campaignId,
-      error.message ||
+      getSafeFixedAdRpcErrorMessage(
+        error,
         "No se pudo reenviar el anuncio.",
+      ),
     );
   }
 
@@ -930,8 +1050,10 @@ export async function submitOwnerInterstitialAdRequest(
     return {
       ok: false,
       error:
-        error.message ||
-        "No se pudo enviar la campaña emergente a revisión.",
+        getSafeInterstitialAdRpcErrorMessage(
+          error,
+          "No se pudo enviar la campaña emergente a revisión.",
+        ),
     };
   }
 
@@ -1364,8 +1486,10 @@ export async function resubmitOwnerInterstitialAdRequest(
     return {
       ok: false,
       error:
-        error.message ||
-        "No se pudo reenviar la campaña emergente.",
+        getSafeInterstitialAdRpcErrorMessage(
+          error,
+          "No se pudo reenviar la campaña emergente.",
+        ),
     };
   }
 
@@ -1475,8 +1599,7 @@ export async function reportOwnerAdPayment(
     redirect(
       "/dashboard/anuncios?error=" +
         encodeURIComponent(
-          error.message ||
-            "No se pudo reportar el pago.",
+          "No se pudo reportar el pago. Inténtalo nuevamente.",
         ),
     );
   }

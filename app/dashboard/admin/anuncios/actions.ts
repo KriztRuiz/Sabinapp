@@ -4,6 +4,54 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+const SAFE_ADMIN_AD_RPC_MESSAGES = new Set([
+  "Debes iniciar sesión para revisar anuncios.",
+  "No tienes permiso para administrar anuncios.",
+  "No se encontró el anuncio solicitado.",
+  "Esta campaña pertenece al modelo anterior y no usa este flujo de revisión.",
+  "Sólo pueden aprobarse anuncios pendientes de revisión.",
+  "El negocio ya no está publicado y el anuncio no puede aprobarse.",
+  "El negocio está vencido y el anuncio no puede aprobarse.",
+  "El precio del anuncio no coincide con su duración.",
+  "El precio diario del anuncio fijo no es válido.",
+  "El anuncio fijo debe tener exactamente una imagen activa.",
+  "El precio diario de la campaña emergente no es válido.",
+  "La campaña emergente debe contener de 1 a 6 imágenes o exactamente un video.",
+  "Uno o más archivos de la campaña emergente no cumplen las reglas de formato o tamaño.",
+  "Este tipo de anuncio no puede aprobarse con este flujo.",
+  "Este anuncio ya tiene un registro de pago.",
+  "Debes iniciar sesión para verificar pagos.",
+  "No tienes permiso para verificar pagos de anuncios.",
+  "Las observaciones no pueden superar 2000 caracteres.",
+  "No se encontró el anuncio.",
+  "Este anuncio pertenece al modelo anterior.",
+  "Sólo pueden activarse anuncios aprobados.",
+  "El negocio ya no está publicado.",
+  "El negocio está vencido.",
+  "El tipo de campaña no puede activarse con este flujo.",
+  "La campaña emergente ya no tiene una composición válida.",
+  "No se encontró el pago del anuncio.",
+  "El dueño todavía no ha reportado un pago pendiente de revisión.",
+  "El monto del pago no coincide con el precio del anuncio.",
+  "El anuncio programado no tiene una fecha de inicio válida.",
+  "La fecha solicitada ya pasó. El dueño debe seleccionar una nueva fecha antes de verificar el pago.",
+  "El modo de inicio del anuncio no es válido.",
+]);
+
+function getSafeAdminAdRpcErrorMessage(
+  error: { code: string; message: string },
+  fallback: string,
+): string {
+  if (
+    error.code === "P0001" &&
+    SAFE_ADMIN_AD_RPC_MESSAGES.has(error.message)
+  ) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 async function requireAdsAdminPermission() {
   const supabase = await createClient();
 
@@ -103,8 +151,10 @@ export async function approveAdRequestAction(
 
   if (error) {
     redirectAdminAdsError(
-      error.message ||
+      getSafeAdminAdRpcErrorMessage(
+        error,
         "No se pudo aprobar el anuncio.",
+      ),
     );
   }
 
@@ -147,8 +197,10 @@ export async function requestAdChangesAction(
 
   if (error) {
     redirectAdminAdsError(
-      error.message ||
+      getSafeAdminAdRpcErrorMessage(
+        error,
         "No se pudieron solicitar las correcciones.",
+      ),
     );
   }
 
@@ -181,8 +233,10 @@ export async function rejectAdRequestAction(
 
   if (error) {
     redirectAdminAdsError(
-      error.message ||
+      getSafeAdminAdRpcErrorMessage(
+        error,
         "No se pudo rechazar el anuncio.",
+      ),
     );
   }
 
@@ -318,8 +372,10 @@ export async function verifyAdPaymentAction(
 
   if (error) {
     redirectAdminAdsError(
-      error.message ||
+      getSafeAdminAdRpcErrorMessage(
+        error,
         "No se pudo verificar el pago.",
+      ),
     );
   }
 
@@ -370,8 +426,10 @@ export async function rejectAdPaymentAction(
 
   if (error) {
     redirectAdminAdsError(
-      error.message ||
+      getSafeAdminAdRpcErrorMessage(
+        error,
         "No se pudo rechazar el reporte de pago.",
+      ),
     );
   }
 
