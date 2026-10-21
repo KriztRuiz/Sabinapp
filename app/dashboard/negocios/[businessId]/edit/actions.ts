@@ -123,9 +123,7 @@ export async function updateBusinessLanding(
   if (updateBusinessError || !updatedBusiness) {
     redirect(
       `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
-        `No se pudo actualizar el contenido del negocio: ${
-          updateBusinessError?.message ?? "sin filas actualizadas"
-        }`,
+        "No se pudo actualizar el contenido del negocio. Inténtalo nuevamente.",
       )}`,
     );
   }
@@ -147,9 +145,7 @@ export async function updateBusinessLanding(
   if (upsertSettingsError || !updatedSettings) {
     redirect(
       `/dashboard/negocios/${businessId}/edit?message=${encodeURIComponent(
-        `El contenido se guardó, pero no se pudo guardar el estilo visual: ${
-          upsertSettingsError?.message ?? "sin configuración actualizada"
-        }`,
+        "El contenido se guardó, pero no se pudo guardar el estilo visual. Inténtalo nuevamente.",
       )}`,
     );
   }
@@ -274,7 +270,7 @@ async function uploadBusinessMediaFile(
   if (error) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo subir la imagen: ${error.message}`,
+      "No se pudo subir la imagen. Inténtalo nuevamente.",
     );
   }
 
@@ -366,7 +362,7 @@ async function uploadBusinessItemImageFile(
   if (error) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo subir la imagen del item: ${error.message}`,
+      "No se pudo subir la imagen del ítem. Inténtalo nuevamente.",
     );
   }
 
@@ -573,7 +569,7 @@ async function unsetOtherPrimaryContacts(
   if (error) {
     redirectToEditBusiness(
       businessId,
-      `No se pudieron actualizar los contactos principales: ${error.message}`,
+      "No se pudieron actualizar los contactos principales. Inténtalo nuevamente.",
     );
   }
 }
@@ -600,7 +596,7 @@ async function unsetOtherPrimaryLocations(
   if (error) {
     redirectToEditBusiness(
       businessId,
-      `No se pudieron actualizar las ubicaciones principales: ${error.message}`,
+      "No se pudieron actualizar las ubicaciones principales. Inténtalo nuevamente.",
     );
   }
 }
@@ -776,7 +772,7 @@ export async function addBusinessLocation(
   if (existingLocationsError) {
     redirectToEditBusiness(
       businessId,
-      `No se pudieron revisar las ubicaciones actuales: ${existingLocationsError.message}`,
+      "No se pudieron revisar las ubicaciones actuales. Inténtalo nuevamente.",
     );
   }
 
@@ -806,9 +802,7 @@ export async function addBusinessLocation(
   if (insertLocationError || !insertedLocation) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo agregar la ubicación: ${
-        insertLocationError?.message ?? "sin filas insertadas"
-      }`,
+      "No se pudo agregar la ubicación. Inténtalo nuevamente.",
     );
   }
 
@@ -857,9 +851,7 @@ export async function deleteBusinessLocation(
   if (currentLocationError || !currentLocation) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró la ubicación: ${
-        currentLocationError?.message ?? "sin filas encontradas"
-      }`,
+      "No se encontró la ubicación.",
     );
   }
 
@@ -874,9 +866,7 @@ export async function deleteBusinessLocation(
   if (deleteLocationError || !deletedLocation) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo eliminar la ubicación: ${
-        deleteLocationError?.message ?? "sin filas eliminadas"
-      }`,
+      "No se pudo eliminar la ubicación. Inténtalo nuevamente.",
     );
   }
 
@@ -892,7 +882,7 @@ export async function deleteBusinessLocation(
     if (remainingLocationsError) {
       redirectToEditBusiness(
         businessId,
-        `La ubicación se eliminó, pero no se pudo revisar la nueva principal: ${remainingLocationsError.message}`,
+        "La ubicación se eliminó, pero no se pudo revisar la nueva principal. Revisa las ubicaciones antes de intentarlo nuevamente.",
       );
     }
 
@@ -911,7 +901,7 @@ export async function deleteBusinessLocation(
       if (promoteLocationError) {
         redirectToEditBusiness(
           businessId,
-          `La ubicación se eliminó, pero no se pudo asignar una nueva principal: ${promoteLocationError.message}`,
+          "La ubicación se eliminó, pero no se pudo asignar una nueva principal. Revisa las ubicaciones antes de intentarlo nuevamente.",
         );
       }
     }
@@ -986,9 +976,7 @@ export async function updateBusinessLocationDetails(
   if (currentLocationError || !currentLocation) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró la ubicación: ${
-        currentLocationError?.message ?? "sin filas encontradas"
-      }`,
+      "No se encontró la ubicación.",
     );
   }
 
@@ -1021,9 +1009,7 @@ export async function updateBusinessLocationDetails(
   if (updateLocationError || !updatedLocation) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo actualizar la ubicación: ${
-        updateLocationError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo actualizar la ubicación. Inténtalo nuevamente.",
     );
   }
 
@@ -1108,9 +1094,7 @@ export async function addBusinessHour(
   if (insertHourError || !insertedHour) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo agregar el horario: ${
-        insertHourError?.message ?? "sin filas insertadas"
-      }`,
+      "No se pudo agregar el horario. Inténtalo nuevamente.",
     );
   }
 
@@ -1157,9 +1141,7 @@ export async function deleteBusinessHour(
   if (currentHourError || !currentHour) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró el horario: ${
-        currentHourError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar el horario o ya no está disponible.",
     );
   }
 
@@ -1174,9 +1156,7 @@ export async function deleteBusinessHour(
   if (deleteHourError || !deletedHour) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo eliminar el horario: ${
-        deleteHourError?.message ?? "sin filas eliminadas"
-      }`,
+      "No se pudo eliminar el horario. Inténtalo nuevamente.",
     );
   }
 
@@ -1250,9 +1230,7 @@ export async function updateBusinessHourDetails(
   if (currentHourError || !currentHour) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró el horario: ${
-        currentHourError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar el horario o ya no está disponible.",
     );
   }
 
@@ -1279,9 +1257,7 @@ export async function updateBusinessHourDetails(
   if (updateHourError || !updatedHour) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo actualizar el horario: ${
-        updateHourError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo actualizar el horario. Inténtalo nuevamente.",
     );
   }
 
@@ -1345,7 +1321,7 @@ export async function addBusinessContact(
   if (existingContactsError) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo calcular el orden del contacto: ${existingContactsError.message}`,
+      "No se pudo calcular el orden del contacto. Inténtalo nuevamente.",
     );
   }
 
@@ -1375,9 +1351,7 @@ export async function addBusinessContact(
   if (insertContactError || !insertedContact) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo agregar el contacto: ${
-        insertContactError?.message ?? "sin filas insertadas"
-      }`,
+      "No se pudo agregar el contacto. Inténtalo nuevamente.",
     );
   }
 
@@ -1425,9 +1399,7 @@ export async function deleteBusinessContact(
   if (currentContactError || !currentContact) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró el contacto: ${
-        currentContactError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar el contacto o ya no está disponible.",
     );
   }
 
@@ -1442,9 +1414,7 @@ export async function deleteBusinessContact(
   if (deleteContactError || !deletedContact) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo eliminar el contacto: ${
-        deleteContactError?.message ?? "sin filas eliminadas"
-      }`,
+      "No se pudo eliminar el contacto. Inténtalo nuevamente.",
     );
   }
 
@@ -1514,9 +1484,7 @@ export async function updateBusinessContactDetails(
   if (currentContactError || !currentContact) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró el contacto: ${
-        currentContactError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar el contacto o ya no está disponible.",
     );
   }
 
@@ -1548,9 +1516,7 @@ export async function updateBusinessContactDetails(
   if (updateContactError || !updatedContact) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo actualizar el contacto: ${
-        updateContactError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo actualizar el contacto. Inténtalo nuevamente.",
     );
   }
 
@@ -1617,9 +1583,7 @@ export async function updateBusinessMediaDetails(
   if (currentMediaError || !currentMedia) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró la imagen: ${
-        currentMediaError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar la imagen o ya no está disponible.",
     );
   }
 
@@ -1671,9 +1635,7 @@ export async function updateBusinessMediaDetails(
 
     redirectToEditBusiness(
       businessId,
-      `No se pudo actualizar la imagen: ${
-        updateMediaError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo actualizar la imagen. Inténtalo nuevamente.",
     );
   }
 
@@ -1769,7 +1731,7 @@ export async function setBusinessMediaAsCover(
   if (resetCoverError) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo limpiar la portada anterior: ${resetCoverError.message}`,
+      "No se pudo actualizar la portada anterior. Revisa la galería antes de intentarlo nuevamente.",
     );
   }
 
@@ -1789,9 +1751,7 @@ export async function setBusinessMediaAsCover(
   if (updateCoverError || !updatedCover) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo cambiar la portada: ${
-        updateCoverError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo establecer la nueva portada. Revisa la galería antes de intentarlo nuevamente.",
     );
   }
 
@@ -1842,9 +1802,7 @@ export async function deleteBusinessMedia(
   if (currentMediaError || !currentMedia) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró la imagen: ${
-        currentMediaError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar la imagen o ya no está disponible.",
     );
   }
 
@@ -1859,9 +1817,7 @@ export async function deleteBusinessMedia(
   if (deleteMediaError || !deletedMedia) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo eliminar la imagen: ${
-        deleteMediaError?.message ?? "sin filas eliminadas"
-      }`,
+      "No se pudo eliminar la imagen. Inténtalo nuevamente.",
     );
   }
 
@@ -1934,7 +1890,7 @@ export async function addBusinessMedia(
   if (existingMediaError) {
     redirectToEditBusiness(
       businessId,
-      `No se pudieron revisar las imágenes actuales: ${existingMediaError.message}`,
+      "No se pudieron revisar las imágenes actuales. Inténtalo nuevamente.",
     );
   }
 
@@ -1974,9 +1930,7 @@ export async function addBusinessMedia(
 
     redirectToEditBusiness(
       businessId,
-      `No se pudo agregar la imagen: ${
-        insertMediaError?.message ?? "sin imagen creada"
-      }`,
+      "No se pudo guardar la imagen. Revisa la galería antes de intentarlo nuevamente.",
     );
   }
 
@@ -2071,9 +2025,7 @@ export async function updateBusinessItemDetails(
   if (currentItemError || !currentItem) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró el item: ${
-        currentItemError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar el ítem o ya no está disponible.",
     );
   }
 
@@ -2155,9 +2107,7 @@ export async function updateBusinessItemDetails(
 
     redirectToEditBusiness(
       businessId,
-      `No se pudo actualizar el item: ${
-        updateItemError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo actualizar el ítem. Inténtalo nuevamente.",
     );
   }
 
@@ -2229,9 +2179,7 @@ export async function deleteBusinessItem(
   if (currentItemError || !currentItem) {
     redirectToEditBusiness(
       businessId,
-      `No se encontró el item: ${
-        currentItemError?.message ?? "sin filas encontradas"
-      }`,
+      "No se pudo consultar el ítem o ya no está disponible.",
     );
   }
 
@@ -2246,9 +2194,7 @@ export async function deleteBusinessItem(
   if (deleteItemError || !deletedItem) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo eliminar el item: ${
-        deleteItemError?.message ?? "sin filas eliminadas"
-      }`,
+      "No se pudo eliminar el ítem. Inténtalo nuevamente.",
     );
   }
 
@@ -2339,7 +2285,7 @@ export async function addBusinessItem(
   if (existingItemsError) {
     redirectToEditBusiness(
       businessId,
-      `No se pudieron revisar los items actuales: ${existingItemsError.message}`,
+      "No se pudieron revisar los ítems actuales. Inténtalo nuevamente.",
     );
   }
 
@@ -2392,9 +2338,7 @@ export async function addBusinessItem(
 
     redirectToEditBusiness(
       businessId,
-      `No se pudo agregar el item: ${
-        insertItemError?.message ?? "sin item creado"
-      }`,
+      "No se pudo guardar el ítem. Revisa el menú antes de intentarlo nuevamente.",
     );
   }
 
@@ -2487,9 +2431,7 @@ export async function submitBusinessForReview(businessId: string) {
   if (updateBusinessError || !updatedBusiness) {
     redirectToEditBusiness(
       businessId,
-      `No se pudo enviar a revisión: ${
-        updateBusinessError?.message ?? "sin filas actualizadas"
-      }`,
+      "No se pudo enviar el negocio a revisión. Inténtalo nuevamente.",
     );
   }
 
