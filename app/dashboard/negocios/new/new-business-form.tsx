@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { FieldGuide } from "../_components/field-guide";
 import { createBusinessFromDashboard } from "./actions";
+import { CreateBusinessSubmitButton } from "./create-business-submit-button";
 
 type BusinessTypeOption = {
   id: string;
@@ -32,6 +33,14 @@ export function NewBusinessForm({
 }: NewBusinessFormProps) {
   const [selectedBusinessTypeId, setSelectedBusinessTypeId] = useState("");
 
+  // UUID estable mientras este formulario permanezca montado.
+  // Se asigna al DOM, evitando diferencias entre SSR e hidratacion.
+  const initializeCreationRequestId = useCallback((input: HTMLInputElement | null) => {
+    if (input && !input.value) {
+      input.value = crypto.randomUUID();
+    }
+  }, []);
+
   const selectedBusinessType = useMemo(
     () =>
       businessTypes.find(
@@ -56,6 +65,7 @@ export function NewBusinessForm({
       action={createBusinessFromDashboard}
       className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm"
     >
+      <input type="hidden" name="creationRequestId" ref={initializeCreationRequestId} />
       <div className="grid gap-5">
         <div>
           <label htmlFor="name" className="text-sm font-bold text-gray-800">
@@ -308,12 +318,7 @@ export function NewBusinessForm({
           El negocio no aparecerá públicamente hasta pasar por revisión.
         </p>
 
-        <button
-          type="submit"
-          className="rounded-xl bg-gray-950 px-5 py-3 text-sm font-black text-white transition hover:bg-gray-800"
-        >
-          Crear negocio
-        </button>
+        <CreateBusinessSubmitButton />
       </div>
     </form>
   );

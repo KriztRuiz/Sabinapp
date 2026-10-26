@@ -2425,8 +2425,10 @@ export async function submitBusinessForReview(businessId: string) {
       updated_at: now,
     })
     .eq("id", businessId)
+    .eq("owner_id", business.owner_id)
+    .in("status", allowedStatuses)
     .select("id")
-    .single();
+    .maybeSingle();
 
   if (updateBusinessError || !updatedBusiness) {
     redirectToEditBusiness(
@@ -2460,7 +2462,7 @@ export async function publishApprovedOwnedBusiness(businessId: string) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, owner_id, status, expires_at")
+    .select("id, slug, owner_id, status, expires_at, is_adult_content")
     .eq("id", businessId)
     .eq("owner_id", user.id)
     .single();
@@ -2493,13 +2495,13 @@ export async function publishApprovedOwnedBusiness(businessId: string) {
 
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const { data: publishedBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "published",
       is_published: true,
-      show_in_search: true,
-      show_in_home: true,
+      show_in_search: !business.is_adult_content,
+      show_in_home: !business.is_adult_content,
       published_at: now,
       rejected_at: null,
       rejected_by: null,
@@ -2511,9 +2513,12 @@ export async function publishApprovedOwnedBusiness(businessId: string) {
       updated_at: now,
     })
     .eq("id", businessId)
-    .eq("owner_id", user.id);
+    .eq("owner_id", user.id)
+    .eq("status", "approved")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !publishedBusiness) {
     redirectToEditBusiness(
       businessId,
       "No se pudo publicar el negocio. Intenta de nuevo.",
@@ -2577,7 +2582,7 @@ export async function pausePublishedOwnedBusiness(businessId: string) {
 
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const { data: pausedBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "hidden",
@@ -2588,9 +2593,13 @@ export async function pausePublishedOwnedBusiness(businessId: string) {
       updated_at: now,
     })
     .eq("id", businessId)
-    .eq("owner_id", user.id);
+    .eq("owner_id", user.id)
+    .eq("status", "published")
+    .eq("is_published", true)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !pausedBusiness) {
     redirectToEditBusiness(
       businessId,
       "No se pudo retirar el negocio del público. Intenta de nuevo.",
@@ -2735,22 +2744,29 @@ export async function updateBusinessClassification(
     );
   }
 
-  const { error } = await supabase
+  const { data: updatedBusiness, error } = await supabase
     .from("businesses")
     .update({
       business_type_id: businessType.id,
       category_id: category.id,
+      ...(business.status === "hidden" ? { status: "draft" } : {}),
       is_adult_content: Boolean(businessType.is_adult_related),
       requires_age_verification: Boolean(businessType.is_adult_related),
+      show_in_search: false,
+      show_in_home: false,
+      is_published: false,
       starts_at: startsAt,
       ends_at: endsAt,
       expires_at: endsAt,
       updated_at: new Date().toISOString(),
     })
     .eq("id", businessId)
-    .eq("owner_id", user.id);
+    .eq("owner_id", user.id)
+    .eq("status", business.status)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !updatedBusiness) {
     redirectToEditBusiness(
       businessId,
       "No se pudo actualizar la clasificación del negocio.",
@@ -2763,6 +2779,8 @@ export async function updateBusinessClassification(
 
   redirectToEditBusiness(
     businessId,
-    "Clasificación actualizada correctamente.",
+    business.status === "hidden"
+      ? "Clasificación actualizada. El negocio volvió a borrador y requiere una nueva revisión."
+      : "Clasificación actualizada correctamente.",
   );
 }

@@ -19,6 +19,12 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const nextPath = getSafeNextPath(requestUrl.searchParams.get("next"));
 
+  if (!code) {
+    return NextResponse.redirect(
+      new URL("/auth/login?message=El%20enlace%20de%20verificaci%C3%B3n%20no%20es%20v%C3%A1lido.%20Solicita%20uno%20nuevo.", requestUrl.origin),
+    );
+  }
+
   if (code) {
     const supabase = await createClient();
 

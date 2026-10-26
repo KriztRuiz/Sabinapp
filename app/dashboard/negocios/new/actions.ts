@@ -66,6 +66,7 @@ export async function createBusinessFromDashboard(formData: FormData) {
 
   const name = getFormText(formData, "name");
   const slugInput = getFormText(formData, "slug");
+  const creationRequestId = getFormText(formData, "creationRequestId");
   const businessTypeId = getFormText(formData, "businessTypeId");
   const categoryId = getFormText(formData, "categoryId");
   const shortDescription = getFormText(formData, "shortDescription");
@@ -88,6 +89,10 @@ export async function createBusinessFromDashboard(formData: FormData) {
 
   if (!categoryId) {
     redirectWithError("Selecciona una categoría.");
+  }
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(creationRequestId)) {
+    redirectWithError("La solicitud de registro no es valida. Recarga el formulario e intenta de nuevo.");
   }
 
   const slug = normalizeSlug(slugInput || name);
@@ -127,8 +132,12 @@ export async function createBusinessFromDashboard(formData: FormData) {
     );
   }
 
-  const startsAt = getDateIso(startsAtRaw);
-  const endsAt = getDateIso(endsAtRaw, true);
+  const startsAt = businessType.requires_start_end_dates
+    ? getDateIso(startsAtRaw)
+    : null;
+  const endsAt = businessType.requires_start_end_dates
+    ? getDateIso(endsAtRaw, true)
+    : null;
 
   if (businessType.requires_start_end_dates && (!startsAt || !endsAt)) {
     redirectWithError(
@@ -146,6 +155,7 @@ export async function createBusinessFromDashboard(formData: FormData) {
     .from("businesses")
     .insert({
       owner_id: user.id,
+      creation_request_id: creationRequestId,
       business_type_id: businessType.id,
       category_id: category.id,
       name,
@@ -156,8 +166,8 @@ export async function createBusinessFromDashboard(formData: FormData) {
       is_published: false,
       is_adult_content: Boolean(businessType.is_adult_related),
       requires_age_verification: Boolean(businessType.is_adult_related),
-      show_in_home: true,
-      show_in_search: true,
+      show_in_home: !businessType.is_adult_related,
+      show_in_search: !businessType.is_adult_related,
       owner_confirmed_authorization: false,
       starts_at: startsAt,
       ends_at: endsAt,
@@ -169,6 +179,46 @@ export async function createBusinessFromDashboard(formData: FormData) {
 
   if (error || !createdBusiness) {
     if (error?.code === "23505") {
+      // Distinguir un reintento del mismo propietario de un slug ocupado.
+      const { data: previous, error: lookupError } = await supabase
+        .from("businesses")
+        .select("id, status, name, slug, business_type_id, category_id, short_description, long_description, starts_at, ends_at")
+        .eq("owner_id", user.id)
+        .eq("creation_request_id", creationRequestId)
+        .maybeSingle();
+
+      if (!lookupError && previous) {
+        const sameDate = (stored: string | null, submitted: string | null) =>
+          stored === submitted ||
+          (stored !== null && submitted !== null &&
+            new Date(stored).getTime() === new Date(submitted).getTime());
+
+        const samePayload =
+          previous.name === name &&
+          previous.slug === slug &&
+          previous.business_type_id === businessType.id &&
+          previous.category_id === category.id &&
+          previous.short_description === shortDescription &&
+          previous.long_description === (longDescription || null) &&
+          sameDate(previous.starts_at, startsAt) &&
+          sameDate(previous.ends_at, endsAt);
+
+        if (!samePayload) {
+          redirectWithError("Esta solicitud ya fue utilizada con otros datos. Abre un formulario nuevo.");
+        }
+
+        if (previous.status !== "draft") {
+          redirectWithError("Esta solicitud ya fue procesada. Revisa el negocio desde tu panel.");
+        }
+
+        revalidatePath("/dashboard/negocios");
+        redirect(
+          `/dashboard/negocios/${previous.id}/edit?message=${encodeURIComponent(
+            "El negocio ya estaba registrado. Se abrió el borrador existente.",
+          )}`,
+        );
+      }
+
       redirectWithError(
         "Ese enlace público ya está ocupado. Usa otro identificador para el negocio.",
       );
@@ -177,11 +227,8 @@ export async function createBusinessFromDashboard(formData: FormData) {
     redirectWithError("No se pudo crear el negocio. Revisa los datos.");
   }
 
-  await supabase.from("business_settings").insert({
-    business_id: createdBusiness.id,
-    visual_mode: "classic",
-  });
-
+  // La configuración inicial se crea automáticamente mediante
+  // el trigger on_business_created_create_defaults de PostgreSQL.
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/negocios");
 

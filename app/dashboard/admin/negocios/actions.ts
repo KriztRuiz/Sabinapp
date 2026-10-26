@@ -146,7 +146,7 @@ export async function approveBusinessForReview(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, status, expires_at")
+    .select("id, slug, status, expires_at, is_adult_content")
     .eq("id", businessId)
     .single();
 
@@ -162,13 +162,13 @@ export async function approveBusinessForReview(formData: FormData) {
     );
   }
 
-  const { error } = await supabase
+  const { data: approvedBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "approved",
       is_published: false,
-      show_in_search: true,
-      show_in_home: true,
+      show_in_search: !business.is_adult_content,
+      show_in_home: !business.is_adult_content,
       approved_at: new Date().toISOString(),
       approved_by: user.id,
       owner_confirmed_authorization: true,
@@ -181,9 +181,12 @@ export async function approveBusinessForReview(formData: FormData) {
       hidden_at: null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", businessId);
+    .eq("id", businessId)
+    .eq("status", "pending_review")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !approvedBusiness) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20aprobar%20el%20negocio",
     );
@@ -225,7 +228,7 @@ export async function rejectBusinessForReview(formData: FormData) {
     );
   }
 
-  const { error } = await supabase
+  const { data: rejectedBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "rejected",
@@ -239,9 +242,12 @@ export async function rejectBusinessForReview(formData: FormData) {
       hidden_at: null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", businessId);
+    .eq("id", businessId)
+    .in("status", rejectableStatuses)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !rejectedBusiness) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20rechazar%20el%20negocio",
     );
@@ -274,7 +280,7 @@ export async function hideBusinessFromPublic(formData: FormData) {
     );
   }
 
-  const { error } = await supabase
+  const { data: hiddenBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "hidden",
@@ -289,9 +295,12 @@ export async function hideBusinessFromPublic(formData: FormData) {
       rejection_reason: null,
       approved_by: user.id,
     })
-    .eq("id", businessId);
+    .eq("id", businessId)
+    .eq("status", "published")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !hiddenBusiness) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20ocultar%20el%20negocio",
     );
@@ -308,7 +317,7 @@ export async function publishApprovedBusiness(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, status, approved_at, approved_by")
+    .select("id, slug, status, approved_at, approved_by, is_adult_content, expires_at")
     .eq("id", businessId)
     .single();
 
@@ -326,13 +335,23 @@ export async function publishApprovedBusiness(formData: FormData) {
 
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const isExpired = business.expires_at
+    ? new Date(business.expires_at).getTime() < new Date(now).getTime()
+    : false;
+
+  if (isExpired) {
+    redirect(
+      "/dashboard/admin/negocios?error=Extiende%20la%20vigencia%20antes%20de%20publicar%20el%20negocio",
+    );
+  }
+
+  const { data: publishedBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "published",
       is_published: true,
-      show_in_search: true,
-      show_in_home: true,
+      show_in_search: !business.is_adult_content,
+      show_in_home: !business.is_adult_content,
       published_at: now,
       approved_at: business.approved_at ?? now,
       approved_by: business.approved_by ?? user.id,
@@ -344,9 +363,12 @@ export async function publishApprovedBusiness(formData: FormData) {
       suspension_reason: null,
       hidden_at: null,
     })
-    .eq("id", businessId);
+    .eq("id", businessId)
+    .eq("status", "approved")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !publishedBusiness) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20publicar%20el%20negocio",
     );
@@ -408,7 +430,7 @@ export async function restoreHiddenBusinessToPublic(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, status, expires_at")
+    .select("id, slug, status, expires_at, is_adult_content")
     .eq("id", businessId)
     .single();
 
@@ -436,19 +458,22 @@ export async function restoreHiddenBusinessToPublic(formData: FormData) {
 
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const { data: restoredBusiness, error } = await supabase
     .from("businesses")
     .update({
       status: "published",
       is_published: true,
-      show_in_search: true,
-      show_in_home: true,
+      show_in_search: !business.is_adult_content,
+      show_in_home: !business.is_adult_content,
       hidden_at: null,
       published_at: now,
     })
-    .eq("id", businessId);
+    .eq("id", businessId)
+    .eq("status", "hidden")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !restoredBusiness) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20volver%20a%20mostrar%20el%20negocio",
     );
@@ -492,7 +517,7 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
 
   const now = new Date().toISOString();
 
-  const { error } = await supabase
+  const archiveQuery = supabase
     .from("businesses")
     .update({
       status: "archived",
@@ -503,7 +528,17 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
     })
     .eq("id", businessId);
 
-  if (error) {
+  const eligibleArchiveQuery = isPublishedExpired
+    ? archiveQuery
+        .eq("status", "published")
+        .lt("expires_at", now)
+    : archiveQuery.in("status", archivableStatuses);
+
+  const { data: archivedBusiness, error } = await eligibleArchiveQuery
+    .select("id")
+    .maybeSingle();
+
+  if (error || !archivedBusiness) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20archivar%20el%20negocio",
     );
@@ -598,7 +633,7 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug")
+    .select("id, slug, status, is_published")
     .eq("id", changeEvent.business_id)
     .single();
 
@@ -608,9 +643,15 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
     );
   }
 
+  if (business.status !== "published" || !business.is_published) {
+    redirect(
+      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20retirar%20y%20revisar%20negocios%20publicados",
+    );
+  }
+
   const now = new Date().toISOString();
 
-  const { error: businessUpdateError } = await supabase
+  const { data: sentBusinessToReview, error: businessUpdateError } = await supabase
     .from("businesses")
     .update({
       status: "pending_review",
@@ -624,9 +665,13 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
       rejected_by: null,
       rejection_reason: null,
     })
-    .eq("id", business.id);
+    .eq("id", business.id)
+    .eq("status", "published")
+    .eq("is_published", true)
+    .select("id")
+    .maybeSingle();
 
-  if (businessUpdateError) {
+  if (businessUpdateError || !sentBusinessToReview) {
     redirect(
       "/dashboard/admin/negocios?error=No%20se%20pudo%20mandar%20el%20negocio%20a%20revision",
     );
