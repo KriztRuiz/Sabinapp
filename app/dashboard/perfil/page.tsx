@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateProfileFromDashboard } from "./actions";
+import ChangePasswordForm from "./change-password-form";
 
 type PageProps = {
   searchParams: Promise<{
@@ -236,6 +237,18 @@ export default async function DashboardProfilePage({ searchParams }: PageProps) 
           </button>
         </form>
       </section>
+
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-950">
+          Seguridad de la cuenta
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          Cambia tu contraseña para mantener protegida tu cuenta.
+          Necesitarás conocer tu contraseña actual.
+        </p>
+        <ChangePasswordForm />
+      </section>
+
     </main>
   );
 }
