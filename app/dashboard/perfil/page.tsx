@@ -13,6 +13,8 @@ type PageProps = {
 
 type ProfileRow = {
   email: string | null;
+  username: string | null;
+  phone: string | null;
   full_name: string | null;
   birthdate: string | null;
   sex: string | null;
@@ -56,7 +58,7 @@ export default async function DashboardProfilePage({ searchParams }: PageProps) 
   const { data } = await supabase
     .from("profiles")
     .select(
-      "email, full_name, birthdate, sex, privacy_accepted_at, profile_completed_at, status",
+      "email, username, phone, full_name, birthdate, sex, privacy_accepted_at, profile_completed_at, status",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -128,6 +130,20 @@ export default async function DashboardProfilePage({ searchParams }: PageProps) 
             </dd>
           </div>
 
+
+          <div className="rounded-2xl bg-gray-50 p-4">
+            <dt className="font-semibold text-gray-500">Usuario</dt>
+            <dd className="mt-1 text-gray-950">
+              {profile?.username || "Sin registrar"}
+            </dd>
+          </div>
+
+          <div className="rounded-2xl bg-gray-50 p-4">
+            <dt className="font-semibold text-gray-500">Telefono personal</dt>
+            <dd className="mt-1 text-gray-950">
+              {profile?.phone || "Sin registrar"}
+            </dd>
+          </div>
           <div className="rounded-2xl bg-gray-50 p-4">
             <dt className="font-semibold text-gray-500">Fecha de nacimiento</dt>
             <dd className="mt-1 text-gray-950">
@@ -153,6 +169,62 @@ export default async function DashboardProfilePage({ searchParams }: PageProps) 
         </p>
 
         <form action={updateProfileFromDashboard} className="mt-6 space-y-4">
+
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-800"
+            >
+              Nombre de usuario (opcional)
+            </label>
+
+            <input
+              id="username"
+              name="username"
+              type="text"
+              minLength={3}
+              maxLength={30}
+              pattern="[A-Za-z][A-Za-z0-9_]{2,29}"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              defaultValue={profile?.username ?? ""}
+              placeholder="ejemplo_usuario"
+              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Entre 3 y 30 caracteres. Letras, numeros y guion bajo.
+              Se guardara en minusculas y debe ser unico.
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-800"
+            >
+              Telefono personal (opcional)
+            </label>
+
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              maxLength={16}
+              pattern="[+]?[0-9]{10,15}"
+              autoComplete="tel"
+              defaultValue={profile?.phone ?? ""}
+              placeholder="8241234567"
+              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Usa entre 10 y 15 digitos, con + opcional al inicio.
+              Este telefono no se mostrara automaticamente en paginas publicas.
+            </p>
+          </div>
           <div>
             <label
               htmlFor="full_name"
