@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateProfileFromDashboard } from "./actions";
+import { SaveProfileButton } from "./save-profile-button";
 import ChangePasswordForm from "./change-password-form";
 
 type PageProps = {
@@ -229,12 +230,7 @@ export default async function DashboardProfilePage({ searchParams }: PageProps) 
             </span>
           </label>
 
-          <button
-            type="submit"
-            className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-          >
-            Guardar perfil
-          </button>
+          <SaveProfileButton />
         </form>
       </section>
 
