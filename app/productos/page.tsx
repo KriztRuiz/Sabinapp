@@ -196,7 +196,8 @@ export default async function PublicProductsPage({ searchParams }: PageProps) {
     })
     .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })
-    .limit(80);
+    .order("id", { ascending: true })
+    .range(0, 999);
 
   const allItems = ((data ?? []) as unknown as ProductRow[]).map(
     (item) => ({
