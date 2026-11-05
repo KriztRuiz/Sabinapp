@@ -814,36 +814,7 @@ export async function submitOwnerInterstitialAdRequest(
     .map((value) => String(value).trim())
     .filter(Boolean);
 
-  async function cleanupUploadedAssets() {
-    if (
-      !businessId ||
-      storagePaths.length === 0
-    ) {
-      return;
-    }
-
-    const expectedPrefix =
-      `${businessId}/campaigns/interstitial/`;
-
-    const safePaths = Array.from(
-      new Set(
-        storagePaths.filter((storagePath) =>
-          storagePath.startsWith(expectedPrefix),
-        ),
-      ),
-    );
-
-    if (safePaths.length === 0) {
-      return;
-    }
-
-    await supabase.storage
-      .from(AD_ASSETS_BUCKET)
-      .remove(safePaths);
-  }
-
   async function fail(message: string) {
-    await cleanupUploadedAssets();
 
     return {
       ok: false,
@@ -1045,7 +1016,6 @@ export async function submitOwnerInterstitialAdRequest(
   );
 
   if (error) {
-    await cleanupUploadedAssets();
 
     return {
       ok: false,
@@ -1206,9 +1176,6 @@ export async function resubmitOwnerInterstitialAdRequest(
           asset.storage_path as string,
       );
 
-  const currentPathSet =
-    new Set(currentStoragePaths);
-
   const storagePaths = formData
     .getAll("storagePaths")
     .map((value) =>
@@ -1219,37 +1186,9 @@ export async function resubmitOwnerInterstitialAdRequest(
   const expectedStoragePrefix =
     `${businessId}/campaigns/interstitial/`;
 
-  const newStoragePaths =
-    Array.from(
-      new Set(
-        storagePaths.filter(
-          (storagePath) =>
-            !currentPathSet.has(
-              storagePath,
-            ) &&
-            storagePath.startsWith(
-              expectedStoragePrefix,
-            ),
-        ),
-      ),
-    );
-
-  async function cleanupNewStorage() {
-    if (
-      newStoragePaths.length === 0
-    ) {
-      return;
-    }
-
-    await supabase.storage
-      .from(AD_ASSETS_BUCKET)
-      .remove(newStoragePaths);
-  }
-
   async function fail(
     message: string,
   ) {
-    await cleanupNewStorage();
 
     return {
       ok: false,
@@ -1481,7 +1420,6 @@ export async function resubmitOwnerInterstitialAdRequest(
     );
 
   if (error) {
-    await cleanupNewStorage();
 
     return {
       ok: false,

@@ -406,6 +406,17 @@ export function AdRequestForm({ businesses }: Props) {
               type="text"
               required
               minLength={3}
+              onInvalid={(event) => {
+                const input = event.currentTarget;
+                input.setCustomValidity(
+                  input.validity.valueMissing
+                    ? "El título del anuncio es obligatorio."
+                    : "El título debe tener entre 3 y 120 caracteres.",
+                );
+              }}
+              onInput={(event) => {
+                event.currentTarget.setCustomValidity("");
+              }}
               maxLength={120}
               className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm"
               placeholder="Ej. Tacos al pastor este fin de semana"
