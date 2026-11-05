@@ -392,7 +392,7 @@ export default async function Home() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-[0.25em] text-sky-700">
-                    Clima en Sabinas ahora
+                    Pronóstico en Sabinas
                   </p>
 
                   <h2 className="mt-3 text-4xl font-black">
@@ -417,7 +417,7 @@ export default async function Home() {
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-orange-50 p-4">
                   <p className="text-xs font-bold uppercase text-orange-700">
-                    Sensación
+                    Sensación estimada
                   </p>
                   <p className="mt-1 text-xl font-black">
                     {weather?.apparentTemperature !== null &&
@@ -446,6 +446,28 @@ export default async function Home() {
               >
                 Ver clima completo
               </Link>
+              <p className="mt-4 text-xs leading-5 text-gray-500">
+                Pronóstico basado en datos de{" "}
+                <a
+                  href="https://www.met.no/en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline hover:text-sky-700"
+                >
+                  MET Norway
+                </a>
+                {" · "}
+                <a
+                  href="https://creativecommons.org/licenses/by/4.0/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-sky-700"
+                >
+                  CC BY 4.0
+                </a>
+                . Unidades y condiciones adaptadas por Sabinapp;
+                sensación térmica estimada.
+              </p>
             </section>
           </div>
         </div>

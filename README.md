@@ -172,7 +172,13 @@ En Sabinapp 1.0 la publicación de noticias continúa siendo administrativa y ma
 
 ## Documentación del proyecto
 
-La documentación principal vive en `docs/`:
+La documentación principal vive en `docs/`.
+
+### Módulo meteorológico
+
+- [`docs/weather-met-norway.md`](docs/weather-met-norway.md): proveedor MET Norway, configuración, caché, pronósticos, limitaciones y pruebas.
+
+### Documentación general
 
 - `00-sabinapp-alcance-mvp-v1.md`: alcance de Sabinapp 1.0;
 - `01-modelo-base-datos.md`: modelo e inventario de datos;

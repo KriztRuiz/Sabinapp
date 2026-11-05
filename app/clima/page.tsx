@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getPublicAds } from "@/lib/ads/public-ads";
 import { createClient } from "@/lib/supabase/server";
 import {
+  getSabinasExtendedForecast,
   getSabinasWeather,
   getWeatherAdvice,
   getWeatherBusinessPlan,
@@ -16,11 +17,11 @@ import {
 export const metadata: Metadata = {
   title: "Clima de Sabinas Hidalgo | Sabinapp",
   description:
-    "Consulta el clima actual de Sabinas Hidalgo: temperatura, sensación térmica, humedad, viento, lluvia y recomendación rápida.",
+    "Consulta el pronóstico del tiempo en Sabinas Hidalgo: temperatura prevista, sensación térmica estimada, humedad, viento y lluvia.",
   openGraph: {
     title: "Clima de Sabinas Hidalgo | Sabinapp",
     description:
-      "Clima actual, datos principales y recomendación rápida para Sabinas Hidalgo.",
+      "Pronóstico meteorológico, condiciones previstas y recomendaciones para Sabinas Hidalgo.",
     type: "website",
   },
 };
@@ -69,11 +70,11 @@ function formatHumidity(value: number | null | undefined) {
 
 function formatPrecipitation(value: number | null | undefined) {
   if (typeof value !== "number") {
-    return "Sin dato";
+    return "Sin pronóstico disponible";
   }
 
   if (value <= 0) {
-    return "Sin lluvia registrada";
+    return "Sin lluvia prevista";
   }
 
   return `${value.toFixed(1)} mm`;
@@ -121,14 +122,35 @@ function getWindStatus(value: number | null | undefined) {
 
 function getRainStatus(value: number | null | undefined) {
   if (typeof value !== "number") {
-    return "Sin lectura de lluvia.";
+    return "No hay pronóstico de precipitación disponible para la próxima hora.";
   }
 
   if (value > 0) {
-    return "Hay registro de lluvia. Revisa antes de salir.";
+    return "Se pronostica lluvia para la próxima hora. Revisa las condiciones antes de salir.";
   }
 
-  return "No hay lluvia registrada en la lectura actual.";
+  return "No se pronostica lluvia durante la próxima hora.";
+}
+
+
+const forecastHourFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: "America/Monterrey",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+const forecastDayFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: "America/Monterrey",
+  weekday: "long",
+  day: "numeric",
+  month: "short",
+});
+
+function formatForecastDay(date: string): string {
+  return forecastDayFormatter.format(
+    new Date(`${date}T12:00:00Z`),
+  );
 }
 
 export default async function WeatherPage() {
@@ -137,8 +159,9 @@ export default async function WeatherPage() {
 
   const supabase = await createClient();
 
-  const [weather, adsResult, authResult] = await Promise.all([
+  const [weather, extendedForecast, adsResult, authResult] = await Promise.all([
     getSabinasWeather(),
+    getSabinasExtendedForecast(),
     getPublicAds({
       placement: "clima",
       includeInterstitial: publicInterstitialEnabled,
@@ -155,7 +178,7 @@ export default async function WeatherPage() {
 
   const weatherCards = [
     {
-      title: "Sensación térmica",
+      title: "Sensación térmica estimada",
       value: formatTemperature(weather?.apparentTemperature),
       description: getHeatStatus(weather?.apparentTemperature ?? mainTemperature),
     },
@@ -170,7 +193,7 @@ export default async function WeatherPage() {
       description: "Ayuda a entender qué tan pesado se puede sentir el ambiente.",
     },
     {
-      title: "Lluvia",
+      title: "Lluvia próxima hora",
       value: formatPrecipitation(weather?.precipitation),
       description: getRainStatus(weather?.precipitation),
     },
@@ -206,15 +229,15 @@ export default async function WeatherPage() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-white/85">
-              Revisa el clima actual antes de salir, visitar negocios, hacer
-              mandados o planear actividades en la ciudad.
+              Consulta el pronóstico del tiempo antes de salir, visitar negocios,
+              hacer mandados o planear actividades en la ciudad.
             </p>
           </div>
 
           <div className="grid gap-4 p-6 lg:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-3xl border border-gray-200 bg-gray-50 p-6">
               <p className="text-sm font-semibold text-gray-500">
-                Temperatura actual
+                Temperatura prevista
               </p>
 
               <p className="mt-3 text-6xl font-black">
@@ -230,7 +253,29 @@ export default async function WeatherPage() {
               </p>
 
               <p className="mt-5 text-sm text-gray-500">
-                Actualización aproximada: {formatWeatherTime(weather?.time)}
+                Pronóstico válido para: {formatWeatherTime(weather?.time)}
+              </p>
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                Datos meteorológicos de{" "}
+                <a
+                  href="https://www.met.no/en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline hover:text-sky-700"
+                >
+                  MET Norway
+                </a>
+                {" · "}
+                <a
+                  href="https://creativecommons.org/licenses/by/4.0/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-sky-700"
+                >
+                  CC BY 4.0
+                </a>
+                . Sabinapp adapta símbolos, convierte unidades y
+                calcula una sensación térmica estimada.
               </p>
             </article>
 
@@ -302,6 +347,110 @@ export default async function WeatherPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="mt-8 rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">
+              Pronóstico horario
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              Próximas 24 horas
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              Horarios disponibles del pronóstico para Sabinas Hidalgo.
+              Las horas se muestran en horario local.
+            </p>
+          </div>
+
+          {extendedForecast?.hourly.length ? (
+            <div className="mt-5 flex gap-3 overflow-x-auto pb-4">
+              {extendedForecast.hourly.map((hour) => (
+                <article
+                  key={hour.time}
+                  className="min-w-40 flex-shrink-0 rounded-2xl border border-sky-100 bg-sky-50 p-4"
+                >
+                  <p className="text-sm font-bold text-sky-800">
+                    {forecastHourFormatter.format(new Date(hour.time))}
+                  </p>
+                  <p className="mt-3 text-3xl font-black text-gray-950">
+                    {formatTemperature(hour.temperature)}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-gray-700">
+                    {getWeatherCodeLabel(hour.weatherCode)}
+                  </p>
+                  <p className="mt-3 text-xs text-gray-600">
+                    Viento: {formatWind(hour.windSpeed)}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-600">
+                    Humedad: {formatHumidity(hour.humidity)}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-600">
+                    Lluvia:{" "}
+                    {hour.precipitation === null
+                      ? "Sin dato"
+                      : `${hour.precipitation} mm`}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-5 text-sm text-gray-600">
+              No hay pronóstico horario disponible en este momento.
+            </p>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">
+              Pronóstico diario
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              Próximos 7 días
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              Temperaturas mínimas y máximas de las muestras
+              disponibles del pronóstico. El primer día puede
+              incluir solamente las horas restantes.
+            </p>
+          </div>
+
+          {extendedForecast?.daily.length ? (
+            <div className="mt-5 space-y-3">
+              {extendedForecast.daily.map((day) => (
+                <article
+                  key={day.date}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold capitalize text-gray-950">
+                      {formatForecastDay(day.date)}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {getWeatherCodeLabel(day.weatherCode)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-black text-gray-950">
+                      {formatTemperature(day.maxTemperature)}
+                      <span className="mx-2 text-gray-400">/</span>
+                      <span className="text-sky-700">
+                        {formatTemperature(day.minTemperature)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Máxima / mínima estimadas
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-5 text-sm text-gray-600">
+              No hay pronóstico diario disponible en este momento.
+            </p>
+          )}
         </section>
 
         <section className="mt-8">
