@@ -82,7 +82,7 @@ function isAllowedPublicPagePath(pagePath: string) {
     return true;
   }
 
-  return pagePath.startsWith("/negocio/");
+  return /^\/negocio\/[^/]+$/.test(pagePath);
 }
 
 export async function POST(request: NextRequest) {
