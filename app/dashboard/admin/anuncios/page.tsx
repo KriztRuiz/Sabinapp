@@ -143,6 +143,7 @@ function getStatusLabel(status: string) {
     expired: "Expirado",
     rejected: "Rechazado",
     archived: "Archivado",
+    withdrawn: "Retirado por el anunciante",
   };
 
   return labels[status] ?? status;
@@ -158,6 +159,7 @@ function getStatusClasses(status: string) {
     expired: "bg-gray-100 text-gray-700",
     rejected: "bg-red-50 text-red-800",
     archived: "bg-gray-200 text-gray-700",
+    withdrawn: "bg-gray-100 text-gray-700",
   };
 
   return classes[status] ?? "bg-gray-100 text-gray-700";
