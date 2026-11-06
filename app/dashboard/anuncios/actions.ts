@@ -1555,3 +1555,60 @@ export async function reportOwnerAdPayment(
       ),
   );
 }
+
+export async function withdrawOwnerAdRequest(
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const campaignId = String(
+    formData.get("campaignId") ?? "",
+  ).trim();
+
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(campaignId)) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          "El identificador de la solicitud no es válido.",
+        ),
+    );
+  }
+
+  const { error } = await supabase.rpc(
+    "withdraw_ad_request",
+    {
+      p_campaign_id: campaignId,
+    },
+  );
+
+  if (error) {
+    redirect(
+      "/dashboard/anuncios?error=" +
+        encodeURIComponent(
+          "No se pudo retirar la solicitud. Verifica que siga pendiente de revisión e inténtalo nuevamente.",
+        ),
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/anuncios");
+  revalidatePath("/dashboard/admin/anuncios");
+
+  redirect(
+    "/dashboard/anuncios?message=" +
+      encodeURIComponent(
+        "La solicitud publicitaria se retiró correctamente.",
+      ),
+  );
+}

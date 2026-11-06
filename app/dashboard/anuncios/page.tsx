@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
-import { reportOwnerAdPayment } from "./actions";
+import {
+  reportOwnerAdPayment,
+  withdrawOwnerAdRequest,
+} from "./actions";
 
 import {
   OwnerAdMetrics,
@@ -91,6 +94,13 @@ function getAdStatus(
     return {
       label: "Requiere correcciones",
       className: "bg-orange-100 text-orange-800",
+    };
+  }
+
+  if (campaign.status === "withdrawn") {
+    return {
+      label: "Solicitud retirada",
+      className: "bg-gray-100 text-gray-700",
     };
   }
 
@@ -513,6 +523,34 @@ export default async function DashboardAdsPage({
                       </dd>
                     </div>
                   </dl>
+
+                  {campaign.status === "pending_review" &&
+                    campaign.requested_days !== null &&
+                    !payment ? (
+                      <ConfirmActionForm
+                        action={withdrawOwnerAdRequest}
+                        className="mt-5"
+                        confirmMessage={
+                          `¿Deseas retirar la solicitud "${campaign.title}"?\n\n` +
+                          "Dejará de estar pendiente de revisión y no podrá aprobarse. " +
+                          "La campaña permanecerá en tu historial.\n\n" +
+                          "Esta acción no se puede deshacer."
+                        }
+                      >
+                        <input
+                          type="hidden"
+                          name="campaignId"
+                          value={campaign.id}
+                        />
+
+                        <button
+                          type="submit"
+                          className="rounded-xl border border-red-300 bg-white px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                        >
+                          Retirar solicitud
+                        </button>
+                      </ConfirmActionForm>
+                    ) : null}
 
                   {!metricsError ? (
                     <OwnerAdMetrics
