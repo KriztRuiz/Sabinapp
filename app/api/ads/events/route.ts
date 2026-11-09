@@ -130,7 +130,9 @@ export async function POST(request: NextRequest) {
     !eventType ||
     !campaignId ||
     !validAsset ||
-    !pagePath
+    !pagePath ||
+    !sessionKey ||
+    sessionKey.length < 8
   ) {
     return NextResponse.json(
       {
@@ -152,24 +154,17 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const tableName = eventType === "click" ? "ad_clicks" : "ad_impressions";
-
-  const { error } = await supabase.from(tableName).insert({
-    campaign_id: campaignId,
-    asset_id: assetId,
-    page_path: pagePath,
-    business_id: businessId,
-    session_key: sessionKey,
-
-    ...(eventType !== "click"
-      ? {
-          impression_kind:
-            eventType === "appearance"
-              ? "appearance"
-              : "asset",
-        }
-      : {}),
-  });
+  const { data, error } = await supabase.rpc(
+    "register_public_ad_event",
+    {
+      p_event_type: eventType,
+      p_campaign_id: campaignId,
+      p_asset_id: assetId,
+      p_page_path: pagePath,
+      p_business_id: businessId,
+      p_session_key: sessionKey,
+    },
+  );
 
   if (error) {
     console.error("Error registering ad event:", error);
@@ -180,6 +175,16 @@ export async function POST(request: NextRequest) {
         error: "No se pudo registrar el evento del anuncio.",
       },
       { status: 500 },
+    );
+  }
+
+  if (data !== true) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Evento publicitario no permitido.",
+      },
+      { status: 400 },
     );
   }
 
