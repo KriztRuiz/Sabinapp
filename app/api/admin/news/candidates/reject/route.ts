@@ -128,6 +128,20 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(candidateId)) {
+    return NextResponse.json(
+      { ok: false, message: "Identificador de candidato invalido." },
+      { status: 400 },
+    );
+  }
+
+  if (rejectionReason.length > 500) {
+    return NextResponse.json(
+      { ok: false, message: "El motivo de rechazo no puede superar 500 caracteres." },
+      { status: 400 },
+    );
+  }
+
   try {
     const { data: candidateData, error: candidateError } = await supabase
       .from("news_candidates")

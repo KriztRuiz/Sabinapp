@@ -103,6 +103,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(candidateId)) {
+    return NextResponse.json(
+      { ok: false, message: "Identificador de candidato invalido." },
+      { status: 400 },
+    );
+  }
+
   try {
     const result = await publishNewsCandidate({
       supabase,
