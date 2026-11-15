@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdsAdminClient } from "@/lib/supabase/ads-admin";
 import { NextResponse, type NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createAdsAdminClient();
   const { data, error } = await supabase.rpc(
     "register_public_ad_event",
     {
