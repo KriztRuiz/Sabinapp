@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdsAdminClient();
   const { data, error } = await supabase.rpc(
-    "register_public_ad_event",
+    "register_limited_public_ad_event",
     {
       p_event_type: eventType,
       p_campaign_id: campaignId,
@@ -202,7 +202,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (data !== true) {
+  const result = data as {
+    ok?: boolean;
+    reason?: string | null;
+  } | null;
+
+  if (
+    result?.reason === "rate_limited_global" ||
+    result?.reason === "rate_limited_campaign"
+  ) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Demasiadas solicitudes publicitarias.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": "60" },
+      },
+    );
+  }
+
+  if (result?.ok !== true) {
     return NextResponse.json(
       {
         ok: false,
