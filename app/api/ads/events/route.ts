@@ -89,7 +89,31 @@ export async function POST(request: NextRequest) {
   let parsedBody: unknown;
 
   try {
-    parsedBody = await request.json();
+    const reader = request.body?.getReader();
+    if (!reader) throw new Error("Empty body");
+
+    const decoder = new TextDecoder();
+    let text = "";
+    let size = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      size += value.byteLength;
+      if (size > 4096) {
+        await reader.cancel();
+        return NextResponse.json(
+          { ok: false, error: "Solicitud demasiado grande." },
+          { status: 413 },
+        );
+      }
+
+      text += decoder.decode(value, { stream: true });
+    }
+
+    text += decoder.decode();
+    parsedBody = JSON.parse(text);
   } catch {
     return NextResponse.json(
       {
