@@ -148,11 +148,15 @@ npm start
 
 - `NEXT_PUBLIC_SUPABASE_URL`;
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` es la clave pública para ingreso, registro y recuperación. Configura la clave secreta correspondiente en Supabase Auth;
+- `SUPABASE_SECRET_KEY` se configura solo en el servidor para registrar eventos publicitarios;
+- `SABINAPP_INTERSTITIAL_PUBLIC_ENABLED` se mantiene en `false` para la beta;
 - `OPENAI_API_KEY`;
 - `SABINAPP_NEWS_AUTO_PUBLISH`;
 - `SABINAPP_NEWS_CRON_SECRET`;
 - `SABINAPP_NEWS_MAX_PUBLISHED_PER_RUN`;
-- `SABINAPP_NEWS_MODEL`.
+- `SABINAPP_NEWS_MODEL`;
+- `SABINAPP_MET_USER_AGENT` identifica el servicio de clima ante MET Norway.
 
 No subir secretos ni archivos `.env.local` al repositorio.
 

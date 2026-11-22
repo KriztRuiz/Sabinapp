@@ -509,20 +509,11 @@ Ruta pública principal:
 
 ### G2. Ruta `/tiempo`
 
-Estado: 🟡 Revisión pendiente
+Estado: 100% en compilación local de producción.
 
-Existe:
-
-`/tiempo`
-
-Debe decidirse antes de lanzamiento si:
-
-- se conserva;
-- redirige;
-- se utiliza internamente;
-- se elimina.
-
-La navegación pública debe favorecer una sola ruta principal.
+`/clima` es la ruta pública principal. El 21 de noviembre de 2026,
+`next start` devolvió HTTP 308 de `/tiempo` a `/clima` y HTTP 200 en
+`/clima`. Repetir en el smoke test del despliegue externo (T6).
 
 ---
 
@@ -1501,11 +1492,10 @@ Los principales bloques todavía abiertos son:
 2. realizar auditoría final de permisos y RLS;
 3. cerrar SEO local;
 4. revisar experiencia móvil;
-5. decidir situación final de `/tiempo`;
-6. limpiar datos de desarrollo;
-7. preparar contenido inicial de lanzamiento;
-8. repetir QA publicitario y decidir activación pública de Campaña B;
-9. preparar y validar despliegue de producción.
+5. limpiar datos de desarrollo;
+6. preparar contenido inicial de lanzamiento;
+7. repetir QA publicitario y decidir activación pública de Campaña B;
+8. preparar y validar despliegue de producción.
 
 Resuelto: protección de `/dev` en servidor local de producción (M3-17B8A).
 La validación del despliegue externo continúa pendiente.
@@ -1516,7 +1506,29 @@ Este listado debe reducirse conforme las áreas obtengan PASS.
 
 # 5. Punto estable actual
 
-Última fase técnica validada: **M3-17B8A — Rutas de desarrollo protegidas**.
+### Validación local de beta — 21 de noviembre de 2026
+
+Base `7faa640` con ajustes de documentación de configuración. Pasaron
+`git diff --check`, `npm run lint`, `npm run build` y las dos suites de clima.
+
+En `next start` pasaron 12 comprobaciones HTTP: páginas públicas
+(`/`, `/negocios`, `/productos`, `/noticias`, `/clima`), pantallas de
+autenticación, redirecciones de `/dashboard` y `/tiempo`, y las dos rutas
+`/dev` devuelven 404.
+
+La landing demo de Taquería El Primo respondió 200 y mostró su título.
+Las pantallas de acceso, registro y recuperación cargaron Turnstile.
+
+El Supabase configurado en `.env.local` pasó cuatro controles de catálogo:
+lectura de `user_roles` denegada a `anon`, borrado denegado a
+`authenticated`, ejecución de `has_role(text)` denegada a `anon` y trigger
+de auditoría de subadmin habilitado.
+
+Pendiente: validar registro, recuperación y ciclo de moderación y publicación
+con cuentas de prueba en el entorno Supabase de beta. El smoke HTTP local
+también se repetirá en el entorno desplegado.
+
+Fase técnica anterior: **M3-17B8A — Rutas de desarrollo protegidas**.
 Resultado: ✅ PASS en servidor local con configuración de producción.
 No requirió modificar código ni base de datos.
 

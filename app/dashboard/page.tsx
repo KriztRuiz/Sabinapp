@@ -18,6 +18,7 @@ type BusinessRow = {
   slug: string;
   status: string;
   is_published: boolean;
+  expires_at: string | null;
 };
 
 type PendingChangeEventRow = {
@@ -76,11 +77,26 @@ export default async function DashboardPage() {
 
   const { data: businessesRaw } = await supabase
     .from("businesses")
-    .select("id, name, slug, status, is_published")
+    .select("id, name, slug, status, is_published, expires_at")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   const businesses = (businessesRaw ?? []) as BusinessRow[];
+  const now = new Date().getTime();
+  const hasActiveBusiness = businesses.some(
+    (business) =>
+      business.status === "published" &&
+      business.is_published &&
+      (business.expires_at === null ||
+        Date.parse(business.expires_at) >= now),
+  );
+  const displayedRoles = roleRows.flatMap(({ roles }) =>
+    roles && roles.key !== "business_owner" ? [roles] : [],
+  );
+  if (hasActiveBusiness) {
+    displayedRoles.push({ key: "business_owner", name: "Dueño de negocio" });
+  }
+
   const businessIds = businesses.map((business) => business.id);
 
   let ownerAds: OwnerAdSummaryRow[] = [];
@@ -296,27 +312,24 @@ export default async function DashboardPage() {
         </article>
 
         <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-950">Tus permisos</h2>
+          <h2 className="text-xl font-semibold text-gray-950">Tus roles</h2>
 
           <p className="mt-2 text-sm text-gray-600">
-            Los permisos definen qué acciones puedes realizar dentro de
-            Sabinapp.
+            Estos son los roles vigentes de tu cuenta.
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {roleRows.length > 0 ? (
-              roleRows.map((row) =>
-                row.roles ? (
-                  <span
-                    key={row.roles.key}
-                    className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800"
-                  >
-                    {row.roles.name}
-                  </span>
-                ) : null,
-              )
+            {displayedRoles.length > 0 ? (
+              displayedRoles.map((role) => (
+                <span
+                  key={role.key}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800"
+                >
+                  {role.name}
+                </span>
+              ))
             ) : (
-              <p className="text-sm text-gray-600">Sin permisos especiales.</p>
+              <p className="text-sm text-gray-600">Sin roles activos.</p>
             )}
           </div>
         </article>
