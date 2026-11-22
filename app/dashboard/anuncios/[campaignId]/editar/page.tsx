@@ -1,4 +1,4 @@
-import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
+import { resolveAdAssetUrls } from "@/lib/ads/asset-urls";
 import Link from "next/link";
 import {
   redirect,
@@ -349,16 +349,14 @@ export default async function EditOwnerAdPage({
     }
   > = [];
 
-  for (const asset of assets) {
-    const publicUrl =
-      getPublicStorageUrl({
-        bucket:
-          asset.storage_bucket,
-        path:
-          asset.storage_path,
-        legacyUrl:
-          asset.url,
-      });
+  const assetUrls = await resolveAdAssetUrls(assets.map((asset) => ({
+    bucket: asset.storage_bucket,
+    path: asset.storage_path,
+    legacyUrl: asset.url,
+  })));
+
+  for (const [index, asset] of assets.entries()) {
+    const publicUrl = assetUrls[index];
 
     if (!publicUrl) {
       redirect(

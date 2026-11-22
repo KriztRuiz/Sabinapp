@@ -1,4 +1,4 @@
-import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
+import { resolveAdAssetUrls } from "@/lib/ads/asset-urls";
 import { createClient } from "@/lib/supabase/server";
 
 export type PublicAdCampaignType = "fixed_banner" | "interstitial";
@@ -74,15 +74,17 @@ function toNumber(value: number | string) {
   return parsed;
 }
 
-function groupPublicAds(rows: PublicAdRpcRow[]) {
+async function groupPublicAds(rows: PublicAdRpcRow[]) {
   const campaigns = new Map<string, PublicAdCampaign>();
 
-  for (const row of rows) {
-    const assetUrl = getPublicStorageUrl({
-      bucket: row.asset_storage_bucket,
-      path: row.asset_storage_path,
-      legacyUrl: row.asset_url,
-    });
+  const assetUrls = await resolveAdAssetUrls(rows.map((row) => ({
+    bucket: row.asset_storage_bucket,
+    path: row.asset_storage_path,
+    legacyUrl: row.asset_url,
+  })));
+
+  for (const [index, row] of rows.entries()) {
+    const assetUrl = assetUrls[index];
 
     if (!assetUrl) {
       continue;
@@ -147,7 +149,7 @@ export async function getPublicAds(params: {
   const rows = (data ?? []) as unknown as PublicAdRpcRow[];
 
   return {
-    ads: groupPublicAds(rows),
+    ads: await groupPublicAds(rows),
     error: null,
   };
 }

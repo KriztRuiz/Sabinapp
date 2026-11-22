@@ -1,4 +1,4 @@
-import { getPublicStorageUrl } from "@/lib/storage/public-storage-url";
+import { resolveAdAssetUrls } from "@/lib/ads/asset-urls";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -280,16 +280,15 @@ export default async function AdminAdsPage({
       )
       .in("campaign_id", campaignIds);
 
-    assets = (
-      (assetsRaw ?? []) as unknown as AdAssetRow[]
-    ).map((asset) => ({
+    const campaignAssets = (assetsRaw ?? []) as unknown as AdAssetRow[];
+    const assetUrls = await resolveAdAssetUrls(campaignAssets.map((asset) => ({
+      bucket: asset.storage_bucket,
+      path: asset.storage_path,
+      legacyUrl: asset.url,
+    })));
+    assets = campaignAssets.map((asset, index) => ({
       ...asset,
-      url:
-        getPublicStorageUrl({
-          bucket: asset.storage_bucket,
-          path: asset.storage_path,
-          legacyUrl: asset.url,
-        }) ?? "",
+      url: assetUrls[index] ?? "",
     }));
     impressions = (impressionsRaw ?? []) as MetricRow[];
     clicks = (clicksRaw ?? []) as MetricRow[];
@@ -982,7 +981,7 @@ export default async function AdminAdsPage({
                               ) : null}
 
                               <p className="mt-2 break-all text-gray-600">
-                                {asset.url}
+                                {asset.storage_path ?? "URL externa"}
                               </p>
                             </div>
                           ))}
