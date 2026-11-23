@@ -128,8 +128,7 @@ export async function signUp(formData: FormData) {
 
   const now = new Date().toISOString();
 
-  const headersList = await headers();
-  const origin = headersList.get("origin") ?? "http://localhost:3000";
+  const origin = await getAuthOrigin();
 
   const supabase = await createClient();
 
@@ -161,6 +160,41 @@ export async function signUp(formData: FormData) {
   redirect("/auth/sign-up-success");
 }
 
+async function getAuthOrigin() {
+  const renderUrl = process.env.RENDER_EXTERNAL_URL;
+  if (renderUrl) {
+    return new URL(renderUrl).origin;
+  }
+
+  return (await headers()).get("origin") ?? "http://localhost:3000";
+}
+
+export async function resendSignupConfirmation(formData: FormData) {
+  const path = "/auth/sign-up-success";
+  const email = getFormValue(formData, "email");
+  if (!email) {
+    redirect(`${path}?message=${encodeURIComponent("Ingresa tu correo.")}`);
+  }
+
+  const captchaToken = requireCaptchaToken(formData, path);
+  const origin = await getAuthOrigin();
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      captchaToken,
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
+  });
+
+  if (error && error.code !== "user_not_found" && error.code !== "email_already_confirmed") {
+    redirect(`${path}?message=${encodeURIComponent("No pudimos reenviar el correo. Espera un momento e inténtalo de nuevo.")}`);
+  }
+
+  redirect(`${path}?message=${encodeURIComponent("Si tu cuenta está pendiente de confirmación, revisa tu bandeja de entrada y el correo no deseado.")}`);
+}
+
 export async function resetPassword(formData: FormData) {
   const email = getFormValue(formData, "email");
 
@@ -173,8 +207,7 @@ export async function resetPassword(formData: FormData) {
     "/auth/forgot-password",
   );
 
-  const headersList = await headers();
-  const origin = headersList.get("origin") ?? "http://localhost:3000";
+  const origin = await getAuthOrigin();
 
   const supabase = await createClient();
 
