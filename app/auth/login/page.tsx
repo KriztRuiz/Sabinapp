@@ -95,6 +95,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </button>
         </form>
 
+        <p className="mt-4 text-center text-sm">
+          <Link
+            href="/auth/sign-up-success"
+            className="font-semibold text-orange-700 hover:text-orange-800"
+          >
+            Reenviar correo de confirmación
+          </Link>
+        </p>
+
         <p className="mt-6 text-center text-sm text-gray-600">
           ¿No tienes cuenta?{" "}
           <Link

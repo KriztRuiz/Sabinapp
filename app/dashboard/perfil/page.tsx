@@ -315,6 +315,17 @@ export default async function DashboardProfilePage({ searchParams }: PageProps) 
           Necesitarás conocer tu contraseña actual.
         </p>
         <ChangePasswordForm />
+        {user.email && !user.email_confirmed_at && (
+          <div className="mt-6 border-t border-gray-200 pt-4">
+            <p className="text-sm text-gray-600">Tu correo está pendiente de confirmación.</p>
+            <Link
+              href="/auth/sign-up-success"
+              className="mt-2 inline-flex text-sm font-semibold text-orange-700 hover:text-orange-800"
+            >
+              Reenviar correo de confirmación
+            </Link>
+          </div>
+        )}
       </section>
 
     </main>
