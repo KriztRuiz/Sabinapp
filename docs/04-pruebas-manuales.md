@@ -349,3 +349,50 @@ git diff --check
 npm run lint
 npm run build
 ```
+
+## Seguimiento de la beta pública · 22 de noviembre de 2026
+
+Entorno: Render, rama beta. Registro de prueba: Prueba QA Sabinapp, slug `prueba-qa-sabinapp`. Usar exclusivamente este registro para moderación.
+
+| Caso | Evidencia y estado |
+| --- | --- |
+| Alta, revisión, aprobación y publicación | Verificado en la sesión anterior. Landing anónima HTTP 200 con el nombre del negocio. El dueño vio el rol en su dashboard. |
+| Punto de partida | Brave mostró «Negocio publicado», 10 publicados y 2 retirados en el panel de moderación. |
+| Retiro y restauración | Pendiente. Verificar en cada paso landing anónima, directorio y Tus roles tras recargar. Comprobar si el dueño tiene otro negocio elegible. |
+| Rechazo y corrección | Pendiente. Comprobar que el dueño ve el motivo, puede editar y reenviar, y que la ficha permanece fuera del directorio hasta su publicación. |
+| Permisos | Pendiente contrastar administrador, subadministrador y dueño con sesiones separadas. |
+| Correo | Cuenta de prueba confirmada previamente. Quedan entrega de reenvío a una cuenta pendiente y recuperación con llegada efectiva al dominio de Render. |
+| Móvil | Pendiente comprobar navegación, lectura, formularios y ContactHub con ancho móvil. |
+
+Observación de experiencia: el historial de reportes y los cambios detallados preceden a la lista de negocios. Considerar un enlace «Ir a negocios por estado» y medir si reduce los pasos para llegar a moderación.
+
+Actualización del retiro: Supabase muestra `hidden` e `is_published=false`. El titular tiene un único negocio. La landing respondió HTTP 404 al visitante y /negocios respondió 200 sin el nombre de la ficha. Sin sesión, /dashboard/admin/negocios respondió 307 a /auth/login. La página de recuperación respondió 200. Las pruebas de entrega de correo siguen abiertas. Lint y build terminaron con código 0.
+
+En Brave privado, después de actualizar el dashboard, «Tus roles» mostró únicamente «Usuario registrado». El resumen mostró 1 negocio, 0 publicados y 1 no publicado. El panel explicó que solicitar publicidad requiere al menos un negocio publicado.
+
+Cambio local de navegación en app/dashboard/admin/negocios/page.tsx: el encabezado enlaza directamente a la sección de negocios por estado. El enlace se muestra cuando la sección está disponible. Verificación estructural: un único destino con el título previsto. Pendiente comprobar el desplazamiento en el navegador con esta versión desplegada.
+
+### 23 de noviembre de 2026 · Republicación en Render
+
+El panel administrativo mostró «Negocio visible nuevamente». Desde Cristian-Asus se consultó el negocio con el cliente público sin sesión. Supabase devolvió `published` e `is_published=true`. La ficha respondió HTTP 200 con el nombre «Prueba QA Sabinapp». El directorio respondió HTTP 200 e incluyó un enlace a la ficha. Queda comprobar el rol tras recargar el panel autenticado.
+Verificado después de la republicación en Brave privado: el titular vio «Usuario registrado» y «Dueño de negocio» en Tus roles, con 1 negocio publicado y 0 no publicados. Ciclo de retiro y restauración completo.
+Retiro voluntario confirmado en la beta desde la cuenta del titular. Supabase devolvió hidden e is_published=false para prueba-qa-sabinapp. La ficha pública respondió HTTP 404 sin el nombre del negocio.
+Reenvío tras el retiro voluntario verificado el 23 de noviembre: Prueba QA Sabinapp pasó a pending_review, con is_published=false y sin motivo de rechazo. La ficha anónima respondió HTTP 404 durante la revisión.
+
+Rechazo administrativo confirmado en Supabase para prueba-qa-sabinapp. Estado rejected, is_published=false. Motivo guardado: Prueba QA: indica en la descripción corta qué tipo de comida ofrece el restaurante ficticio y vuelve a enviar la ficha. Ficha sin sesión: HTTP 404.
+El editor del titular mostró Rechazado y el motivo exacto registrado por administración al recargar. Se introdujo la corrección solicitada en la descripción corta.
+
+Corrección persistida para la ficha QA. Descripción: Restaurante ficticio de prueba que ofrece tacos de guisado y comida casera. Estado: rejected. is_published=false.
+
+### Reenvío de la ficha corregida
+
+La cuenta titular corrigió la descripción y reenvió Prueba QA Sabinapp. Supabase conservó el texto corregido y devolvió pending_review e is_published=false. La ficha anónima respondió HTTP 404. El directorio respondió HTTP 200 sin el nombre del negocio. Se deja el registro ficticio en revisión para evitar exponerlo al público.
+
+El reenvío del titular conservó el motivo administrativo anterior y la fecha de envío registrada. En el editor y el panel de moderación se distingue ahora el motivo actual del anterior. Una nota explica la fecha durante la revisión. Se verificó localmente el contenido HTML para rechazado, pendiente y borrador en ambas pantallas.
+Prueba móvil en Render con ventana de 390 × 844. El directorio y la ficha Taquería El Primo presentaron 375 px útiles y 375 px de contenido, sin desplazamiento horizontal. Contactar ahora desplegó WhatsApp, teléfono y correo; Cerrar contacto volvió a contraer el menú. Se observaron otras dos fichas públicas identificadas como pruebas: Prueba Idempotencia UI 17B12 y Sabinapp Prueba Beta 2211. Pendiente revisar su retiro antes de difusión.
+
+### 25 de noviembre de 2026 — Recuperación de contraseña en Render
+
+Se envió el formulario desde /auth/forgot-password con la cuenta de pruebas autorizada. La beta mostró el mensaje genérico previsto. La entrega en el buzón y el dominio final del enlace quedan pendientes de verificación.
+
+Validación local de los cambios de moderación: npm run lint y npm run build finalizaron correctamente. En la revisión del código de gestión de subadministradores se verificó que la acción exige sesión y rol admin, y rechaza cambios al propio usuario. Queda probar la interfaz con una sesión de subadministrador.

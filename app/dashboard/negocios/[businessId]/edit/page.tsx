@@ -446,8 +446,11 @@ export default async function EditBusinessPage({
 
           <div className="mt-4 grid gap-3 text-sm text-gray-700 md:grid-cols-2">
             <p>
-              <strong>Enviado a revisión:</strong>{" "}
+              <strong>Envío registrado:</strong>{" "}
               {formatModerationDate(business.submitted_at)}
+              {business.status === "pending_review" && business.submitted_at && (
+                <span className="block text-sm text-gray-600">Los reenvíos del titular conservan la fecha de envío registrada.</span>
+              )}
             </p>
 
             <p>
@@ -468,7 +471,7 @@ export default async function EditBusinessPage({
 
           {business.rejection_reason ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-800">
-              <p className="font-black">Motivo de rechazo</p>
+              <p className="font-black">{business.status === "rejected" ? "Motivo de rechazo" : "Motivo del rechazo anterior"}</p>
               <p className="mt-2">{business.rejection_reason}</p>
             </div>
           ) : null}

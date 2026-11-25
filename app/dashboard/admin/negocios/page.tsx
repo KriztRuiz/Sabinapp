@@ -1099,6 +1099,14 @@ export default async function AdminBusinessesPage({
                 Panel interno para revisar negocios, cambios recientes, estados,
                 vigencia y acciones de moderación dentro de Sabinapp.
               </p>
+              {!error && (
+                <a
+                  href="#negocios-por-estado"
+                  className="mt-3 inline-block font-semibold text-gray-900 underline underline-offset-4"
+                >
+                  Ir a negocios por estado
+                </a>
+              )}
             </div>
 
           </div>
@@ -2148,7 +2156,7 @@ export default async function AdminBusinessesPage({
         ) : null}
 
         {!error ? (
-          <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <section id="negocios-por-estado" className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-gray-500">
 Detalle de negocios
@@ -2250,7 +2258,7 @@ Detalle de negocios por estado
 
                             {business.rejection_reason ? (
                               <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-800">
-                                Motivo de rechazo: {business.rejection_reason}
+                                {business.status === "rejected" ? "Motivo de rechazo" : "Motivo del rechazo anterior"}: {business.rejection_reason}
                               </p>
                             ) : null}
 
@@ -2279,8 +2287,11 @@ Detalle de negocios por estado
                             </p>
 
                             <p>
-                              <strong>Enviado:</strong>{" "}
+                              <strong>Envío registrado:</strong>{" "}
                               {formatDate(business.submitted_at)}
+                              {business.status === "pending_review" && business.submitted_at && (
+                                <span className="block text-sm text-gray-600">Los reenvíos del titular conservan la fecha de envío registrada.</span>
+                              )}
                             </p>
 
                             <p>
