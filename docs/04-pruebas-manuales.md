@@ -396,3 +396,9 @@ Prueba móvil en Render con ventana de 390 × 844. El directorio y la ficha Taqu
 Se envió el formulario desde /auth/forgot-password con la cuenta de pruebas autorizada. La beta mostró el mensaje genérico previsto. La entrega en el buzón y el dominio final del enlace quedan pendientes de verificación.
 
 Validación local de los cambios de moderación: npm run lint y npm run build finalizaron correctamente. En la revisión del código de gestión de subadministradores se verificó que la acción exige sesión y rol admin, y rechaza cambios al propio usuario. Queda probar la interfaz con una sesión de subadministrador.
+
+### 25 de noviembre de 2026 — Navegación de moderación y recuperación
+
+La portada de revisión enlaza a cuatro páginas independientes. La compilación de producción generó por-estado, cambios, resenas y comentarios. Lint y build finalizaron con código 0. Ocho comprobaciones de HTML renderizado verificaron los destinos, el indicador de página activa y la cantidad de enlaces con y sin permiso de reportes. Falta el recorrido con una sesión administrativa en Render.
+
+El titular confirmó recepción del correo de recuperación. Al abrirlo terminó en localhost:3000 con otp_expired. Queda revisar Site URL y Redirect URLs en el proyecto alojado y repetir con una liga nueva.

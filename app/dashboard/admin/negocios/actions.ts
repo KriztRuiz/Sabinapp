@@ -93,20 +93,20 @@ function getHiddenReason(formData: FormData) {
   return String(formData.get("hiddenReason") ?? "").trim();
 }
 
-function redirectAdminReportsMessage(message: string) {
+function redirectAdminReportsMessage(section: "resenas" | "comentarios", message: string) {
   redirect(
-    `/dashboard/admin/negocios?message=${encodeURIComponent(message)}#reportes-resenas`,
+    `/dashboard/admin/negocios/${section}?message=${encodeURIComponent(message)}`,
   );
 }
 
-function redirectAdminReportsError(message: string) {
+function redirectAdminReportsError(section: "resenas" | "comentarios", message: string) {
   redirect(
-    `/dashboard/admin/negocios?error=${encodeURIComponent(message)}#reportes-resenas`,
+    `/dashboard/admin/negocios/${section}?error=${encodeURIComponent(message)}`,
   );
 }
 
 function revalidateReviewReportPaths(slug: string | null) {
-  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/dashboard/admin/negocios", "layout");
 
   if (slug) {
     revalidatePath(`/negocio/${slug}`);
@@ -115,7 +115,7 @@ function revalidateReviewReportPaths(slug: string | null) {
 
 
 function revalidateNewsCommentReportPaths() {
-  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/dashboard/admin/negocios", "layout");
   revalidatePath("/noticias");
 }
 
@@ -130,7 +130,7 @@ function getBusinessId(formData: FormData) {
 }
 
 function revalidateBusinessPaths(slug: string | null) {
-  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/dashboard/admin/negocios", "layout");
   revalidatePath("/");
   revalidatePath("/negocios");
   revalidatePath("/productos");
@@ -152,13 +152,13 @@ export async function approveBusinessForReview(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
   if (business.status !== "pending_review") {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20aprobar%20negocios%20pendientes%20de%20revision",
+      "/dashboard/admin/negocios/por-estado?error=Solo%20se%20pueden%20aprobar%20negocios%20pendientes%20de%20revision",
     );
   }
 
@@ -188,13 +188,13 @@ export async function approveBusinessForReview(formData: FormData) {
 
   if (error || !approvedBusiness) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20aprobar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20aprobar%20el%20negocio",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Negocio%20aprobado");
+  redirect("/dashboard/admin/negocios/por-estado?message=Negocio%20aprobado");
 }
 
 export async function rejectBusinessForReview(formData: FormData) {
@@ -204,7 +204,7 @@ export async function rejectBusinessForReview(formData: FormData) {
 
   if (rejectionReason.length < 10) {
     redirect(
-      "/dashboard/admin/negocios?error=El%20motivo%20de%20rechazo%20debe%20tener%20al%20menos%2010%20caracteres",
+      "/dashboard/admin/negocios/por-estado?error=El%20motivo%20de%20rechazo%20debe%20tener%20al%20menos%2010%20caracteres",
     );
   }
 
@@ -216,7 +216,7 @@ export async function rejectBusinessForReview(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
@@ -224,7 +224,7 @@ export async function rejectBusinessForReview(formData: FormData) {
 
   if (!rejectableStatuses.includes(String(business.status))) {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20rechazar%20negocios%20en%20revision%20o%20aprobados",
+      "/dashboard/admin/negocios/por-estado?error=Solo%20se%20pueden%20rechazar%20negocios%20en%20revision%20o%20aprobados",
     );
   }
 
@@ -249,13 +249,13 @@ export async function rejectBusinessForReview(formData: FormData) {
 
   if (error || !rejectedBusiness) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20rechazar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20rechazar%20el%20negocio",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Negocio%20rechazado");
+  redirect("/dashboard/admin/negocios/por-estado?message=Negocio%20rechazado");
 }
 
 export async function hideBusinessFromPublic(formData: FormData) {
@@ -270,13 +270,13 @@ export async function hideBusinessFromPublic(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
   if (business.status !== "published") {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20ocultar%20negocios%20publicados",
+      "/dashboard/admin/negocios/por-estado?error=Solo%20se%20pueden%20ocultar%20negocios%20publicados",
     );
   }
 
@@ -302,13 +302,13 @@ export async function hideBusinessFromPublic(formData: FormData) {
 
   if (error || !hiddenBusiness) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20ocultar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20ocultar%20el%20negocio",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Negocio%20ocultado");
+  redirect("/dashboard/admin/negocios/por-estado?message=Negocio%20ocultado");
 }
 
 export async function publishApprovedBusiness(formData: FormData) {
@@ -323,13 +323,13 @@ export async function publishApprovedBusiness(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
   if (business.status !== "approved") {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20publicar%20negocios%20aprobados",
+      "/dashboard/admin/negocios/por-estado?error=Solo%20se%20pueden%20publicar%20negocios%20aprobados",
     );
   }
 
@@ -341,7 +341,7 @@ export async function publishApprovedBusiness(formData: FormData) {
 
   if (isExpired) {
     redirect(
-      "/dashboard/admin/negocios?error=Extiende%20la%20vigencia%20antes%20de%20publicar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=Extiende%20la%20vigencia%20antes%20de%20publicar%20el%20negocio",
     );
   }
 
@@ -370,13 +370,13 @@ export async function publishApprovedBusiness(formData: FormData) {
 
   if (error || !publishedBusiness) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20publicar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20publicar%20el%20negocio",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Negocio%20publicado");
+  redirect("/dashboard/admin/negocios/por-estado?message=Negocio%20publicado");
 }
 
 export async function extendBusinessExpiration(formData: FormData) {
@@ -395,7 +395,7 @@ export async function extendBusinessExpiration(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
@@ -415,13 +415,13 @@ export async function extendBusinessExpiration(formData: FormData) {
 
   if (error) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20extender%20la%20vigencia",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20extender%20la%20vigencia",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Vigencia%20actualizada");
+  redirect("/dashboard/admin/negocios/por-estado?message=Vigencia%20actualizada");
 }
 
 export async function restoreHiddenBusinessToPublic(formData: FormData) {
@@ -436,13 +436,13 @@ export async function restoreHiddenBusinessToPublic(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
   if (business.status !== "hidden") {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20restaurar%20negocios%20ocultos",
+      "/dashboard/admin/negocios/por-estado?error=Solo%20se%20pueden%20restaurar%20negocios%20ocultos",
     );
   }
 
@@ -452,7 +452,7 @@ export async function restoreHiddenBusinessToPublic(formData: FormData) {
 
   if (isExpired) {
     redirect(
-      "/dashboard/admin/negocios?error=Extiende%20la%20vigencia%20antes%20de%20volver%20a%20mostrar%20este%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=Extiende%20la%20vigencia%20antes%20de%20volver%20a%20mostrar%20este%20negocio",
     );
   }
 
@@ -475,13 +475,13 @@ export async function restoreHiddenBusinessToPublic(formData: FormData) {
 
   if (error || !restoredBusiness) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20volver%20a%20mostrar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20volver%20a%20mostrar%20el%20negocio",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Negocio%20visible%20nuevamente");
+  redirect("/dashboard/admin/negocios/por-estado?message=Negocio%20visible%20nuevamente");
 }
 
 export async function archiveBusinessFromAdmin(formData: FormData) {
@@ -496,7 +496,7 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
@@ -511,7 +511,7 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
     !isPublishedExpired
   ) {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20archivar%20negocios%20ocultos%2C%20rechazados%20o%20vencidos",
+      "/dashboard/admin/negocios/por-estado?error=Solo%20se%20pueden%20archivar%20negocios%20ocultos%2C%20rechazados%20o%20vencidos",
     );
   }
 
@@ -540,13 +540,13 @@ export async function archiveBusinessFromAdmin(formData: FormData) {
 
   if (error || !archivedBusiness) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20archivar%20el%20negocio",
+      "/dashboard/admin/negocios/por-estado?error=No%20se%20pudo%20archivar%20el%20negocio",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
-  redirect("/dashboard/admin/negocios?message=Negocio%20archivado");
+  redirect("/dashboard/admin/negocios/por-estado?message=Negocio%20archivado");
 }
 
 function getChangeEventId(formData: FormData) {
@@ -576,13 +576,13 @@ export async function markBusinessChangeEventSeen(formData: FormData) {
 
   if (error) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20marcar%20el%20cambio%20como%20visto",
+      "/dashboard/admin/negocios/cambios?error=No%20se%20pudo%20marcar%20el%20cambio%20como%20visto",
     );
   }
 
-  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/dashboard/admin/negocios", "layout");
 
-  redirect("/dashboard/admin/negocios?message=Cambio%20marcado%20como%20visto");
+  redirect("/dashboard/admin/negocios/cambios?message=Cambio%20marcado%20como%20visto");
 }
 
 export async function markAllBusinessChangeEventsSeenForBusiness(
@@ -604,14 +604,14 @@ export async function markAllBusinessChangeEventsSeenForBusiness(
 
   if (error) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudieron%20marcar%20los%20cambios%20como%20vistos",
+      "/dashboard/admin/negocios/cambios?error=No%20se%20pudieron%20marcar%20los%20cambios%20como%20vistos",
     );
   }
 
-  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/dashboard/admin/negocios", "layout");
 
   redirect(
-    "/dashboard/admin/negocios?message=Cambios%20del%20negocio%20marcados%20como%20vistos",
+    "/dashboard/admin/negocios/cambios?message=Cambios%20del%20negocio%20marcados%20como%20vistos",
   );
 }
 
@@ -627,7 +627,7 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
 
   if (changeEventError || !changeEvent?.business_id) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20cambio%20o%20el%20negocio",
+      "/dashboard/admin/negocios/cambios?error=No%20se%20encontro%20el%20cambio%20o%20el%20negocio",
     );
   }
 
@@ -639,13 +639,13 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
 
   if (businessError || !business) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20encontro%20el%20negocio",
+      "/dashboard/admin/negocios/cambios?error=No%20se%20encontro%20el%20negocio",
     );
   }
 
   if (business.status !== "published" || !business.is_published) {
     redirect(
-      "/dashboard/admin/negocios?error=Solo%20se%20pueden%20retirar%20y%20revisar%20negocios%20publicados",
+      "/dashboard/admin/negocios/cambios?error=Solo%20se%20pueden%20retirar%20y%20revisar%20negocios%20publicados",
     );
   }
 
@@ -673,7 +673,7 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
 
   if (businessUpdateError || !sentBusinessToReview) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudo%20mandar%20el%20negocio%20a%20revision",
+      "/dashboard/admin/negocios/cambios?error=No%20se%20pudo%20mandar%20el%20negocio%20a%20revision",
     );
   }
 
@@ -691,14 +691,14 @@ export async function sendBusinessChangeBackToReview(formData: FormData) {
 
   if (changeEventsUpdateError) {
     redirect(
-      "/dashboard/admin/negocios?error=El%20negocio%20se%20mando%20a%20revision%2C%20pero%20no%20se%20pudieron%20actualizar%20los%20avisos",
+      "/dashboard/admin/negocios/cambios?error=El%20negocio%20se%20mando%20a%20revision%2C%20pero%20no%20se%20pudieron%20actualizar%20los%20avisos",
     );
   }
 
   revalidateBusinessPaths(business.slug);
 
   redirect(
-    "/dashboard/admin/negocios?message=Negocio%20retirado%20del%20publico%20y%20enviado%20a%20revision",
+    "/dashboard/admin/negocios/cambios?message=Negocio%20retirado%20del%20publico%20y%20enviado%20a%20revision",
   );
 }
 
@@ -717,14 +717,14 @@ export async function markAllBusinessChangeEventsSeen() {
 
   if (error) {
     redirect(
-      "/dashboard/admin/negocios?error=No%20se%20pudieron%20marcar%20todos%20los%20cambios%20como%20vistos",
+      "/dashboard/admin/negocios/cambios?error=No%20se%20pudieron%20marcar%20todos%20los%20cambios%20como%20vistos",
     );
   }
 
-  revalidatePath("/dashboard/admin/negocios");
+  revalidatePath("/dashboard/admin/negocios", "layout");
 
   redirect(
-    "/dashboard/admin/negocios?message=Todos%20los%20cambios%20pendientes%20fueron%20marcados%20como%20vistos",
+    "/dashboard/admin/negocios/cambios?message=Todos%20los%20cambios%20pendientes%20fueron%20marcados%20como%20vistos",
   );
 }
 
@@ -746,11 +746,11 @@ export async function markReviewReportInReview(formData: FormData) {
     .eq("target_type", "review");
 
   if (error) {
-    redirectAdminReportsError("No se pudo marcar el reporte en revisión.");
+    redirectAdminReportsError("resenas", "No se pudo marcar el reporte en revisión.");
   }
 
   revalidateReviewReportPaths(null);
-  redirectAdminReportsMessage("Reporte marcado en revisión.");
+  redirectAdminReportsMessage("resenas", "Reporte marcado en revisión.");
 }
 
 export async function resolveReviewReport(formData: FormData) {
@@ -772,11 +772,11 @@ export async function resolveReviewReport(formData: FormData) {
     .eq("target_type", "review");
 
   if (error) {
-    redirectAdminReportsError("No se pudo resolver el reporte.");
+    redirectAdminReportsError("resenas", "No se pudo resolver el reporte.");
   }
 
   revalidateReviewReportPaths(null);
-  redirectAdminReportsMessage("Reporte resuelto.");
+  redirectAdminReportsMessage("resenas", "Reporte resuelto.");
 }
 
 export async function rejectReviewReport(formData: FormData) {
@@ -798,11 +798,11 @@ export async function rejectReviewReport(formData: FormData) {
     .eq("target_type", "review");
 
   if (error) {
-    redirectAdminReportsError("No se pudo rechazar el reporte.");
+    redirectAdminReportsError("resenas", "No se pudo rechazar el reporte.");
   }
 
   revalidateReviewReportPaths(null);
-  redirectAdminReportsMessage("Reporte rechazado.");
+  redirectAdminReportsMessage("resenas", "Reporte rechazado.");
 }
 
 export async function closeReviewReport(formData: FormData) {
@@ -824,11 +824,11 @@ export async function closeReviewReport(formData: FormData) {
     .eq("target_type", "review");
 
   if (error) {
-    redirectAdminReportsError("No se pudo cerrar el reporte.");
+    redirectAdminReportsError("resenas", "No se pudo cerrar el reporte.");
   }
 
   revalidateReviewReportPaths(null);
-  redirectAdminReportsMessage("Reporte cerrado.");
+  redirectAdminReportsMessage("resenas", "Reporte cerrado.");
 }
 
 export async function hideReportedReview(formData: FormData) {
@@ -839,7 +839,7 @@ export async function hideReportedReview(formData: FormData) {
   const hiddenReason = getHiddenReason(formData);
 
   if (hiddenReason.length < 10) {
-    redirectAdminReportsError(
+    redirectAdminReportsError("resenas",
       "El motivo para ocultar la reseña debe tener al menos 10 caracteres.",
     );
   }
@@ -853,7 +853,7 @@ export async function hideReportedReview(formData: FormData) {
     .maybeSingle();
 
   if (!report) {
-    redirectAdminReportsError("No encontramos el reporte de reseña.");
+    redirectAdminReportsError("resenas", "No encontramos el reporte de reseña.");
   }
 
   const now = new Date().toISOString();
@@ -870,7 +870,7 @@ export async function hideReportedReview(formData: FormData) {
     .eq("id", reviewId);
 
   if (reviewError) {
-    redirectAdminReportsError("No se pudo ocultar la reseña.");
+    redirectAdminReportsError("resenas", "No se pudo ocultar la reseña.");
   }
 
   const { error: reportError } = await supabase
@@ -886,13 +886,13 @@ export async function hideReportedReview(formData: FormData) {
     .eq("target_type", "review");
 
   if (reportError) {
-    redirectAdminReportsError(
+    redirectAdminReportsError("resenas",
       "La reseña se ocultó, pero no se pudo cerrar el reporte.",
     );
   }
 
   revalidateReviewReportPaths(businessSlug);
-  redirectAdminReportsMessage("Reseña ocultada y reporte resuelto.");
+  redirectAdminReportsMessage("resenas", "Reseña ocultada y reporte resuelto.");
 }
 
 
@@ -913,11 +913,11 @@ export async function markNewsCommentReportInReview(formData: FormData) {
     .eq("target_type", "news_comment");
 
   if (error) {
-    redirectAdminReportsError("No se pudo marcar el reporte en revisión.");
+    redirectAdminReportsError("comentarios", "No se pudo marcar el reporte en revisión.");
   }
 
   revalidateNewsCommentReportPaths();
-  redirectAdminReportsMessage("Reporte de comentario marcado en revisión.");
+  redirectAdminReportsMessage("comentarios", "Reporte de comentario marcado en revisión.");
 }
 
 export async function resolveNewsCommentReport(formData: FormData) {
@@ -939,11 +939,11 @@ export async function resolveNewsCommentReport(formData: FormData) {
     .eq("target_type", "news_comment");
 
   if (error) {
-    redirectAdminReportsError("No se pudo resolver el reporte.");
+    redirectAdminReportsError("comentarios", "No se pudo resolver el reporte.");
   }
 
   revalidateNewsCommentReportPaths();
-  redirectAdminReportsMessage("Reporte de comentario resuelto.");
+  redirectAdminReportsMessage("comentarios", "Reporte de comentario resuelto.");
 }
 
 export async function rejectNewsCommentReport(formData: FormData) {
@@ -965,11 +965,11 @@ export async function rejectNewsCommentReport(formData: FormData) {
     .eq("target_type", "news_comment");
 
   if (error) {
-    redirectAdminReportsError("No se pudo rechazar el reporte.");
+    redirectAdminReportsError("comentarios", "No se pudo rechazar el reporte.");
   }
 
   revalidateNewsCommentReportPaths();
-  redirectAdminReportsMessage("Reporte de comentario rechazado.");
+  redirectAdminReportsMessage("comentarios", "Reporte de comentario rechazado.");
 }
 
 export async function closeNewsCommentReport(formData: FormData) {
@@ -991,11 +991,11 @@ export async function closeNewsCommentReport(formData: FormData) {
     .eq("target_type", "news_comment");
 
   if (error) {
-    redirectAdminReportsError("No se pudo cerrar el reporte.");
+    redirectAdminReportsError("comentarios", "No se pudo cerrar el reporte.");
   }
 
   revalidateNewsCommentReportPaths();
-  redirectAdminReportsMessage("Reporte de comentario cerrado.");
+  redirectAdminReportsMessage("comentarios", "Reporte de comentario cerrado.");
 }
 
 export async function hideReportedNewsComment(formData: FormData) {
@@ -1005,7 +1005,7 @@ export async function hideReportedNewsComment(formData: FormData) {
   const hiddenReason = getHiddenReason(formData);
 
   if (hiddenReason.length < 10) {
-    redirectAdminReportsError(
+    redirectAdminReportsError("comentarios",
       "El motivo para ocultar el comentario debe tener al menos 10 caracteres.",
     );
   }
@@ -1019,7 +1019,7 @@ export async function hideReportedNewsComment(formData: FormData) {
     .maybeSingle();
 
   if (!report) {
-    redirectAdminReportsError("No encontramos el reporte de comentario.");
+    redirectAdminReportsError("comentarios", "No encontramos el reporte de comentario.");
   }
 
   const now = new Date().toISOString();
@@ -1036,7 +1036,7 @@ export async function hideReportedNewsComment(formData: FormData) {
     .eq("id", newsCommentId);
 
   if (commentError) {
-    redirectAdminReportsError("No se pudo ocultar el comentario.");
+    redirectAdminReportsError("comentarios", "No se pudo ocultar el comentario.");
   }
 
   const { error: reportError } = await supabase
@@ -1052,11 +1052,11 @@ export async function hideReportedNewsComment(formData: FormData) {
     .eq("target_type", "news_comment");
 
   if (reportError) {
-    redirectAdminReportsError(
+    redirectAdminReportsError("comentarios",
       "El comentario se ocultó, pero no se pudo cerrar el reporte.",
     );
   }
 
   revalidateNewsCommentReportPaths();
-  redirectAdminReportsMessage("Comentario ocultado y reporte resuelto.");
+  redirectAdminReportsMessage("comentarios", "Comentario ocultado y reporte resuelto.");
 }
