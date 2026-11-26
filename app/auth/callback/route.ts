@@ -1,46 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-function getSafeNextPath(nextPath: string | null) {
-  if (!nextPath) {
-    return "/dashboard";
-  }
-
-  if (!nextPath.startsWith("/") || nextPath.startsWith("//")) {
-    return "/dashboard";
-  }
-
-  return nextPath;
-}
-
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-
+  // Render forwards requests to an internal host. Email links need the public origin.
+  const origin = new URL(process.env.RENDER_EXTERNAL_URL || requestUrl.origin).origin;
+  const recovery = requestUrl.searchParams.get("next") === "/auth/update-password";
   const code = requestUrl.searchParams.get("code");
-  const nextPath = getSafeNextPath(requestUrl.searchParams.get("next"));
-
-  if (!code) {
-    return NextResponse.redirect(
-      new URL("/auth/login?message=El%20enlace%20de%20verificaci%C3%B3n%20no%20es%20v%C3%A1lido.%20Solicita%20uno%20nuevo.", requestUrl.origin),
-    );
+  const next = requestUrl.searchParams.get("next");
+  let destination = new URL("/dashboard", origin);
+  if (next?.startsWith("/") && !next.startsWith("//") && !next.includes("\\")) {
+    const candidate = new URL(next, origin);
+    if (candidate.origin === origin) destination = candidate;
   }
 
   if (code) {
     const supabase = await createClient();
-
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (error) {
-      return NextResponse.redirect(
-        new URL(
-          `/auth/login?message=${encodeURIComponent(
-            "No se pudo validar el enlace. Solicita uno nuevo.",
-          )}`,
-          requestUrl.origin,
-        ),
-      );
-    }
+    if (!error) return NextResponse.redirect(destination);
   }
 
-  return NextResponse.redirect(new URL(nextPath, requestUrl.origin));
+  const retry = new URL(recovery ? "/auth/forgot-password" : "/auth/login", origin);
+  retry.searchParams.set("message", "El enlace no es válido o ya caducó. Solicita uno nuevo.");
+  return NextResponse.redirect(retry);
 }

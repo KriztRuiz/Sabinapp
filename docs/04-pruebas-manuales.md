@@ -402,3 +402,9 @@ Validación local de los cambios de moderación: npm run lint y npm run build fi
 La portada de revisión enlaza a cuatro páginas independientes. La compilación de producción generó por-estado, cambios, resenas y comentarios. Lint y build finalizaron con código 0. Ocho comprobaciones de HTML renderizado verificaron los destinos, el indicador de página activa y la cantidad de enlaces con y sin permiso de reportes. Falta el recorrido con una sesión administrativa en Render.
 
 El titular confirmó recepción del correo de recuperación. Al abrirlo terminó en localhost:3000 con otp_expired. Queda revisar Site URL y Redirect URLs en el proyecto alojado y repetir con una liga nueva.
+
+### Recuperación en la beta — corrección de las dos redirecciones
+
+En Supabase, Site URL era http://localhost:3000 y las tres redirecciones permitidas apuntaban a desarrollo. Se guardó https://sabinas-beta.onrender.com como Site URL y se agregaron /auth/callback y /auth/callback?next=/auth/update-password bajo ese dominio. Se conservaron las entradas para desarrollo.
+
+Desde Render, una solicitud GET sin código al callback de recuperación devolvió 307 hacia https://localhost:10000/auth/login. El callback ahora usa RENDER_EXTERNAL_URL al construir el destino y dirige una liga de recuperación inválida al formulario para solicitar otra. Cinco pruebas del callback con intercambio de sesión simulado comprobaron el dominio de Render en recuperación válida, confirmación válida, código ausente y código rechazado. La confirmación del buzón requiere una liga nueva.
