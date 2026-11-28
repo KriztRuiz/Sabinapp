@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { OwnerAdNotice } from "@/components/ads/owner-ad-notice";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
 import {
   reportOwnerAdPayment,
@@ -352,9 +353,7 @@ export default async function DashboardAdsPage({
       </header>
 
       {query.message ? (
-        <section className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
-          {query.message}
-        </section>
+        <OwnerAdNotice message={query.message} />
       ) : null}
 
       {query.error ? (

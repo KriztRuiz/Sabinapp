@@ -477,7 +477,7 @@ export default async function Page({ searchParams }: PageProps) {
       ) : null}
 
       {!changeEventsError ? (
-        <section className="mt-8 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm">
+        <section className="mt-8 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm [overflow-wrap:anywhere] [&_.grid>*]:min-w-0">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-amber-700">
@@ -573,7 +573,7 @@ export default async function Page({ searchParams }: PageProps) {
       ) : null}
 
       {!changeEventsError && changeEvents.length > 0 ? (
-        <section className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+        <section className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm [overflow-wrap:anywhere] [&_.grid>*]:min-w-0">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-amber-700">

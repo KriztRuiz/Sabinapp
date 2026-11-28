@@ -300,7 +300,7 @@ export default async function DashboardPage() {
 
             <div>
               <dt className="font-medium text-gray-500">Estado de cuenta</dt>
-              <dd className="text-gray-950">{profile?.status ?? "active"}</dd>
+              <dd className="text-gray-950">{profile?.status === "active" ? "Activa" : (profile?.status ?? "Sin información")}</dd>
             </div></dl>
 
           <Link

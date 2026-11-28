@@ -9,8 +9,8 @@ export default async function SignUpSuccessPage({
 }) {
   const { message } = await searchParams;
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
-      <section className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-3 py-6 sm:px-6 sm:py-12">
+      <section className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-8 text-center shadow-sm">
         <p className="text-sm font-medium text-orange-600">Sabinapp</p>
 
         <h1 className="mt-2 text-3xl font-bold text-gray-950">
@@ -38,13 +38,10 @@ export default async function SignUpSuccessPage({
             required
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950"
           />
-          <TurnstileWidget />
-          <button
-            type="submit"
+          <TurnstileWidget
+            submitLabel="Reenviar correo de confirmación"
             className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-950 hover:bg-gray-50"
-          >
-            Reenviar correo de confirmación
-          </button>
+          />
         </form>
 
         <Link

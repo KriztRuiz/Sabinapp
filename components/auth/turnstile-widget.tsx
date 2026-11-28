@@ -1,83 +1,132 @@
 "use client";
 
-import Script from "next/script";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 
-type TurnstileApi = {
-  render: (
-    container: HTMLElement,
-    options: {
-      sitekey: string;
-      theme: "light";
-      language: string;
-      "response-field": boolean;
-    },
-  ) => string;
-  remove: (widgetId: string) => void;
+type Status = "waiting" | "ready" | "expired" | "failed" | "slow";
+
+const messages: Record<Status, string> = {
+  waiting: "Esperando la verificación de seguridad…",
+  ready: "Verificación completada.",
+  expired: "La verificación venció. Vuelve a verificarte para continuar.",
+  failed: "No se pudo completar la verificación. Comprueba tu conexión y vuelve a intentarlo.",
+  slow: "La verificación está tardando. Puedes esperar o volver a intentarlo.",
+};
+
+type WidgetOptions = {
+  sitekey: string;
+  theme: "light";
+  language: "es";
+  size: "compact";
+  retry: "never";
+  "refresh-expired": "manual";
+  "refresh-timeout": "manual";
+  callback: (token: string) => void;
+  "error-callback": () => boolean;
+  "expired-callback": () => void;
+  "timeout-callback": () => void;
 };
 
 declare global {
   interface Window {
-    turnstile?: TurnstileApi;
+    turnstile?: {
+      render: (container: HTMLElement, options: WidgetOptions) => string;
+      remove: (id: string) => void;
+    };
   }
 }
 
-export default function TurnstileWidget() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | null>(null);
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-  const renderWidget = useCallback(() => {
-    if (
-      !siteKey ||
-      !containerRef.current ||
-      !window.turnstile ||
-      widgetIdRef.current !== null
-    ) {
-      return;
-    }
-
-    widgetIdRef.current = window.turnstile.render(
-      containerRef.current,
-      {
-        sitekey: siteKey,
-        theme: "light",
-        language: "es",
-        "response-field": true,
-      },
-    );
-  }, [siteKey]);
+export default function TurnstileWidget({ submitLabel, className }: {
+  submitLabel: string;
+  className: string;
+}) {
+  const container = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<Status>("waiting");
+  const [attempt, setAttempt] = useState(0);
+  const { pending } = useFormStatus();
 
   useEffect(() => {
-    renderWidget();
+    if (!siteKey) return;
+    let active = true;
+    let widgetId: string | undefined;
+    let script: HTMLScriptElement | undefined;
+    const timer = window.setTimeout(() => {
+      if (active) setStatus(current => current === "waiting" ? "slow" : current);
+    }, 30000);
+
+    function update(next: Status) {
+      if (active) {
+        window.clearTimeout(timer);
+        setStatus(next);
+      }
+    }
+
+    function render() {
+      if (!active || !container.current || !siteKey) return;
+      if (!window.turnstile) {
+        update("failed");
+        return;
+      }
+
+      try {
+        widgetId = window.turnstile.render(container.current, {
+          sitekey: siteKey,
+          theme: "light",
+          language: "es",
+          size: "compact",
+          retry: "never",
+          "refresh-expired": "manual",
+          "refresh-timeout": "manual",
+          callback: token => update(token ? "ready" : "failed"),
+          "error-callback": () => { update("failed"); return true; },
+          "expired-callback": () => update("expired"),
+          "timeout-callback": () => update("expired"),
+        });
+      } catch {
+        update("failed");
+      }
+    }
+
+    if (window.turnstile) {
+      render();
+    } else {
+      script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.onload = render;
+      script.onerror = () => update("failed");
+      document.head.append(script);
+    }
 
     return () => {
-      const widgetId = widgetIdRef.current;
-
-      if (widgetId !== null) {
-        window.turnstile?.remove(widgetId);
-        widgetIdRef.current = null;
-      }
+      active = false;
+      window.clearTimeout(timer);
+      if (widgetId !== undefined) window.turnstile?.remove(widgetId);
+      script?.remove();
     };
-  }, [renderWidget]);
+  }, [attempt]);
 
-  if (!siteKey) {
-    return (
-      <p className="text-sm text-red-700">
-        La verificación de seguridad no está configurada.
-      </p>
-    );
+  function retry() {
+    setStatus("waiting");
+    setAttempt(current => current + 1);
   }
 
   return (
-    <div className="flex justify-center">
-      <div ref={containerRef} />
-
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-        strategy="afterInteractive"
-        onReady={renderWidget}
-      />
-    </div>
+    <>
+      <div ref={container} className="flex justify-center" />
+      <p role="status" className="text-sm text-gray-700">
+        {siteKey ? messages[status] : "La verificación de seguridad no está configurada."}
+      </p>
+      {siteKey && (status === "failed" || status === "expired" || status === "slow") && (
+        <button type="button" onClick={retry} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold">
+          Reintentar verificación
+        </button>
+      )}
+      <button type="submit" disabled={status !== "ready" || pending} className={className + " disabled:cursor-not-allowed disabled:opacity-60"}>
+        {submitLabel}
+      </button>
+    </>
   );
 }

@@ -12,7 +12,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const params = await searchParams;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-3 py-6 sm:px-6 sm:py-12">
       <Link
         href="/"
         className="mb-6 inline-flex text-sm font-semibold text-orange-700 transition hover:text-orange-800"
@@ -20,7 +20,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
         ← Volver a Sabinapp
       </Link>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-8 shadow-sm">
         <p className="text-sm font-medium text-orange-600">Sabinapp</p>
 
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Crear cuenta</h1>
@@ -152,14 +152,10 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
             </span>
           </label>
 
-          <TurnstileWidget />
-
-          <button
-            type="submit"
+          <TurnstileWidget
+            submitLabel="Crear cuenta"
             className="w-full rounded-lg bg-gray-950 px-4 py-2.5 font-semibold text-white transition hover:bg-gray-800"
-          >
-            Crear cuenta
-          </button>
+          />
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
