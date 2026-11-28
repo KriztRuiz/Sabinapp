@@ -474,7 +474,7 @@ export function ImpactBusinessLanding({ data }: Props) {
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/80 to-black" />
 
-        <div className="relative mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-7xl items-center gap-10 px-5 py-14 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8">
+        <div className="relative mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-7xl grid-cols-1 items-center gap-10 px-5 py-14 [overflow-wrap:anywhere] sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:px-8">
           <div>
             <p className="inline-flex rotate-[-2deg] rounded-xl bg-red-500 px-5 py-3 text-sm font-black uppercase tracking-[0.25em] text-white shadow-2xl">
               {copy.badge}
@@ -553,7 +553,7 @@ export function ImpactBusinessLanding({ data }: Props) {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-4 px-5 py-10 sm:px-6 md:grid-cols-3 lg:px-8">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-5 py-10 [overflow-wrap:anywhere] sm:px-6 md:grid-cols-3 lg:px-8">
         <a
           href="#destacados"
           className="group rounded-[2rem] border-2 border-white/10 bg-white/10 p-6 shadow-xl shadow-black/30 backdrop-blur transition hover:-translate-y-1 hover:border-yellow-300"

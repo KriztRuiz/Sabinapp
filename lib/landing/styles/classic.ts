@@ -19,7 +19,7 @@ export const classicStyles: LandingStyles = {
   mutedText: "text-[#716252]",
   sectionLabel: "text-[#9a641f]",
   heroGrid:
-    "grid min-h-[72vh] items-center gap-10 py-14 lg:grid-cols-[1fr_0.9fr]",
+    "grid min-h-[72vh] grid-cols-1 items-center gap-10 py-14 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]",
   heroImageCard:
     "relative rounded-[1.5rem] border border-[#d8c3a3] bg-[#efe1cf] p-3 shadow-xl shadow-[#5c3b14]/10",
   heroImage: "h-[500px] w-full rounded-[1rem] object-cover",
