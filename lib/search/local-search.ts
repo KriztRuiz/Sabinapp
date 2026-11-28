@@ -29,7 +29,7 @@ function getSearchTokenVariants(token: string) {
     variants.add(`${token}es`);
   }
 
-  return Array.from(variants).filter((variant) => variant.length >= 3);
+  return Array.from(variants);
 }
 
 export function textMatchesSearch(searchableText: string, query: string) {
