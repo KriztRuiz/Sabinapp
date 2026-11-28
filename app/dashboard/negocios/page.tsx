@@ -352,7 +352,7 @@ export default async function DashboardBusinessesPage() {
               </div>
 
               <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
-                {activeBusinesses.length} activos
+                {activeBusinesses.length} {activeBusinesses.length === 1 ? "activo" : "activos"}
               </span>
             </div>
 
@@ -384,7 +384,7 @@ export default async function DashboardBusinessesPage() {
                 </div>
 
                 <span className="w-fit rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-700">
-                  {archivedBusinesses.length} archivados
+                  {archivedBusinesses.length} {archivedBusinesses.length === 1 ? "archivado" : "archivados"}
                 </span>
               </div>
 
