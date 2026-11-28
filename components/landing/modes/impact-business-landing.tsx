@@ -742,7 +742,7 @@ export function ImpactBusinessLanding({ data }: Props) {
 
       <section id="contacto" className="mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-6 lg:px-8">
         <article className="rounded-[2.5rem] border-[3px] border-yellow-300 bg-yellow-300 p-8 text-black shadow-2xl shadow-yellow-950/40">
-          <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+          <div className="grid grid-cols-1 gap-8 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.35em]">
                 Acción final
